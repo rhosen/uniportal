@@ -1,0 +1,251 @@
+﻿@page
+@model UniPortal.Pages.Student.DashboardModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Student Dashboard";
+    var userName = User.Identity?.Name ?? "Student";
+    Layout = "_StudentLayout";
+}
+
+<div class="container-fluid p-4">
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item me-2" role="presentation">
+            <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab">
+                <i class="bi bi-house-door-fill me-1"></i> Dashboard
+            </button>
+        </li>
+        <li class="nav-item me-2" role="presentation">
+            <button class="nav-link" id="grades-tab" data-bs-toggle="tab" data-bs-target="#grades" type="button" role="tab">
+                <i class="bi bi-journal-text me-1"></i> Past Grades
+            </button>
+        </li>
+        <li class="nav-item me-2" role="presentation">
+            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+                <i class="bi bi-person-fill me-1"></i> Profile
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="change-password-tab" data-bs-toggle="tab" data-bs-target="#change-password" type="button" role="tab">
+                <i class="bi bi-key-fill me-1"></i> Change Password
+            </button>
+        </li>
+    </ul>
+
+
+    <div class="tab-content" id="dashboardTabsContent">
+
+        <!-- Dashboard Tab -->
+        <div class="tab-pane fade show active" id="home">
+            <div class="row g-4">
+
+                <!-- Classroom Map -->
+                <div class="col-12">
+                    <div class="card shadow-sm rounded-4 p-3">
+                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-building me-2"></i>Classroom Availability</h5>
+                        <div class="d-flex flex-wrap">
+                            @foreach (var room in Model.Classrooms)
+                            {
+                                var bgColor = room.IsOccupied ? "#fee2e2" : "#d1fae5";
+                                var badgeClass = room.IsOccupied ? "bg-danger" : "bg-success";
+                                var statusText = room.IsOccupied ? "Occupied" : "Free";
+                                <div class="card m-2 text-center shadow-sm" style="width: 100px; background-color: @bgColor; cursor:pointer;">
+                                    <div class="card-body p-2">
+                                        <strong>@room.RoomName</strong>
+                                        <div class="badge @badgeClass mt-1">@statusText</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Classes -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm rounded-4 p-3 h-100">
+                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-calendar-check-fill me-2"></i>Upcoming Classes</h5>
+                        <table class="table table-borderless align-middle">
+                            <thead class="text-muted">
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Time</th>
+                                    <th>Room</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.UpcomingClasses)
+                                {
+                                    <tr class="hover-shadow rounded">
+                                        <td>@c.CourseName</td>
+                                        <td>@c.Time</td>
+                                        <td>@c.Room</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pending Assignments -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm rounded-4 p-3 h-100">
+                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-file-earmark-text-fill me-2"></i>Pending Assignments</h5>
+                        <div class="list-group">
+                            @foreach (var a in Model.PendingAssignments)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm mb-2 rounded">
+                                    <div>
+                                        <strong>@a.Title</strong>
+                                        <div class="badge bg-warning text-muted small">Due: @a.DueDate.ToString("MMM d")</div>
+                                    </div>
+                                    <form method="post" asp-page-handler="SubmitAssignment" class="mt-2 mt-md-0">
+                                        <input type="hidden" name="AssignmentId" value="@a.Id" />
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="bi bi-upload me-1"></i> Submit
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Grades Tab -->
+        <div class="tab-pane fade" id="grades">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm rounded-4 p-3">
+                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-award-fill me-2"></i>Past Grades</h5>
+                        <table class="table table-hover mt-2">
+                            <thead class="text-muted">
+                                <tr>
+                                    <th>Semester</th>
+                                    <th>Subject</th>
+                                    <th>Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var g in Model.PastGrades)
+                                {
+                                    <tr>
+                                        <td>@g.Semester</td>
+                                        <td>@g.Subject</td>
+                                        <td>@g.Grade</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div class="tab-pane fade" id="profile" role="tabpanel">
+            <div class="d-flex justify-content-center mt-4">
+                <div class="card shadow-sm" style="width: 100%; max-width: 500px;">
+                    <div class="card-body p-3">
+                        <h6 class="card-title text-center mb-3">Update Profile</h6>
+
+                        <form method="post" asp-page-handler="UpdateProfile">
+                            <div class="row g-2">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small">First Name</label>
+                                    <input type="text" class="form-control form-control-sm border-0 border-bottom"
+                                           asp-for="Profile.FirstName" placeholder="First name" />
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small">Last Name</label>
+                                    <input type="text" class="form-control form-control-sm border-0 border-bottom"
+                                           asp-for="Profile.LastName" placeholder="Last name" />
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small">Email</label>
+                                <input type="email" class="form-control form-control-sm border-0 border-bottom"
+                                       asp-for="Profile.Email" placeholder="Email address" />
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small">Phone</label>
+                                <input type="text" class="form-control form-control-sm border-0 border-bottom"
+                                       asp-for="Profile.PhoneNumber" placeholder="Phone number" />
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small">Date of Birth</label>
+                                <input type="date" class="form-control form-control-sm border-0 border-bottom"
+                                       asp-for="Profile.DateOfBirth" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small">Address</label>
+                                <textarea class="form-control form-control-sm border-0 border-bottom" rows="2"
+                                          asp-for="Profile.Address" placeholder="Your address"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-sm w-100 rounded-1">
+                                Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Change Password Tab -->
+        <div class="tab-pane fade" id="change-password" role="tabpanel">
+            <div class="d-flex justify-content-center mt-4">
+                <div class="card shadow-sm" style="width: 100%; max-width: 400px;">
+                    <div class="card-body p-3">
+                        <h6 class="card-title text-center mb-3">Change Password</h6>
+
+                        <form method="post" asp-page-handler="ChangePassword">
+                            <div class="mb-3">
+                                <label class="form-label small">Current Password</label>
+                                <input type="password" class="form-control form-control-sm border-0 border-bottom"
+                                       asp-for="ChangePasswordModel.CurrentPassword"
+                                       placeholder="Enter current password" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small">New Password</label>
+                                <input type="password" class="form-control form-control-sm border-0 border-bottom"
+                                       asp-for="ChangePasswordModel.NewPassword"
+                                       placeholder="Enter new password" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small">Confirm New Password</label>
+                                <input type="password" class="form-control form-control-sm border-0 border-bottom"
+                                       asp-for="ChangePasswordModel.ConfirmPassword"
+                                       placeholder="Re-enter new password" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-sm w-100 rounded-1">
+                                Update Password
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // Bootstrap tab functionality already included if using bootstrap.bundle.js
+    </script>
+}
