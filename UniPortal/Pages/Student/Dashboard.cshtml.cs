@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
+using UniPortal.Constants;
 using UniPortal.Services;
 
 namespace UniPortal.Pages.Student
 {
-    [Authorize(Roles = "Student")]
+    [Authorize(Roles = Roles.Student)]
     public class DashboardModel : PageModel
     {
         private readonly UserManager<IdentityUser> _userManager;

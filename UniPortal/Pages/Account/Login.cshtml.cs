@@ -70,7 +70,7 @@ namespace UniPortal.Pages.Account
                 new AuthenticationProperties
                 {
                     IsPersistent = Input.RememberMe,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                    ExpiresUtc = DateTimeOffset.Now.AddHours(8)
                 });
 
             // 6️⃣ Role-based redirection
@@ -78,6 +78,7 @@ namespace UniPortal.Pages.Account
             {
                 "Admin" => "/admin/dashboard",
                 "Faculty" => "/faculty/dashboard",
+                "Coordinator" => "/faculty/dashboard",
                 _ => "/student/dashboard"
             };
 

@@ -21,12 +21,16 @@ builder.Services.AddAuthentication("Cookies")
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
+builder.Services.AddAppServices();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     await RoleSeeder.SeedRolesAsync(roleManager);
+    await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
+    await FacultySeeder.SeedFacultyAsync(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline.
@@ -45,5 +49,12 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
+
+// Set login page as default route
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/account/login"); // your login page route
+    return Task.CompletedTask;
+});
 
 app.Run();

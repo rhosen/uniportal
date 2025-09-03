@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 
@@ -7,10 +9,11 @@ namespace UniPortal.Services
     public class AccountService
     {
         private readonly UniPortalContext _dbContext;
-
-        public AccountService(UniPortalContext dbContext)
+        private readonly UserManager<IdentityUser> _userManager;
+        public AccountService(UniPortalContext dbContext, UserManager<IdentityUser> userManager)
         {
             _dbContext = dbContext;
+            _userManager = userManager;
         }
 
         // Create new account (linked to existing IdentityUser)
@@ -45,7 +48,7 @@ namespace UniPortal.Services
             if (account == null) return;
 
             account.IsDeleted = true;
-            account.DeletedAt = DateTime.UtcNow;
+            account.DeletedAt = DateTime.Now;
             await _dbContext.SaveChangesAsync();
         }
 
@@ -56,14 +59,14 @@ namespace UniPortal.Services
             if (account == null) return;
 
             account.IsActive = true;
-            account.UpdatedAt = DateTime.UtcNow;
+            account.UpdatedAt = DateTime.Now;
             await _dbContext.SaveChangesAsync();
         }
 
         // Optional: update profile
         public async Task UpdateProfileAsync(Account account)
         {
-            account.UpdatedAt = DateTime.UtcNow;
+            account.UpdatedAt = DateTime.Now;
             _dbContext.Accounts.Update(account);
             await _dbContext.SaveChangesAsync();
         }
@@ -87,6 +90,30 @@ namespace UniPortal.Services
             await _dbContext.SaveChangesAsync();
             return true;
         }
-    }
 
+        public async Task<List<Account>> GetInactiveStudentsAsync()
+        {
+            // Get the user IDs of students (in memory)
+            var studentIds = (await _userManager.GetUsersInRoleAsync(Roles.Student))
+                             .Select(u => u.Id)
+                             .ToList();
+
+            // Query the Accounts filtering with the studentIds list
+            return await _dbContext.Accounts
+                .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsDeleted && !a.IsActive)
+                .ToListAsync();
+        }
+
+        public async Task ActivateStudentAsync(Guid studentId)
+        {
+            var student = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == studentId);
+            if (student != null)
+            {
+                student.IsActive = true;
+                student.UpdatedAt = DateTime.Now;
+                await _dbContext.SaveChangesAsync();
+            }
+
+        }
+    }
 }

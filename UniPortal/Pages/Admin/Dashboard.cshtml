@@ -1,0 +1,62 @@
+﻿@page
+@model UniPortal.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<div class="row g-4">
+
+    <!-- Active Students -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Active Students</h6>
+                <h3 class="fw-bold">@Model.ActiveStudents</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inactive Students -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3 border-danger" style="cursor: pointer;" onclick="location.href='@Url.Page("/admin/activatestudents")'">
+            <div class="card-body">
+                <h6 class="card-title text-muted text-danger">Inactive Students</h6>
+                <h3 class="fw-bold text-danger">@Model.InactiveStudents</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teachers -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Total Teachers</h6>
+                <h3 class="fw-bold">@Model.TotalTeachers</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Total Courses</h6>
+                <h3 class="fw-bold">@Model.TotalCourses</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="mt-5">
+    <h5 class="mb-3">Quick Links</h5>
+    <div class="d-flex flex-wrap gap-3">
+        <a class="btn btn-outline-primary" asp-page="/Admin/Accounts">Manage Accounts</a>
+        <a class="btn btn-outline-primary" asp-page="/Admin/Departments">Manage Departments</a>
+        <a class="btn btn-outline-primary" asp-page="/Admin/Courses">Manage Courses</a>
+        <a class="btn btn-outline-primary" asp-page="/Admin/Classrooms">Manage Classrooms</a>
+        <a class="btn btn-outline-primary" asp-page="/Admin/Notifications">Notifications</a>
+        <a class="btn btn-outline-primary" asp-page="/Admin/Logs">Logs</a>
+    </div>
+</div>

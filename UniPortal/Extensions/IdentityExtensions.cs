@@ -23,11 +23,6 @@ namespace UniPortal.Extensions
             })
                 .AddEntityFrameworkStores<UniPortalContext>()
                 .AddDefaultTokenProviders();
-
-            // Add our Identity service (registration, login, logout)
-            services.AddScoped<Services.UserService>();
-            services.AddScoped<Services.AccountService>();
-
             return services;
         }
 

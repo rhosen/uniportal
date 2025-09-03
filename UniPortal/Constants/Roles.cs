@@ -1,4 +1,4 @@
-﻿namespace UniPortal.Auth
+﻿namespace UniPortal.Constants
 {
     public static class Roles
     {

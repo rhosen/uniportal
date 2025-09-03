@@ -1,0 +1,82 @@
+﻿@page
+@model UniPortal.Pages.Faculty.DashboardModel
+@{
+    ViewData["Title"] = "Faculty Dashboard";
+    Layout = "_FacultyLayout";
+}
+
+<div class="row g-4">
+
+    <!-- Total Courses -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Courses You Teach</h6>
+                <h3 class="fw-bold">@Model.TotalCourses</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Students -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Students Enrolled</h6>
+                <h3 class="fw-bold">@Model.TotalStudents</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Assignments -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Assignments Created</h6>
+                <h3 class="fw-bold">@Model.TotalAssignments</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications (last month) -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm p-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Recent Notifications</h6>
+                <h3 class="fw-bold">@Model.RecentNotifications</h3>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3 col-sm-6 mt-3">
+        <div class="card text-center shadow-sm p-3 border-primary">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Total Enrollments</h6>
+                <h3 class="fw-bold">@Model.TotalEnrollments</h3>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3 col-sm-6 mt-3">
+        <div class="card text-center shadow-sm p-3 border-success">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Scheduled Classes</h6>
+                <h3 class="fw-bold">@Model.TotalScheduledClasses</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="mt-5">
+    <h5 class="mb-3">Quick Links</h5>
+    <div class="d-flex flex-wrap gap-3">
+        <a class="btn btn-outline-primary" asp-page="/Faculty/Courses">My Courses</a>
+        <a class="btn btn-outline-primary" asp-page="/Faculty/Assignments">Assignments</a>
+        <a class="btn btn-outline-primary" asp-page="/Faculty/ClassNotes">Class Notes</a>
+        <a class="btn btn-outline-primary" asp-page="/Faculty/Notifications">Notifications</a>
+        <a class="btn btn-outline-primary" asp-page="/Coordinator/Enrollments">Manage Enrollments</a>
+        <a class="btn btn-outline-primary" asp-page="/Coordinator/ClassSchedule">Class Schedule</a>
+    </div>
+</div>

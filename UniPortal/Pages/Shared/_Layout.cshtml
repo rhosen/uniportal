@@ -16,41 +16,47 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom shadow-sm mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">UniPortal</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <!-- Brand -->
+                <a class="navbar-brand fw-bold fs-4 text-primary" asp-area="" asp-page="/Index">UniPortal</a>
+
+                <!-- Toggler -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+
+                <!-- Nav Links & Auth -->
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-sm-0">
+                        @* <li class="nav-item">
+                            <a class="nav-link text-dark fw-semibold" asp-area="" asp-page="/Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
+                            <a class="nav-link text-dark fw-semibold" asp-area="" asp-page="/Privacy">Privacy</a>
+                        </li> *@
                     </ul>
-                    <!-- Right-side auth buttons -->
-                    <div class="d-flex align-items-center">
+
+                    <div class="d-flex align-items-center gap-2">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <span class="me-3">Welcome, <strong>@fullName</strong></span>
-                            <span class="badge bg-primary me-3">Student</span>
+                            <span class="text-muted">Welcome, <strong>@fullName</strong></span>
+                            <span class="badge bg-primary rounded-pill">Student</span>
                             <form method="post" asp-page="/Account/Logout">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Logout</button>
                             </form>
                         }
                         else
                         {
-                            <a class="btn btn-outline-primary me-2 btn-sm" asp-page="/Account/Login">Login</a>
-                            <a class="btn btn-outline-secondary btn-sm" asp-page="/Account/Register">Register</a>
+                            <a class="btn btn-outline-primary btn-sm" asp-page="/account/login">Login</a>
+                            <a class="btn btn-outline-secondary btn-sm" asp-page="/account/register">Register</a>
                         }
                     </div>
                 </div>
             </div>
         </nav>
+
     </header>
     <div class="container">
         <main role="main" class="pb-3">
@@ -60,7 +66,7 @@
 
     <footer class="footer mt-auto py-3 bg-light fixed-bottom border-top">
         <div class="container">
-            &copy; 2025 - UniPortal - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            &copy; 2025 - UniPortal
         </div>
     </footer>
 

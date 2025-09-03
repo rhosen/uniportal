@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using UniPortal.Auth;
+using UniPortal.Constants;
 
 namespace UniPortal.Data.Seeders
 {

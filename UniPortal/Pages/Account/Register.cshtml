@@ -5,51 +5,70 @@
     ViewData["Title"] = "Register";
 }
 
-<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
-    <div class="card shadow-lg rounded-4 p-4" style="width: 400px;">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold">Create Account</h2>
-            <p class="text-muted small">Start your journey with UniPortal</p>
+<div class="container-fluid mt-lg-5 d-flex align-items-center justify-content-center bg-light">
+    <div class="col-12 col-sm-10 col-md-10 col-lg-8 col-xl-6">
+        <div class="row shadow rounded-4 overflow-hidden bg-white">
+
+            <!-- Left Panel: Illustration & Welcome (hidden on mobile) -->
+            <div class="col-md-6 d-none d-md-flex bg-primary align-items-center justify-content-center">
+                <div class="text-white text-center px-4">
+                    <img src="~/img/undraw_sign-up_qamz.svg" alt="Register Illustration" class="img-fluid mb-4" style="max-height: 260px;" />
+                    <h2 class="fw-bold">Join UniPortal</h2>
+                    <p class="small">Create your account</p>
+                </div>
+            </div>
+
+            <!-- Right Panel: Registration Form -->
+            <div class="col-12 col-md-6 p-4 p-md-5 d-flex align-items-center">
+                <div class="w-100">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold text-primary">UniPortal</h3>
+                        <p class="text-muted small">Secure Registration</p>
+                    </div>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label asp-for="Input.Email" class="form-label fw-semibold"></label>
+                            <input asp-for="Input.Email" class="form-control form-control-sm rounded-3" placeholder="Enter your email" />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Password" class="form-label fw-semibold"></label>
+                            <input asp-for="Input.Password" type="password" class="form-control form-control-sm rounded-3" placeholder="Enter password" />
+                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.ConfirmPassword" class="form-label fw-semibold"></label>
+                            <input asp-for="Input.ConfirmPassword" type="password" class="form-control form-control-sm rounded-3" placeholder="Confirm password" />
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm">
+                            Register
+                        </button>
+
+                        <div class="text-center mt-3 small">
+                            Already have an account?
+                            <a asp-page="/Account/Login" class="text-decoration-none fw-semibold">Login</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </div>
-
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    <div>@error.ErrorMessage</div>
-                }
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        }
-
-        <form method="post">
-            <div class="mb-3">
-                <label asp-for="Input.Email" class="form-label fw-semibold"></label>
-                <input asp-for="Input.Email" class="form-control form-control-lg rounded-3" placeholder="Enter your email" />
-                <span asp-validation-for="Input.Email" class="text-danger small"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Input.Password" class="form-label fw-semibold"></label>
-                <input asp-for="Input.Password" type="password" class="form-control form-control-lg rounded-3" placeholder="Enter password" />
-                <span asp-validation-for="Input.Password" class="text-danger small"></span>
-            </div>
-
-            <div class="mb-4">
-                <label asp-for="Input.ConfirmPassword" class="form-label fw-semibold"></label>
-                <input asp-for="Input.ConfirmPassword" type="password" class="form-control form-control-lg rounded-3" placeholder="Confirm password" />
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
-                Register
-            </button>
-
-            <div class="mt-3 text-center">
-                <span class="text-muted small">Already have an account? <a asp-page="/Account/Login" class="text-decoration-none fw-semibold">Login</a></span>
-            </div>
-        </form>
     </div>
 </div>
 
