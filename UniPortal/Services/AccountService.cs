@@ -83,7 +83,7 @@ namespace UniPortal.Services
 
             account.FirstName = firstName;
             account.LastName = lastName;
-            account.PhoneNumber = phone;
+            account.Phone = phone;
             account.Address = address;
 
             _dbContext.Accounts.Update(account);

@@ -4,7 +4,6 @@
     {
         public string Name { get; set; } = string.Empty;       // e.g., "Student", "Department", "All"
         public string? Description { get; set; }
-        public bool IsActive { get; set; } = true;
 
         // Navigation
         public ICollection<Notification> Notifications { get; set; }

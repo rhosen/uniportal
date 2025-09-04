@@ -98,7 +98,7 @@ namespace UniPortal.Pages.Student
                 {
                     FirstName = account.FirstName,
                     LastName = account.LastName,
-                    PhoneNumber = account.PhoneNumber,
+                    PhoneNumber = account.Phone,
                     Address = account.Address
                 };
             }

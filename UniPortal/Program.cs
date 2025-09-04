@@ -13,8 +13,8 @@ builder.Services.AddCustomIdentity(builder.Configuration.GetConnectionString("De
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
-        options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
+        options.LoginPath = "/account/login";
+        options.LogoutPath = "/account/logout";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
     });
 
@@ -31,6 +31,7 @@ using (var scope = app.Services.CreateScope())
     await RoleSeeder.SeedRolesAsync(roleManager);
     await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
     await FacultySeeder.SeedFacultyAsync(scope.ServiceProvider);
+    await NotificationTypeSeeder.SeedNotificationTypesAsync(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline.

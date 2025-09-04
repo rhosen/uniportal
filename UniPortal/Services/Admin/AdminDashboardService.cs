@@ -6,7 +6,6 @@ using UniPortal.Data;
 
 namespace UniPortal.Services.Admin
 {
-    [Authorize(Roles = Roles.Admin)]
     public class AdminDashboardService
     {
         private readonly UserManager<IdentityUser> _userManager;

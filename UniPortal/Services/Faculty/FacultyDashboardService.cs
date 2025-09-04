@@ -76,7 +76,7 @@ namespace UniPortal.Services.Faculty
             var oneMonthAgo = DateTime.Now.AddMonths(-1);
 
             return await _context.Notifications
-                .Where(n => !n.IsDeleted && n.CreatedBy == teacherAccountId && n.CreatedAt >= oneMonthAgo)
+                .Where(n => !n.IsDeleted && n.CreatedById == teacherAccountId && n.CreatedAt >= oneMonthAgo)
                 .CountAsync();
         }
 
