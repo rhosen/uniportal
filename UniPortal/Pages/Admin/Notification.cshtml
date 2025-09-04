@@ -43,7 +43,7 @@
                             }
                         </select>
                     </td>
-                    <td><input asp-for="NewNotification.TargetId" class="form-control" placeholder="Optional target ID" /></td>
+                    <td><input asp-for="NewNotification.ReceiverId" class="form-control" placeholder="Optional target ID" /></td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
@@ -87,7 +87,7 @@
                                 }
                             </select>
                         </td>
-                        <td><input name="EditNotification.TargetId" value="@Model.EditNotification.TargetId" class="form-control" /></td>
+                        <td><input name="EditNotification.ReceiverId" value="@Model.EditNotification.ReceiverId" class="form-control" placeholder="Optional target ID" /></td>
                         <td>@notif.CreatedByAccount?.FirstName @notif.CreatedByAccount?.LastName</td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
@@ -100,7 +100,7 @@
                         <td>@notif.Title</td>
                         <td>@notif.Message</td>
                         <td>@notif.NotificationType?.Name</td>
-                        <td>@notif.TargetId?.ToString() ?? "-"</td>
+                        <td>@notif.ReceiverId</td>
                         <td>@notif.CreatedByAccount?.FirstName @notif.CreatedByAccount?.LastName</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@notif.Id" class="btn btn-sm btn-warning">Edit</button>

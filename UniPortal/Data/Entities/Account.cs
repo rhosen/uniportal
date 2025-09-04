@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-
-namespace UniPortal.Data.Entities
+﻿namespace UniPortal.Data.Entities
 {
-    public class Account: IEntity
+    public class Account : IEntity
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
@@ -13,6 +10,7 @@ namespace UniPortal.Data.Entities
         public string Address { get; set; } = string.Empty;
         public string IdentityUserId { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
-
+        public string IdentityNumber { get; set; } = string.Empty; 
+        public string BatchNumber { get; set; } 
     }
 }

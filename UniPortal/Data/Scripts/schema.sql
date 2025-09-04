@@ -17,21 +17,24 @@ CREATE TABLE dbo.Accounts (
     Phone NVARCHAR(50) NULL,
     Address NVARCHAR(500) NULL,
     IdentityUserId NVARCHAR(450) NOT NULL,
-    CreatedById UNIQUEIDENTIFIER NULL,         -- new column to track creator
+    IdentityNumber NVARCHAR(100) NULL,     -- Roll number / Job ID
+    BatchNumber NVARCHAR(50) NULL,             -- Only for students, nullable for others
+    CreatedById UNIQUEIDENTIFIER NULL,         -- tracks creator
     IsActive BIT NOT NULL DEFAULT 0,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
-    
+
     CONSTRAINT FK_Accounts_IdentityUser FOREIGN KEY (IdentityUserId)
         REFERENCES dbo.AspNetUsers(Id)
         ON DELETE CASCADE,
-    
+
     CONSTRAINT FK_Accounts_CreatedBy FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
 );
 GO
+
 
 -- =========================
 -- Departments Table
@@ -346,6 +349,7 @@ CREATE TABLE dbo.NotificationTypes (
 );
 GO
 
+
 -- =========================
 -- Notifications Table
 -- =========================
@@ -359,7 +363,7 @@ CREATE TABLE dbo.Notifications (
     Message NVARCHAR(MAX) NOT NULL,
     CreatedById UNIQUEIDENTIFIER NOT NULL,
     NotificationTypeId UNIQUEIDENTIFIER NOT NULL,
-    TargetId UNIQUEIDENTIFIER NULL,
+    ReceiverId NVARCHAR(100) NULL,  -- stores Account IdentityNumber
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
@@ -368,9 +372,10 @@ CREATE TABLE dbo.Notifications (
     CONSTRAINT FK_Notifications_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id),
     CONSTRAINT FK_Notifications_NotificationType FOREIGN KEY (NotificationTypeId)
-        REFERENCES dbo.NotificationTypes(Id)
+        REFERENCES dbo.NotificationTypes(Id),
 );
 GO
+
 
 -- =========================
 -- ClassSchedules / Timetable Table

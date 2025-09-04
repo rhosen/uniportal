@@ -7,7 +7,7 @@ namespace UniPortal.Data.Entities
         public string Title { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
         public Guid NotificationTypeId { get; set; }
-        public Guid? TargetId { get; set; }
+        public string ReceiverId { get; set; }
 
         // Navigation
 

@@ -1,17 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Data.Entities;
 using UniPortal.Services;
 
 namespace UniPortal.Pages.Admin
 {
-    public class NotificationsModel : PageModel
+    public class NotificationsModel : BasePageModel
     {
         private readonly NotificationService _notificationService;
+        private readonly AccountService _accountService;
 
-        public NotificationsModel(NotificationService notificationService)
+        public NotificationsModel(NotificationService notificationService, AccountService accountService) : base(accountService)
         {
             _notificationService = notificationService;
+            _accountService = accountService;
         }
 
         public List<Notification> Notifications { get; set; } = new();
@@ -48,13 +49,12 @@ namespace UniPortal.Pages.Admin
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            var userId = new Guid(User.Claims.First(c => c.Type == "sub").Value); // current user
             await _notificationService.CreateAsync(
                 NewNotification.Title,
                 NewNotification.Message,
-                userId,
+                CurrentAccount.Id,
                 NewNotification.NotificationTypeId,
-                NewNotification.TargetId
+                NewNotification.ReceiverId
             );
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
@@ -71,7 +71,8 @@ namespace UniPortal.Pages.Admin
                     Title = notif.Title,
                     Message = notif.Message,
                     NotificationTypeId = notif.NotificationTypeId,
-                    TargetId = notif.TargetId
+                    ReceiverId = notif.ReceiverId,
+                    UpdatedAt = DateTime.Now,
                 };
             }
             await OnGetAsync();
@@ -91,7 +92,7 @@ namespace UniPortal.Pages.Admin
                 EditNotification.Title,
                 EditNotification.Message,
                 EditNotification.NotificationTypeId,
-                EditNotification.TargetId
+                EditNotification.ReceiverId
             );
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }

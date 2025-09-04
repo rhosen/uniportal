@@ -30,7 +30,7 @@ namespace UniPortal.Services
                 .FirstOrDefaultAsync(n => n.Id.ToString() == id);
         }
 
-        public async Task CreateAsync(string title, string message, Guid createdBy, Guid notificationTypeId, Guid? targetId)
+        public async Task CreateAsync(string title, string message, Guid createdBy, Guid notificationTypeId, string receiverId)
         {
             var notification = new Notification
             {
@@ -38,14 +38,14 @@ namespace UniPortal.Services
                 Message = message,
                 CreatedById = createdBy,
                 NotificationTypeId = notificationTypeId,
-                TargetId = targetId
+                ReceiverId = receiverId
             };
 
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Guid id, string title, string message, Guid notificationTypeId, Guid? targetId)
+        public async Task UpdateAsync(Guid id, string title, string message, Guid notificationTypeId, string receiverId)
         {
             var notification = await _context.Notifications.FindAsync(id);
             if (notification != null)
@@ -53,7 +53,7 @@ namespace UniPortal.Services
                 notification.Title = title;
                 notification.Message = message;
                 notification.NotificationTypeId = notificationTypeId;
-                notification.TargetId = targetId;
+                notification.ReceiverId = receiverId;
                 notification.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
             }
@@ -86,6 +86,22 @@ namespace UniPortal.Services
             return await _context.NotificationTypes
                 .Where(nt => !nt.IsDeleted)
                 .OrderBy(nt => nt.Name)
+                .ToListAsync();
+        }
+
+        public async Task<List<Account>> GetAccountsByRoleAsync(string roleName)
+        {
+            return await (from account in _context.Accounts
+                          join userRole in _context.UserRoles on account.IdentityUserId equals userRole.UserId
+                          join role in _context.Roles on userRole.RoleId equals role.Id
+                          where role.Name == roleName && !account.IsDeleted && account.IsActive
+                          select account)
+                         .ToListAsync();
+        }
+        public async Task<List<Department>> GetDepartmentsAsync()
+        {
+            return await _context.Departments
+                .Where(d => !d.IsDeleted)
                 .ToListAsync();
         }
     }
