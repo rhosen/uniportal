@@ -434,10 +434,10 @@ CREATE TABLE dbo.CanceledClasses (
 GO
 
 -- =========================
--- Attendance Table
+-- Attendances Table
 -- =========================
-IF OBJECT_ID('dbo.Attendance', 'U') IS NOT NULL
-    DROP TABLE dbo.Attendance;
+IF OBJECT_ID('dbo.Attendances', 'U') IS NOT NULL
+    DROP TABLE dbo.Attendances;
 GO
 
 CREATE TABLE dbo.Attendances (
@@ -450,11 +450,11 @@ CREATE TABLE dbo.Attendances (
     DeletedAt DATETIME2 NULL,
     RecordedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     
-    CONSTRAINT FK_Attendance_Student FOREIGN KEY (StudentId)
+    CONSTRAINT FK_Attendances_Student FOREIGN KEY (StudentId)
         REFERENCES dbo.Accounts(Id),
-    CONSTRAINT FK_Attendance_ClassSchedule FOREIGN KEY (ClassScheduleId)
+    CONSTRAINT FK_Attendances_ClassSchedule FOREIGN KEY (ClassScheduleId)
         REFERENCES dbo.ClassSchedules(Id),
-    CONSTRAINT FK_Attendance_CreatedById FOREIGN KEY (CreatedById)
+    CONSTRAINT FK_Attendances_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
 );
 GO

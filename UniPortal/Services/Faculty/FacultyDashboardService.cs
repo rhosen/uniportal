@@ -64,7 +64,7 @@ namespace UniPortal.Services.Faculty
         // Pending attendance for this teacher's classes
         public async Task<int> GetPendingAttendanceAsync(Guid teacherAccountId)
         {
-            return await _context.Attendance
+            return await _context.Attendances
                 .Where(a => !a.IsDeleted && _context.ClassSchedules
                     .Any(cs => cs.Id == a.ClassScheduleId && cs.TeacherId == teacherAccountId))
                 .CountAsync();

@@ -28,7 +28,7 @@ namespace UniPortal.Data
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<AssignmentSubmission> AssignmentSubmissions { get; set; }
         public DbSet<Grade> Grades { get; set; }
-        public DbSet<Attendance> Attendance { get; set; }
+        public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Attachment> Attachments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationType> NotificationTypes { get; set; }
