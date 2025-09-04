@@ -30,17 +30,17 @@ namespace UniPortal.Pages.Account
         public LoginVM Input { get; set; } = new();
 
         // This method is used for both GET and POST to validate the user
-        private async Task<(bool IsValid, string ErrorMessage, string DisplayName, string Role)> ValidateUserAsync(string email, string password)
+        private async Task<(bool IsValid, string ErrorMessage, string DisplayName, string Role, string identityId)> ValidateUserAsync(string email, string password)
         {
             // 1️⃣ Validate user credentials via IdentityService
             var user = await _userService.GetUserByEmailAsync(email);
             if (user == null || !await _userService.VerifyPasswordAsync(email, password))
-                return (false, "Invalid login attempt.", string.Empty, string.Empty);
+                return (false, "Invalid login attempt.", string.Empty, string.Empty, string.Empty);
 
             // 2️⃣ Get active account via AccountService
             var account = await _accountService.GetActiveAccountAsync(user.Id);
             if (account == null)
-                return (false, "Your account is not yet activated. Please contact admin.", string.Empty, string.Empty);
+                return (false, "Your account is not yet activated. Please contact admin.", string.Empty, string.Empty, string.Empty);
 
             // 3️⃣ Determine display name
             string displayName = !string.IsNullOrWhiteSpace(account.FirstName + account.LastName)
@@ -51,11 +51,12 @@ namespace UniPortal.Pages.Account
             var roles = await _userService.GetUserRoleAsync(user);
             var role = roles.FirstOrDefault();
 
-            return (true, string.Empty, displayName, role);
+            return (true, string.Empty, displayName, role, user.Id.ToString());
         }
 
         // Helper method to handle redirection based on role
         private IActionResult RedirectToRoleBasedPage(string role)
+
         {
             var redirectUrl = role switch
             {
@@ -90,7 +91,7 @@ namespace UniPortal.Pages.Account
                 return Page();
 
             // 1️⃣ Use the ValidateUserAsync method
-            var (isValid, errorMessage, displayName, role) = await ValidateUserAsync(Input.Email, Input.Password);
+            var (isValid, errorMessage, displayName, role, identityId) = await ValidateUserAsync(Input.Email, Input.Password);
 
             if (!isValid)
                 return InvalidLogin(errorMessage);
@@ -100,8 +101,8 @@ namespace UniPortal.Pages.Account
             {
                 new Claim(ClaimTypes.Name, displayName),
                 new Claim(ClaimTypes.Email, Input.Email),
-                new Claim(ClaimTypes.NameIdentifier, displayName),
-                new Claim(ClaimTypes.Role, role) // role from account
+                new Claim(ClaimTypes.NameIdentifier, identityId),
+                new Claim(ClaimTypes.Role, role),
             };
 
             // 3️⃣ Sign in with cookie

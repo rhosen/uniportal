@@ -1,4 +1,5 @@
 ﻿using UniPortal.Services;
+using UniPortal.Services.Faculty;
 
 namespace UniPortal.Extensions
 {
@@ -11,9 +12,11 @@ namespace UniPortal.Extensions
             services.AddScoped<UserService>();
             services.AddScoped<AccountService>();
             services.AddScoped<Services.Admin.AdminDashboardService>();
-            services.AddScoped<Services.Faculty.FacultyDashboardService>();
-            services.AddScoped<Services.Faculty.TeacherService>();
+            services.AddScoped<FacultyDashboardService>();
+            services.AddScoped<TeacherService>();
             services.AddScoped<DepartmentService>();
+            services.AddScoped<SemesterService>();
+            services.AddScoped<CourseService>();
 
             return services;
         }
