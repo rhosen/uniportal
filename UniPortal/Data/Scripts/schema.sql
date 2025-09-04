@@ -381,13 +381,33 @@ GO
 
 
 -- =========================
+-- CanceledClasses Table
+-- =========================
+
+IF OBJECT_ID('dbo.CanceledClasses', 'U') IS NOT NULL
+    DROP TABLE dbo.CanceledClasses;
+GO
+
+
+CREATE TABLE CanceledClasses (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    ClassScheduleId UNIQUEIDENTIFIER NOT NULL,
+    Date DATE NOT NULL,        -- The specific date the class is canceled
+    Reason NVARCHAR(500) NULL, -- Optional reason for cancellation
+
+    CONSTRAINT FK_CanceledClasses_ClassSchedule FOREIGN KEY (ClassScheduleId)
+        REFERENCES ClassSchedules(Id)
+);
+GO
+
+-- =========================
 -- Attendance Table
 -- =========================
 IF OBJECT_ID('dbo.Attendance', 'U') IS NOT NULL
     DROP TABLE dbo.Attendance;
 GO
 
-CREATE TABLE dbo.Attendance (
+CREATE TABLE dbo.Attendances (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     StudentId UNIQUEIDENTIFIER NOT NULL,
     ClassScheduleId UNIQUEIDENTIFIER NOT NULL,
