@@ -9,7 +9,7 @@
 
     <!-- Active Students -->
     <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3">
+        <div class="card text-center shadow-sm p-3" style="cursor: pointer;" onclick="location.href='@Url.Page("/admin/students")'">
             <div class="card-body">
                 <h6 class="card-title text-muted">Active Students</h6>
                 <h3 class="fw-bold">@Model.ActiveStudents</h3>
@@ -28,7 +28,7 @@
     </div>
 
     <!-- Teachers -->
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-3 col-sm-6" style="cursor: pointer;" onclick="location.href='@Url.Page("/admin/teachers")'">
         <div class="card text-center shadow-sm p-3">
             <div class="card-body">
                 <h6 class="card-title text-muted">Total Teachers</h6>

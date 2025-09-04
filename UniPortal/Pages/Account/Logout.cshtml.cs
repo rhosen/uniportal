@@ -16,7 +16,7 @@ namespace UniPortal.Pages.Account
             HttpContext.Response.Cookies.Delete(".AspNetCore.Identity.Application");
 
             // Redirect to login or home page
-            return RedirectToPage("/Account/Login");
+            return RedirectToPage("/account/login");
         }
     }
 }

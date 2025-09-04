@@ -33,22 +33,13 @@
                     <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Grades">Grades</a></li>
                     @* <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Attendance">Attendance</a></li> *@
                     <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Notifications">Notifications</a></li>
-
-                    @* Coordinator Only Links *@
-                    @if (User.IsInRole("Coordinator"))
-                    {
-                        <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Enrollments">Enrollments</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-page="/Faculty/ClassSchedule">Class Schedule</a></li>
-                    }
+                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Enrollments">Enrollments</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/ClassSchedule">Class Schedule</a></li>
                 </ul>
 
                 <div class="d-flex align-items-center ms-auto">
                     <span class="me-3">Welcome, <strong>@fullName</strong></span>
                     <span class="badge bg-primary me-2">Faculty</span>
-                    @if (User.IsInRole("Coordinator"))
-                    {
-                        <span class="badge bg-info me-3">Coordinator</span>
-                    }
                     <form method="post" asp-page="/Account/Logout">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                     </form>

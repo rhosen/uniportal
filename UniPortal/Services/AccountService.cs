@@ -104,6 +104,19 @@ namespace UniPortal.Services
                 .ToListAsync();
         }
 
+        public async Task<List<Account>> GetActiveStudentsAsync()
+        {
+            // Get the user IDs of students (in memory)
+            var studentIds = (await _userManager.GetUsersInRoleAsync(Roles.Student))
+                             .Select(u => u.Id)
+                             .ToList();
+
+            // Query the Accounts filtering with the studentIds list
+            return await _dbContext.Accounts
+                .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsDeleted && a.IsActive)
+                .ToListAsync();
+        }
+
         public async Task ActivateStudentAsync(Guid studentId)
         {
             var student = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == studentId);

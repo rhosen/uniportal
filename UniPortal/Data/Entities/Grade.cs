@@ -7,5 +7,11 @@
         public Guid SemesterId { get; set; }
         public string? GradeValue { get; set; }
         public decimal? Marks { get; set; }
+
+
+        // Navigation
+        public Account Student { get; set; }
+        public Course Course { get; set; }
+        public Semester Semester { get; set; }
     }
 }

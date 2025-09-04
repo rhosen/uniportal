@@ -42,9 +42,8 @@
                         @if (User.Identity.IsAuthenticated)
                         {
                             <span class="text-muted">Welcome, <strong>@fullName</strong></span>
-                            <span class="badge bg-primary rounded-pill">Student</span>
                             <form method="post" asp-page="/Account/Logout">
-                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Logout</button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                             </form>
                         }
                         else

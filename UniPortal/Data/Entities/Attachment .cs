@@ -8,6 +8,9 @@
         public Guid UploadedById { get; set; }
         public string? RelatedEntity { get; set; } // "ClassNote", "Assignment", etc.
         public Guid? RelatedEntityId { get; set; }
+
+        // Navigation
+        public Account UploadedByAccount { get; set; }
     }
 
 }

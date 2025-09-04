@@ -9,5 +9,13 @@
         public int DayOfWeek { get; set; } // 1 = Monday, etc.
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
+
+
+        // Navigation
+        public Course Course { get; set; }
+        public Account Teacher { get; set; }
+        public Classroom Classroom { get; set; }
+        public Semester Semester { get; set; }
+        public ICollection<Attendance> Attendances { get; set; }
     }
 }

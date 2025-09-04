@@ -10,6 +10,7 @@
             services.AddScoped<Services.AccountService>();
             services.AddScoped<Services.Admin.AdminDashboardService>();
             services.AddScoped<Services.Faculty.FacultyDashboardService>();
+            services.AddScoped<Services.Faculty.TeacherService>();
 
             return services;
         }

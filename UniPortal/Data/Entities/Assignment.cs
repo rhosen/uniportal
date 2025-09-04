@@ -7,5 +7,9 @@
         public Guid CourseId { get; set; }
         public DateTime AssignedDate { get; set; } = DateTime.Now;
         public DateTime DueDate { get; set; }
+
+        // Navigation
+        public Course Course { get; set; }
+        public ICollection<AssignmentSubmission> Submissions { get; set; }
     }
 }
