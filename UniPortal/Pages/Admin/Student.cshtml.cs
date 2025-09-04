@@ -4,12 +4,12 @@ using UniPortal.Services;
 
 namespace UniPortal.Pages.Admin
 {
-    public class StudentsModel : PageModel
+    public class StudentModel : PageModel
     {
 
         private readonly AccountService _accountService;
 
-        public StudentsModel(AccountService accountService)
+        public StudentModel(AccountService accountService)
         {
             _accountService = accountService;
         }
