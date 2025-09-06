@@ -25,7 +25,6 @@
                     <th>First Name</th>
                     <th>Last Name</th>
                     <th>Email</th>
-                    <th>ID</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -35,7 +34,6 @@
                     <td><input asp-for="NewTeacher.FirstName" class="form-control" required /></td>
                     <td><input asp-for="NewTeacher.LastName" class="form-control" required /></td>
                     <td><input asp-for="NewTeacher.Email" class="form-control" required /></td>
-                    <td><input asp-for="NewTeacher.IdentityNumber" class="form-control" required /></td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
@@ -69,7 +67,6 @@
                         <td><input name="EditTeacher.FirstName" value="@Model.EditTeacher.FirstName" class="form-control" /></td>
                         <td><input name="EditTeacher.LastName" value="@Model.EditTeacher.LastName" class="form-control" /></td>
                         <td><input name="EditTeacher.Email" value="@Model.EditTeacher.Email" class="form-control" /></td>
-                        <td><input name="EditTeacher.ID" value="@Model.EditTeacher.IdentityNumber" class="form-control" /></td>
                         <td>@(teacher.IsActive ? "Active" : "Inactive")</td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
@@ -82,7 +79,6 @@
                         <td>@teacher.FirstName</td>
                         <td>@teacher.LastName</td>
                         <td>@teacher.Email</td>
-                        <td>@teacher.IdentityNumber</td>
                         <td>@(teacher.IsActive ? "Active" : "Inactive")</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@teacher.Id" class="btn btn-sm btn-warning">Edit</button>

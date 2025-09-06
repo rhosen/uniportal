@@ -47,7 +47,7 @@
                             <option value="">-- Select Department --</option>
                             @foreach (var dept in Model.Departments)
                             {
-                                <option value="@dept.Id">@dept.Name</option>
+                                <option value="@dept.Id">@dept.Code</option>
                             }
                         </select>
                     </td>
@@ -118,7 +118,7 @@
                                 @foreach (var dept in Model.Departments)
                                 {
                                     <option value="@dept.Id" selected="@(dept.Id == Model.EditCourse.DepartmentId ? "selected" : null)">
-                                        @dept.Name
+                                        @dept.Code
                                     </option>
                                 }
                             </select>
@@ -156,7 +156,7 @@
                         <!-- READ MODE -->
                         <td>@course.Subject?.Name</td>
                         <td>@course.Subject?.Code</td>
-                        <td>@course.Department?.Name</td>
+                        <td>@course.Department?.Code</td>
                         <td>@course.Teacher?.FirstName @course.Teacher?.LastName</td>
                         <td>@course.Semester?.Name</td>
                         <td>@course.Credits</td>

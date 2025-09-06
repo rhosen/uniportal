@@ -37,7 +37,7 @@
                             @foreach (var course in Model.Courses)
                             {
                                 <option value="@course.Id">
-                                    @course.Department.Name · @course.Subject.Name (@course.Subject.Code) · @course.Semester.Name · @course.Teacher.FirstName @course.Teacher.LastName
+                                    @course.Department.Code · @course.Subject.Name (@course.Subject.Code) · @course.Semester.Name · @course.Teacher.FirstName @course.Teacher.LastName
                                 </option>
                             }
                         </select>
@@ -98,7 +98,7 @@
                                 @foreach (var course in Model.Courses)
                                 {
                                     <option value="@course.Id" selected="@(course.Id == Model.EditSchedule.CourseId ? "selected" : null)">
-                                        @course.Department.Name · @course.Subject.Name (@course.Subject.Code) · @course.Semester.Name · @course.Teacher.FirstName @course.Teacher.LastName
+                                        @course.Department.Code · @course.Subject.Name (@course.Subject.Code) · @course.Semester.Name · @course.Teacher.FirstName @course.Teacher.LastName
                                     </option>
                                 }
                             </select>
@@ -135,7 +135,7 @@
                     else
                     {
                         <!-- Normal Row -->
-                        <td>@sched.Course.Department.Name · @sched.Course.Subject.Name (@sched.Course.Subject.Code) · @sched.Course.Semester.Name · @sched.Course.Teacher.FirstName @sched.Course.Teacher.LastName</td>
+                        <td>@sched.Course.Department.Code · @sched.Course.Subject.Name (@sched.Course.Subject.Code) · @sched.Course.Semester.Name · @sched.Course.Teacher.FirstName @sched.Course.Teacher.LastName</td>
                         <td>@sched.Classroom.RoomName</td>
                         <td>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.DayNames[sched.DayOfWeek - 1]</td>
                         <td>@sched.StartTime - @sched.EndTime</td>

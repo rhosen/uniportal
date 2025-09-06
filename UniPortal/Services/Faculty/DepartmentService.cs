@@ -2,7 +2,7 @@
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 
-namespace UniPortal.Services
+namespace UniPortal.Services.Faculty
 {
     public class DepartmentService
     {
@@ -17,7 +17,7 @@ namespace UniPortal.Services
         {
             return await _context.Departments
                 .Include(d => d.Head)
-                .OrderBy(d => d.Name)
+                .OrderBy(d => d.Code)
                 .ToListAsync();
         }
 
@@ -32,8 +32,8 @@ namespace UniPortal.Services
         {
             var dept = new Department
             {
-                Name = name,
-                Description = description,
+                Code = name,
+                Name = description,
                 HeadId = headId
             };
             _context.Departments.Add(dept);
@@ -45,8 +45,8 @@ namespace UniPortal.Services
             var dept = await _context.Departments.FindAsync(id);
             if (dept != null)
             {
-                dept.Name = name;
-                dept.Description = description;
+                dept.Code = name;
+                dept.Name = description;
                 dept.HeadId = headId;
                 dept.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();

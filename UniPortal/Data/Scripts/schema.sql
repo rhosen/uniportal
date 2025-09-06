@@ -17,10 +17,7 @@ CREATE TABLE dbo.Accounts
     Email NVARCHAR(256) NOT NULL,
     Phone NVARCHAR(50) NULL,
     Address NVARCHAR(500) NULL,
-    IdentityUserId NVARCHAR(450) NOT NULL,
-    IdentityNumber NVARCHAR(100) NULL,       -- Roll number / Job ID
-    BatchNumber NVARCHAR(50) NULL,           -- Only for students, nullable for others
-    DepartmentId UNIQUEIDENTIFIER NULL,      -- Nullable FK to Departments
+    IdentityUserId NVARCHAR(450) NOT NULL,  -- Link to AspNetUsers
     CreatedById UNIQUEIDENTIFIER NULL,       -- tracks creator
     IsActive BIT NOT NULL DEFAULT 0,
     IsDeleted BIT NOT NULL DEFAULT 0,
@@ -33,13 +30,9 @@ CREATE TABLE dbo.Accounts
         ON DELETE CASCADE,
 
     CONSTRAINT FK_Accounts_CreatedBy FOREIGN KEY (CreatedById)
-        REFERENCES dbo.Accounts(Id),
-
-    CONSTRAINT FK_Accounts_Departments FOREIGN KEY (DepartmentId)
-        REFERENCES dbo.Departments(Id)
+        REFERENCES dbo.Accounts(Id)
 );
 GO
-
 
 -- =========================
 -- Departments Table
@@ -50,8 +43,8 @@ GO
 
 CREATE TABLE dbo.Departments (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    Name NVARCHAR(200) NOT NULL,
-    Description NVARCHAR(500) NULL,
+    Code NVARCHAR(200) NOT NULL,
+    Name NVARCHAR(500) NULL,
     HeadId UNIQUEIDENTIFIER NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
@@ -63,6 +56,40 @@ CREATE TABLE dbo.Departments (
         REFERENCES dbo.Accounts(Id),
     CONSTRAINT FK_Departments_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
+);
+GO
+
+-- =========================
+-- Students Table
+-- =========================
+IF OBJECT_ID('dbo.Students', 'U') IS NOT NULL
+    DROP TABLE dbo.Students;
+GO
+CREATE TABLE dbo.Students
+(
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    AccountId UNIQUEIDENTIFIER NOT NULL,         -- FK to Accounts
+    StudentId NVARCHAR(100) NULL,                -- Assigned later by admin
+    BatchNumber NVARCHAR(50) NULL,              -- Optional at registration
+    Section NVARCHAR(50) NULL,                  -- Optional at registration
+    DepartmentId UNIQUEIDENTIFIER NULL,         -- Nullable until assigned by admin
+    IsDeleted BIT NOT NULL DEFAULT 0,           -- From IEntity
+    DeletedAt DATETIME2 NULL,                   -- From IEntity
+    CreatedById UNIQUEIDENTIFIER NULL,          -- From IEntity
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),  -- From IEntity
+    UpdatedAt DATETIME2 NULL,                   -- From IEntity
+   
+    CONSTRAINT FK_Students_Account FOREIGN KEY (AccountId)
+        REFERENCES dbo.Accounts(Id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_Students_Department FOREIGN KEY (DepartmentId)
+        REFERENCES dbo.Departments(Id),
+
+    CONSTRAINT FK_Students_CreatedBy FOREIGN KEY (CreatedById)
+        REFERENCES dbo.Accounts(Id),
+
+    CONSTRAINT UQ_Students_StudentId UNIQUE (StudentId)
 );
 GO
 

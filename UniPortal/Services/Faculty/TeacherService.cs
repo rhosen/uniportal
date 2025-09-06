@@ -80,7 +80,7 @@ namespace UniPortal.Services.Faculty
                 Email = email,
                 IsActive = true,
                 IsDeleted = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.Accounts.Add(account);
@@ -110,7 +110,7 @@ namespace UniPortal.Services.Faculty
             account.FirstName = firstName;
             account.LastName = lastName;
             account.Email = email;
-            account.UpdatedAt = DateTime.UtcNow;
+            account.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
             return true;
@@ -126,7 +126,7 @@ namespace UniPortal.Services.Faculty
 
             account.IsActive = false;
             account.IsDeleted = true;
-            account.DeletedAt = DateTime.UtcNow;
+            account.DeletedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
             return true;
@@ -141,7 +141,7 @@ namespace UniPortal.Services.Faculty
             if (account == null) return false;
 
             account.IsActive = true;
-            account.UpdatedAt = DateTime.UtcNow;
+            account.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
             return true;

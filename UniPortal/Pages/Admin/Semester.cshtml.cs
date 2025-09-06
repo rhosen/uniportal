@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using UniPortal.Services;
+using UniPortal.Services.Faculty;
 
 namespace UniPortal.Pages.Admin
 {

@@ -1,4 +1,6 @@
-﻿namespace UniPortal.Data.Entities
+﻿using UniPortal.Data.Entities.UniPortal.Data.Entities;
+
+namespace UniPortal.Data.Entities
 {
     public class Subject: IEntity
     {

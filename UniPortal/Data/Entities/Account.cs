@@ -8,13 +8,11 @@
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public string IdentityUserId { get; set; } = string.Empty;
+        public string IdentityUserId { get; set; } = string.Empty; // Link to AspNetUsers
         public bool IsActive { get; set; } = true;
-        public string IdentityNumber { get; set; } = string.Empty; 
-        public string BatchNumber { get; set; }
-        public int? DepartmentId { get; set; }
 
-        // Navigation Property
-        public Department? Department { get; set; }
+        // Navigation
+        public Student? Student { get; set; }   // Only if this account is a student
+
     }
 }

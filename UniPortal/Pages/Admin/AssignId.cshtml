@@ -1,12 +1,14 @@
 ﻿@page
-@model UniPortal.Pages.Admin.ActivateStudentModel
+@model UniPortal.Pages.Admin.AssignIdModel
+@{
+}
 @{
     ViewData["Title"] = "Activate Students";
     Layout = "_AdminLayout";
 }
 
 <div class="container my-4">
-    <h2 class="mb-4">🧑‍🎓 Pending Student Activations</h2>
+    <h2 class="mb-4">🆔 Assign Student ID</h2>
 
     <!-- Search Box -->
     <form method="get" class="mb-3">
@@ -16,9 +18,9 @@
         </div>
     </form>
 
-    @if (!Model.InactiveStudents.Any())
+    @if (!Model.StudentsWithoutId.Any())
     {
-        <p class="text-muted">No pending students for activation.</p>
+        <p class="text-muted">No students found for assignin ID.</p>
     }
     else
     {
@@ -32,7 +34,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var student in Model.InactiveStudents)
+                @foreach (var student in Model.StudentsWithoutId)
                 {
                     <tr>
                         <td>@student.FirstName @student.LastName</td>
@@ -40,10 +42,9 @@
                         <td>@student.CreatedAt.ToString("yyyy-MM-dd")</td>
                         <td>
                             <div class="d-flex gap-2">
-                                <!-- Activate Account -->
-                                <form method="post" asp-page-handler="Activate">
+                                <form method="post" asp-page-handler="AssignStudentId">
                                     <input type="hidden" name="AccountId" value="@student.Id" />
-                                    <button type="submit" class="btn btn-sm btn-success">✅ Activate</button>
+                                    <button type="submit" class="btn btn-sm btn-primary">🆔 Assign ID</button>
                                 </form>
                             </div>
                         </td>

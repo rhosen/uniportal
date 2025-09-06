@@ -1,21 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using UniPortal.Data.Entities;
-using UniPortal.Services;
 using UniPortal.Services.Student;
 
 namespace UniPortal.Pages.Admin
 {
-    public class ActivateStudentModel : PageModel
+    public class AssignIdModel : PageModel
     {
-        private readonly AccountService _accountService;
+        private readonly StudentService _studentService;
 
-        public ActivateStudentModel(AccountService accountService)
+        public AssignIdModel(StudentService studentService)
         {
-            _accountService = accountService;
+            _studentService = studentService;
         }
 
-        public List<Data.Entities.Account> InactiveStudents { get; set; } = new();
+        public List<Data.Entities.Account> StudentsWithoutId { get; set; } = new();
 
         // Search & Pagination
         [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
@@ -27,7 +25,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task OnGetAsync()
         {
-            var allStudents = await _accountService.GetInactiveStudentsAsync();
+            var allStudents = await _studentService.GetStudentsWithoutStudentIdAsync();
 
             if (!string.IsNullOrEmpty(SearchTerm))
             {
@@ -39,17 +37,19 @@ namespace UniPortal.Pages.Admin
             }
 
             TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
-            InactiveStudents = allStudents
+            StudentsWithoutId = allStudents
                 .Skip((CurrentPage - 1) * PageSize)
                 .Take(PageSize)
                 .ToList();
         }
 
-        // Activate account
-        public async Task<IActionResult> OnPostActivateAsync()
+        // Assign unique Student ID
+        public async Task<IActionResult> OnPostAssignStudentIdAsync()
         {
             if (AccountId != Guid.Empty)
-                await _accountService.ActivateAsync(AccountId);
+            {
+                await _studentService.AssignStudentIdAsync(AccountId);
+            }
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }

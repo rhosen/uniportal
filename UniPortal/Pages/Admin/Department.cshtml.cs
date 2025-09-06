@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using UniPortal.Services;
 using UniPortal.Services.Faculty;
 
 namespace UniPortal.Pages.Admin
@@ -37,7 +36,7 @@ namespace UniPortal.Pages.Admin
             if (!string.IsNullOrEmpty(SearchTerm))
             {
                 allDepartments = allDepartments
-                    .Where(d => d.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                    .Where(d => d.Code.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
@@ -50,7 +49,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            await _departmentService.CreateAsync(NewDepartment.Name, NewDepartment.Description, NewDepartment.HeadId);
+            await _departmentService.CreateAsync(NewDepartment.Code, NewDepartment.Name, NewDepartment.HeadId);
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
@@ -63,8 +62,8 @@ namespace UniPortal.Pages.Admin
                 EditDepartment = new Data.Entities.Department
                 {
                     Id = dept.Id,
+                    Code = dept.Code,
                     Name = dept.Name,
-                    Description = dept.Description,
                     HeadId = dept.HeadId
                 };
             }
@@ -80,7 +79,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task<IActionResult> OnPostSaveEditAsync(string id)
         {
-            await _departmentService.UpdateAsync(Guid.Parse(id), EditDepartment.Name, EditDepartment.Description, EditDepartment.HeadId);
+            await _departmentService.UpdateAsync(Guid.Parse(id), EditDepartment.Code, EditDepartment.Name, EditDepartment.HeadId);
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

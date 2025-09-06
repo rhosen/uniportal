@@ -43,7 +43,7 @@ namespace UniPortal.Services.Faculty
                 TeacherId = teacherId,
                 SemesterId = semesterId,
                 Credits = credits,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.Courses.Add(course);
@@ -67,7 +67,7 @@ namespace UniPortal.Services.Faculty
             course.TeacherId = teacherId;
             course.SemesterId = semesterId;
             course.Credits = credits;
-            course.UpdatedAt = DateTime.UtcNow;
+            course.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -81,7 +81,7 @@ namespace UniPortal.Services.Faculty
             if (course == null) return;
 
             course.IsDeleted = true;
-            course.DeletedAt = DateTime.UtcNow;
+            course.DeletedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
             await LogAsync(deletedById, ActionType.Delete, AppConstant.Course, course.Id);

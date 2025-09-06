@@ -14,7 +14,7 @@
             public string? Entity { get; set; }
             public Guid? EntityId { get; set; }
             public string? Details { get; set; }         // Optional JSON payload
-            public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+            public DateTime Timestamp { get; set; } = DateTime.Now;
         }
     }
 

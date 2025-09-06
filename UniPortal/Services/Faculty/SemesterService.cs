@@ -2,7 +2,7 @@
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 
-namespace UniPortal.Services
+namespace UniPortal.Services.Faculty
 {
     public class SemesterService
     {

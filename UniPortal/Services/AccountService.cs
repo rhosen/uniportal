@@ -116,17 +116,5 @@ namespace UniPortal.Services
                 .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsDeleted && a.IsActive)
                 .ToListAsync();
         }
-
-        public async Task ActivateStudentAsync(Guid studentId)
-        {
-            var student = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == studentId);
-            if (student != null)
-            {
-                student.IsActive = true;
-                student.UpdatedAt = DateTime.Now;
-                await _dbContext.SaveChangesAsync();
-            }
-
-        }
     }
 }
