@@ -10,15 +10,15 @@ namespace UniPortal.Pages.Account
     {
         private readonly UserService _userService;
 
-        public RegisterModel(UserService identityService)
+        public RegisterModel(UserService userService)
         {
-            _userService = identityService;
+            _userService = userService;
         }
 
         [BindProperty]
         public RegistrationVM Input { get; set; }
 
-        public string ErrorMessage { get; set; }
+        public bool RegistrationSucceeded { get; set; }  // <-- Make sure this is here
 
         public async Task<IActionResult> OnPostAsync()
         {
@@ -29,8 +29,8 @@ namespace UniPortal.Pages.Account
 
             if (result.Succeeded)
             {
-                // Registration succeeded, redirect to login or home
-                return RedirectToPage("/account/login");
+                RegistrationSucceeded = true; // <-- Set this to show message
+                return Page();
             }
 
             foreach (var error in result.Errors)

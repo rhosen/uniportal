@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using UniPortal.Data.Entities;
+using UniPortal.Data.Entities.UniPortal.Data.Entities;
 
 namespace UniPortal.Data
 {
@@ -18,6 +19,7 @@ namespace UniPortal.Data
         // Academic entities
         public DbSet<Department> Departments { get; set; }
         public DbSet<Semester> Semesters { get; set; }
+        public DbSet<Subject> Subjects { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Classroom> Classrooms { get; set; }
         public DbSet<ClassNote> ClassNotes { get; set; }

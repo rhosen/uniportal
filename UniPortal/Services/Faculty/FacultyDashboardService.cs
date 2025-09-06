@@ -66,7 +66,8 @@ namespace UniPortal.Services.Faculty
         {
             return await _context.Attendances
                 .Where(a => !a.IsDeleted && _context.ClassSchedules
-                    .Any(cs => cs.Id == a.ClassScheduleId && cs.TeacherId == teacherAccountId))
+                    .Any(cs => cs.Id == a.ClassScheduleId
+                               && cs.Course.TeacherId == teacherAccountId))
                 .CountAsync();
         }
 

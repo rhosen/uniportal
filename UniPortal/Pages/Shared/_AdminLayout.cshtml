@@ -12,13 +12,17 @@
     <title>@ViewData["Title"] - UniPortal</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="~/lib/bootstrap/dist/icon/bootstrap-icons.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
 
     <!-- Admin Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" asp-page="/Admin/Dashboard">UniPortal</a>
+            <a class="navbar-brand fw-bold" asp-page="/Admin/Dashboard">
+                <img src="~/favicon.ico" alt="UniPortal Logo" width="30" height="30" class="me-2" />
+                UniPortal
+            </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
                     aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,9 +32,10 @@
             <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" asp-page="/admin/department">Departments</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/admin/semester">Semesters</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/admin/subject">Subjects</a></li>
                     <li class="nav-item"><a class="nav-link" asp-page="/admin/classroom">Classrooms</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/admin/notification">Notifications</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/admin/semester">Semesters</a></li>
+                    @* <li class="nav-item"><a class="nav-link" asp-page="/admin/notification">Notifications</a></li> *@
                     @* <li class="nav-item"><a class="nav-link" asp-page="/admin/logs">Logs</a></li> *@
                 </ul>
 

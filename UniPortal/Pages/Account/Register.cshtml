@@ -23,7 +23,7 @@
                 <div class="w-100">
                     <div class="text-center mb-4">
                         <h3 class="fw-bold text-primary">UniPortal</h3>
-                        <p class="text-muted small">Secure Registration</p>
+                        <p class="text-muted small">Student Registration</p>
                     </div>
 
                     @if (!ViewData.ModelState.IsValid)
@@ -37,34 +37,49 @@
                         </div>
                     }
 
-                    <form method="post">
-                        <div class="mb-3">
-                            <label asp-for="Input.Email" class="form-label fw-semibold"></label>
-                            <input asp-for="Input.Email" class="form-control form-control-sm rounded-3" placeholder="Enter your email" />
-                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                    @* Show activation message with OK button after successful registration *@
+                    @if (Model.RegistrationSucceeded)
+                    {
+                        <div id="activationMessage" class="alert alert-info text-center">
+                            <p><strong>Thank you for registering!</strong></p>
+                            <p>Your account has been created but is pending activation.</p>
+                            <p>Once an administrator approves your account, you’ll be able to log in.</p>
+                            <button id="okButton" class="btn btn-primary btn-sm mt-3">OK</button>
                         </div>
+                    }
 
-                        <div class="mb-3">
-                            <label asp-for="Input.Password" class="form-label fw-semibold"></label>
-                            <input asp-for="Input.Password" type="password" class="form-control form-control-sm rounded-3" placeholder="Enter password" />
-                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
-                        </div>
+                    @* Only render the form if registration NOT succeeded *@
+                    @if (!Model.RegistrationSucceeded)
+                    {
+                        <form method="post">
+                            <div class="mb-3">
+                                <label asp-for="Input.Email" class="form-label fw-semibold"></label>
+                                <input asp-for="Input.Email" class="form-control form-control-sm rounded-3" placeholder="Enter your email" />
+                                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                            </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Input.ConfirmPassword" class="form-label fw-semibold"></label>
-                            <input asp-for="Input.ConfirmPassword" type="password" class="form-control form-control-sm rounded-3" placeholder="Confirm password" />
-                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
-                        </div>
+                            <div class="mb-3">
+                                <label asp-for="Input.Password" class="form-label fw-semibold"></label>
+                                <input asp-for="Input.Password" type="password" class="form-control form-control-sm rounded-3" placeholder="Enter password" />
+                                <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                            </div>
 
-                        <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm">
-                            Register
-                        </button>
+                            <div class="mb-3">
+                                <label asp-for="Input.ConfirmPassword" class="form-label fw-semibold"></label>
+                                <input asp-for="Input.ConfirmPassword" type="password" class="form-control form-control-sm rounded-3" placeholder="Confirm password" />
+                                <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                            </div>
 
-                        <div class="text-center mt-3 small">
-                            Already have an account?
-                            <a asp-page="/Account/Login" class="text-decoration-none fw-semibold">Login</a>
-                        </div>
-                    </form>
+                            <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm">
+                                Register
+                            </button>
+
+                            <div class="text-center mt-3 small">
+                                Already have an account?
+                                <a asp-page="/Account/Login" class="text-decoration-none fw-semibold">Login</a>
+                            </div>
+                        </form>
+                    }
                 </div>
             </div>
 
@@ -74,4 +89,14 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var okBtn = document.getElementById("okButton");
+            if (okBtn) {
+                okBtn.addEventListener("click", function () {
+                    window.location.href = "/account/login";
+                });
+            }
+        });
+    </script>
 }

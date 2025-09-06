@@ -1,11 +1,8 @@
-﻿using System.Diagnostics;
-
-namespace UniPortal.Data.Entities
+﻿namespace UniPortal.Data.Entities
 {
     public class Course : IEntity
     {
-        public string Name { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty;
+        public Guid SubjectId { get; set; } 
         public Guid DepartmentId { get; set; }
         public Guid TeacherId { get; set; }
         public Guid SemesterId { get; set; }
@@ -13,6 +10,7 @@ namespace UniPortal.Data.Entities
 
 
         // Navigation
+        public Subject Subject { get; set; }
         public Department Department { get; set; }
         public Account Teacher { get; set; }
         public Semester Semester { get; set; }

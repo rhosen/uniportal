@@ -5,46 +5,182 @@
     Layout = "_AdminLayout";
 }
 
-<div class="row g-4">
+<style>
+    .metric-card {
+        padding: 0.75rem 1rem;
+        background: linear-gradient(to right, #f8f9fa, #ffffff);
+        border-radius: 0.75rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        color: #212529;
+        min-height: 90px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+        }
+
+    .metric-icon {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Colors for icons by action */
+    .icon-active {
+        fill: #28a745; /* Green */
+        stroke: #28a745;
+    }
+
+    .icon-inactive {
+        fill: #dc3545; /* Red */
+        stroke: #dc3545;
+    }
+
+    .icon-teacher {
+        fill: #007bff; /* Blue */
+        stroke: #007bff;
+    }
+
+    .icon-course {
+        fill: #6f42c1; /* Purple */
+        stroke: #6f42c1;
+    }
+
+    .icon-schedule {
+        fill: #fd7e14; /* Orange */
+        stroke: #fd7e14;
+    }
+
+    .icon-notify {
+        fill: #ffc107; /* Gold/Yellow */
+        stroke: #ffc107;
+    }
+
+    .card-title {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.15rem;
+        text-align: center;
+    }
+
+    .card-value {
+        font-size: 1.25rem;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .metric-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.15rem;
+    }
+</style>
+
+<div class="row g-3">
 
     <!-- Active Students -->
     <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3" style="cursor: pointer;" onclick="location.href='@Url.Page("/admin/student")'">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Active Students</h6>
-                <h3 class="fw-bold">@Model.ActiveStudents</h3>
+        <div class="metric-card" onclick="location.href='@Url.Page("/admin/student")'">
+            <div class="metric-content">
+                <!-- Graduation Cap SVG -->
+                <svg class="metric-icon icon-active" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <path d="M32 4L4 16l28 12 28-12L32 4zM32 24L6 12v6l26 12 26-12v-6L32 24zM18 34v10h4V34h-4zm24 0v10h4V34h-4zm-16 3h12v3H26v-3z" />
+                </svg>
+                <div class="card-title">Active Students</div>
+                <div class="card-value">@Model.ActiveStudents</div>
             </div>
         </div>
     </div>
 
     <!-- Inactive Students -->
     <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3 border-danger" style="cursor: pointer;" onclick="location.href='@Url.Page("/admin/activatestudent")'">
-            <div class="card-body">
-                <h6 class="card-title text-muted text-danger">Inactive Students</h6>
-                <h3 class="fw-bold text-danger">@Model.InactiveStudents</h3>
+        <div class="metric-card" onclick="location.href='@Url.Page("/admin/activatestudent")'">
+            <div class="metric-content">
+                <!-- User with Clock SVG -->
+                <svg class="metric-icon icon-inactive" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <circle cx="32" cy="15" r="10" />
+                    <path d="M44 38v-3a10 10 0 0 0-20 0v3h20z" />
+                    <circle cx="48" cy="36" r="10" fill="none" stroke="#dc3545" stroke-width="2" />
+                    <path d="M48 30v5h5" stroke="#dc3545" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <div class="card-title">Inactive Students</div>
+                <div class="card-value">@Model.InactiveStudents</div>
             </div>
         </div>
     </div>
 
-    <!-- Teachers -->
-    <div class="col-md-3 col-sm-6" style="cursor: pointer;" onclick="location.href='@Url.Page("/admin/teacher")'">
-        <div class="card text-center shadow-sm p-3">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Total Teachers</h6>
-                <h3 class="fw-bold">@Model.TotalTeachers</h3>
-            </div>
-        </div>
-    </div>
-
-    <!-- Courses -->
+    <!-- Total Teachers -->
     <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3" style="cursor: pointer;" onclick="location.href='@Url.Page("/admin/course")'">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Total Courses</h6>
-                <h3 class="fw-bold">@Model.TotalCourses</h3>
+        <div class="metric-card" onclick="location.href='@Url.Page("/admin/teacher")'">
+            <div class="metric-content">
+                <!-- Teacher SVG -->
+                <svg class="metric-icon icon-teacher" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <circle cx="32" cy="12" r="10" />
+                    <rect x="14" y="26" width="36" height="16" rx="2" ry="2" />
+                    <line x1="14" y1="42" x2="50" y2="42" stroke="#007bff" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <div class="card-title">Total Teachers</div>
+                <div class="card-value">@Model.TotalTeachers</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Courses -->
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card" onclick="location.href='@Url.Page("/admin/course")'">
+            <div class="metric-content">
+                <!-- Open Book SVG -->
+                <svg class="metric-icon icon-course" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <path d="M10 40V10l22 10 22-10v30L32 32 10 40z" />
+                </svg>
+                <div class="card-title">Total Courses</div>
+                <div class="card-value">@Model.TotalCourses</div>
             </div>
         </div>
     </div>
 </div>
 
+<div class="row g-3 mt-2">
+
+    <!-- Schedule Class -->
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card" onclick="location.href='@Url.Page("/admin/classschedule")'">
+            <div class="metric-content">
+                <!-- Calendar SVG -->
+                <svg class="metric-icon icon-schedule" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="none" stroke="#fd7e14" stroke-width="2" />
+                    <line x1="12" y1="22" x2="52" y2="22" stroke="#fd7e14" stroke-width="2" />
+                    <line x1="20" y1="6" x2="20" y2="12" stroke="#fd7e14" stroke-width="2" stroke-linecap="round" />
+                    <line x1="44" y1="6" x2="44" y2="12" stroke="#fd7e14" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <div class="card-title">Schedule </div>
+                <div class="card-title">Class </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card" onclick="location.href='@Url.Page("/admin/notification")'">
+            <div class="metric-content">
+                <!-- Megaphone SVG -->
+                <svg class="metric-icon icon-notify" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <path d="M14 18v16l30-8-30-8z" />
+                    <rect x="10" y="16" width="4" height="20" rx="1" ry="1" />
+                    <path d="M44 16v20h4V16z" />
+                </svg>
+                <div class="card-title">Notify</div>
+                <div class="card-title">Now</div>
+            </div>
+        </div>
+    </div>
+</div>

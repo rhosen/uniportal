@@ -11,7 +11,7 @@
     <!-- Search Box -->
     <form method="get" class="mb-3">
         <div class="input-group">
-            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by name or code..." />
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by subject name or code..." />
             <button type="submit" class="btn btn-primary">Search</button>
         </div>
     </form>
@@ -22,8 +22,7 @@
             <thead class="table-dark">
                 <tr>
                     <th>#</th>
-                    <th>Name</th>
-                    <th>Code</th>
+                    <th>Subject</th>
                     <th>Department</th>
                     <th>Teacher</th>
                     <th>Semester</th>
@@ -34,8 +33,15 @@
             <tbody>
                 <tr>
                     <td>New</td>
-                    <td><input asp-for="NewCourse.Name" class="form-control" required /></td>
-                    <td><input asp-for="NewCourse.Code" class="form-control" required /></td>
+                    <td>
+                        <select asp-for="NewCourse.SubjectId" class="form-select" required>
+                            <option value="">-- Select Subject --</option>
+                            @foreach (var subj in Model.Subjects)
+                            {
+                                <option value="@subj.Id">@subj.Code - @subj.Name</option>
+                            }
+                        </select>
+                    </td>
                     <td>
                         <select asp-for="NewCourse.DepartmentId" class="form-select" required>
                             <option value="">-- Select Department --</option>
@@ -76,7 +82,7 @@
     <table class="table table-striped">
         <thead class="table-dark">
             <tr>
-                <th>Name</th>
+                <th>Subject</th>
                 <th>Code</th>
                 <th>Department</th>
                 <th>Teacher</th>
@@ -93,10 +99,21 @@
                         <input type="hidden" name="id" value="@course.Id" />
                         @if (Model.EditCourseId == course.Id.ToString())
                         {
-                        <td><input name="EditCourse.Name" value="@Model.EditCourse.Name" class="form-control" /></td>
-                        <td><input name="EditCourse.Code" value="@Model.EditCourse.Code" class="form-control" /></td>
+                            <!-- EDIT MODE -->
                         <td>
-                            <select name="EditCourse.DepartmentId" class="form-select">
+                            <select name="EditCourse.SubjectId" class="form-select" required>
+                                <option value="">-- Select Subject --</option>
+                                @foreach (var subj in Model.Subjects)
+                                {
+                                    <option value="@subj.Id" selected="@(subj.Id == Model.EditCourse.SubjectId ? "selected" : null)">
+                                        @subj.Code - @subj.Name
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td>@Model.Subjects.FirstOrDefault(s => s.Id == Model.EditCourse.SubjectId)?.Code</td>
+                        <td>
+                            <select name="EditCourse.DepartmentId" class="form-select" required>
                                 <option value="">-- Select Department --</option>
                                 @foreach (var dept in Model.Departments)
                                 {
@@ -107,7 +124,7 @@
                             </select>
                         </td>
                         <td>
-                            <select name="EditCourse.TeacherId" class="form-select">
+                            <select name="EditCourse.TeacherId" class="form-select" required>
                                 <option value="">-- Select Teacher --</option>
                                 @foreach (var teacher in Model.Teachers)
                                 {
@@ -118,7 +135,7 @@
                             </select>
                         </td>
                         <td>
-                            <select name="EditCourse.SemesterId" class="form-select">
+                            <select name="EditCourse.SemesterId" class="form-select" required>
                                 <option value="">-- Select Semester --</option>
                                 @foreach (var sem in Model.Semesters)
                                 {
@@ -136,8 +153,9 @@
                     }
                     else
                     {
-                        <td>@course.Name</td>
-                        <td>@course.Code</td>
+                        <!-- READ MODE -->
+                        <td>@course.Subject?.Name</td>
+                        <td>@course.Subject?.Code</td>
                         <td>@course.Department?.Name</td>
                         <td>@course.Teacher?.FirstName @course.Teacher?.LastName</td>
                         <td>@course.Semester?.Name</td>

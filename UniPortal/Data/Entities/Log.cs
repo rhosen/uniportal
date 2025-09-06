@@ -1,12 +1,21 @@
 ﻿namespace UniPortal.Data.Entities
 {
-    public class Log
+    using global::UniPortal.Constants;
+    using System;
+
+    namespace UniPortal.Data.Entities
     {
-        public Guid Id { get; set; }
-        public Guid? AccountId { get; set; }
-        public string Action { get; set; } = string.Empty;
-        public string? Entity { get; set; }
-        public Guid? EntityId { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public class Log
+        {
+            public Guid Id { get; set; } = Guid.NewGuid();
+            public Guid? AccountId { get; set; }
+            public ActionType ActionType { get; set; }    // Use enum instead of string
+            public string Action { get; set; } = string.Empty;
+            public string? Entity { get; set; }
+            public Guid? EntityId { get; set; }
+            public string? Details { get; set; }         // Optional JSON payload
+            public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        }
     }
+
 }

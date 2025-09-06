@@ -6,11 +6,9 @@
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-
         // Navigation
-        public ICollection<Course> Courses { get; set; }
-        public ICollection<Enrollment> Enrollments { get; set; }
-        public ICollection<Grade> Grades { get; set; }
-        public ICollection<ClassSchedule> ClassSchedules { get; set; }
+        public ICollection<Course> Courses { get; set; } = new List<Course>();
+        public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+        public ICollection<Grade> Grades { get; set; } = new List<Grade>();
     }
 }

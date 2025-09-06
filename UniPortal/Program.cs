@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Identity;
+using Serilog;
+using UniPortal;
 using UniPortal.Data.Seeders;
 using UniPortal.Extensions;
+using UniPortal.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +26,13 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddAppServices();
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {

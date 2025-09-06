@@ -9,7 +9,6 @@ namespace UniPortal.Extensions
     {
         public static IServiceCollection AddAppServices(this IServiceCollection services)
         {
-            // Add our Identity related services
             services.AddScoped<UserService>();
             services.AddScoped<AccountService>();
             services.AddScoped<AdminDashboardService>();
@@ -20,6 +19,10 @@ namespace UniPortal.Extensions
             services.AddScoped<CourseService>();
             services.AddScoped<ClassroomService>();
             services.AddScoped<NotificationService>();
+            services.AddScoped<SubjectService>();
+            services.AddScoped<ClassScheduleService>();
+            services.AddSingleton<FileLogService>();
+            services.AddScoped<LogService>();
 
             return services;
         }

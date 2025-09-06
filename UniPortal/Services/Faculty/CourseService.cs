@@ -1,88 +1,102 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 
 namespace UniPortal.Services.Faculty
 {
-    public class CourseService
+    public class CourseService : BaseService<Course>
     {
-        private readonly UniPortalContext _context;
-
-        public CourseService(UniPortalContext context)
+        public CourseService(UniPortalContext context, LogService logService)
+            : base(context, logService)
         {
-            _context = context;
         }
 
         public async Task<List<Course>> GetAllAsync()
         {
             return await _context.Courses
+                .Include(c => c.Subject)
                 .Include(c => c.Department)
                 .Include(c => c.Teacher)
                 .Include(c => c.Semester)
-                .OrderBy(c => c.Name)
+                .Where(c => !c.IsDeleted)
+                .OrderBy(c => c.Subject.Name)
                 .ToListAsync();
         }
 
-        public async Task<Course> GetByIdAsync(string id)
+        public async Task<Course?> GetByIdAsync(Guid courseId)
         {
             return await _context.Courses
+                .Include(c => c.Subject)
                 .Include(c => c.Department)
                 .Include(c => c.Teacher)
                 .Include(c => c.Semester)
-                .FirstOrDefaultAsync(c => c.Id.ToString() == id);
+                .FirstOrDefaultAsync(c => c.Id == courseId && !c.IsDeleted);
         }
 
-        public async Task CreateAsync(string name, string code, Guid departmentId, Guid teacherId, Guid semesterId, int credits = 3)
+        public async Task<Course> CreateAsync(Guid subjectId, Guid departmentId, Guid teacherId, Guid semesterId, int credits = 3, Guid? createdById = null)
         {
             var course = new Course
             {
-                Name = name,
-                Code = code,
+                SubjectId = subjectId,
                 DepartmentId = departmentId,
                 TeacherId = teacherId,
                 SemesterId = semesterId,
-                Credits = credits
+                Credits = credits,
+                CreatedAt = DateTime.UtcNow
             };
+
             _context.Courses.Add(course);
             await _context.SaveChangesAsync();
+
+            await LogAsync(createdById, ActionType.Create, AppConstant.Course, course.Id,
+                new { SubjectId = subjectId, DepartmentId = departmentId, TeacherId = teacherId, SemesterId = semesterId, Credits = credits });
+
+            return course;
         }
 
-        public async Task UpdateAsync(Guid id, string name, string code, Guid departmentId, Guid teacherId, Guid semesterId, int credits = 3)
+        public async Task UpdateAsync(Guid courseId, Guid subjectId, Guid departmentId, Guid teacherId, Guid semesterId, int credits = 3, Guid? updatedById = null)
         {
-            var course = await _context.Courses.FindAsync(id);
-            if (course != null)
-            {
-                course.Name = name;
-                course.Code = code;
-                course.DepartmentId = departmentId;
-                course.TeacherId = teacherId;
-                course.SemesterId = semesterId;
-                course.Credits = credits;
-                course.UpdatedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
-            }
+            var course = await _context.Courses.FindAsync(courseId);
+            if (course == null) return;
+
+            var oldValues = new { course.SubjectId, course.DepartmentId, course.TeacherId, course.SemesterId, course.Credits };
+
+            course.SubjectId = subjectId;
+            course.DepartmentId = departmentId;
+            course.TeacherId = teacherId;
+            course.SemesterId = semesterId;
+            course.Credits = credits;
+            course.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            await LogAsync(updatedById, ActionType.Update, AppConstant.Course, course.Id,
+                new { Old = oldValues, New = new { SubjectId = subjectId, DepartmentId = departmentId, TeacherId = teacherId, SemesterId = semesterId, Credits = credits } });
         }
 
-        public async Task DeleteAsync(string id)
+        public async Task DeleteAsync(Guid courseId, Guid? deletedById = null)
         {
-            var course = await _context.Courses.FindAsync(Guid.Parse(id));
-            if (course != null)
-            {
-                course.IsDeleted = true;
-                course.DeletedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
-            }
+            var course = await _context.Courses.FindAsync(courseId);
+            if (course == null) return;
+
+            course.IsDeleted = true;
+            course.DeletedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            await LogAsync(deletedById, ActionType.Delete, AppConstant.Course, course.Id);
         }
 
-        public async Task ActivateAsync(string id)
+        public async Task ActivateAsync(Guid courseId, Guid? activatedById = null)
         {
-            var course = await _context.Courses.FindAsync(Guid.Parse(id));
-            if (course != null)
-            {
-                course.IsDeleted = false;
-                course.DeletedAt = null;
-                await _context.SaveChangesAsync();
-            }
+            var course = await _context.Courses.FindAsync(courseId);
+            if (course == null) return;
+
+            course.IsDeleted = false;
+            course.DeletedAt = null;
+
+            await _context.SaveChangesAsync();
+            await LogAsync(activatedById, ActionType.Activate, AppConstant.Course, course.Id);
         }
     }
 }
