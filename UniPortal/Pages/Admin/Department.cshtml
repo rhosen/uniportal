@@ -22,8 +22,8 @@
             <thead class="table-dark">
                 <tr>
                     <th>#</th>
+                    <th>Code</th>
                     <th>Name</th>
-                    <th>Description</th>
                     <th>Head</th>
                     <th>Actions</th>
                 </tr>
@@ -54,8 +54,8 @@
     <table class="table table-striped">
         <thead class="table-dark">
             <tr>
+                <th>Code</th>
                 <th>Name</th>
-                <th>Description</th>
                 <th>Head</th>
                 <th>Actions</th>
             </tr>
@@ -70,8 +70,8 @@
                         @if (Model.EditDepartmentId == dept.Id.ToString())
                         {
                             <!-- Editing Row -->
-                        <td><input name="EditDepartment.Name" value="@Model.EditDepartment.Code" class="form-control" /></td>
-                        <td><input name="EditDepartment.Description" value="@Model.EditDepartment.Name" class="form-control" /></td>
+                        <td><input name="EditDepartment.Code" value="@Model.EditDepartment.Code" class="form-control" /></td>
+                        <td><input name="EditDepartment.Name" value="@Model.EditDepartment.Name" class="form-control" /></td>
                         <td>
                             <select name="EditDepartment.HeadId" class="form-select">
                                 <option value="">-- Select Head --</option>

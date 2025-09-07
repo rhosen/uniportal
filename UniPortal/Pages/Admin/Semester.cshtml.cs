@@ -27,6 +27,11 @@ namespace UniPortal.Pages.Admin
 
         public async Task OnGetAsync()
         {
+            // Set default start date to today
+            NewSemester.StartDate = DateTime.Today;
+            // Set default end date to 6 months from today
+            NewSemester.EndDate = DateTime.Today.AddMonths(6);
+
             var allSemesters = await _semesterService.GetAllAsync();
 
             if (!string.IsNullOrEmpty(SearchTerm))

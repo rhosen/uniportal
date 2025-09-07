@@ -26,24 +26,27 @@ namespace UniPortal.Services.Faculty
                 .FirstOrDefaultAsync(c => c.Id.ToString() == id);
         }
 
-        public async Task CreateAsync(string roomName, int capacity)
+        public async Task CreateAsync(string roomName, int capacity, string location)
         {
             var classroom = new Classroom
             {
                 RoomName = roomName,
-                Capacity = capacity
+                Capacity = capacity,
+                Location = location
             };
             _context.Classrooms.Add(classroom);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Guid id, string roomName, int capacity)
+        public async Task UpdateAsync(Guid id, string roomName, int capacity, string location)
         {
             var classroom = await _context.Classrooms.FindAsync(id);
             if (classroom != null)
             {
                 classroom.RoomName = roomName;
                 classroom.Capacity = capacity;
+                classroom.Location = location
+                    ;
                 classroom.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
             }

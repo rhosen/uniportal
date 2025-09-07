@@ -10,7 +10,7 @@
 
 
         // Navigation
-        public Account Student { get; set; }
+        public Student Student { get; set; }
         public Course Course { get; set; }
         public Semester Semester { get; set; }
     }

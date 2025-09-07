@@ -11,6 +11,6 @@
 
         // Navigation
         public Assignment Assignment { get; set; }
-        public Account Student { get; set; }
+        public Student Student { get; set; }
     }
 }
