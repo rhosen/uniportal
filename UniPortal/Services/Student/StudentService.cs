@@ -15,9 +15,6 @@ namespace UniPortal.Services.Student
             _context = context;
         }
 
-        /// <summary>
-        /// Gets all students who do not have a StudentId assigned yet.
-        /// </summary>
         public async Task<List<Account>> GetStudentsWithoutStudentIdAsync()
         {
             var studentRoleName = Roles.Student;
@@ -38,11 +35,38 @@ namespace UniPortal.Services.Student
             return await query.ToListAsync();
         }
 
-        /// <summary>
-        /// Generates and assigns a unique student ID for a given account.
-        /// If student entry exists, updates; otherwise, inserts a new record.
-        /// </summary>
-        public async Task<string> AssignStudentIdAsync(Guid accountId)
+        public async Task CreateOrUpdateStudentAsync(Data.Entities.Student student)
+        {
+            if (student == null) throw new ArgumentNullException(nameof(student));
+
+            // Check if student already exists
+            var existingStudent = await _context.Students
+                .FirstOrDefaultAsync(s => s.AccountId == student.AccountId);
+
+            if (existingStudent != null)
+            {
+                // Update existing student
+                existingStudent.StudentId = student.StudentId;
+                existingStudent.BatchNumber = student.BatchNumber;
+                existingStudent.Section = student.Section;
+                existingStudent.DepartmentId = student.DepartmentId;
+                existingStudent.UpdatedAt = DateTime.UtcNow;
+
+                _context.Students.Update(existingStudent);
+            }
+            else
+            {
+                // Create new student
+                student.Id = Guid.NewGuid();
+                student.CreatedAt = DateTime.UtcNow;
+
+                await _context.Students.AddAsync(student);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<string> GetSystemGeneratedStudentId(Guid accountId)
         {
             if (accountId == Guid.Empty)
                 throw new ArgumentException("Invalid account ID");
@@ -59,35 +83,9 @@ namespace UniPortal.Services.Student
             // Generate unique student ID
             string studentId = await GenerateUniqueStudentIdAsync(admissionYear);
 
-            // Insert or update student record
-            var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.AccountId == accountId);
-
-            if (student != null)
-            {
-                student.StudentId = studentId;
-                student.UpdatedAt = DateTime.Now;
-            }
-            else
-            {
-                student = new Data.Entities.Student
-                {
-                    Id = Guid.NewGuid(),
-                    AccountId = accountId,
-                    StudentId = studentId,
-                    CreatedAt = DateTime.Now
-                };
-                _context.Students.Add(student);
-            }
-
-            await _context.SaveChangesAsync();
             return studentId;
         }
 
-        /// <summary>
-        /// Generates a unique student ID based on year, sequential number, and random suffix.
-        /// Ensures no collisions in the database.
-        /// </summary>
         private async Task<string> GenerateUniqueStudentIdAsync(int admissionYear)
         {
             string studentId;
