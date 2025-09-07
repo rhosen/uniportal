@@ -1,257 +1,240 @@
 ﻿@page
 @model UniPortal.Pages.Student.DashboardModel
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     ViewData["Title"] = "Student Dashboard";
-    var userName = User.Identity?.Name ?? "Student";
     Layout = "_StudentLayout";
+    string initials = string.Join("", Model.Profile.FullName
+                                       .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                       .Select(n => n[0]))
+                        .ToUpper();
 }
 
-<div class="container-fluid p-4">
+<link href="~/css/metric-card.css" rel="stylesheet" />
+<link href="~/css/sidebar.css" rel="stylesheet" />
 
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
-        <li class="nav-item me-2" role="presentation">
-            <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab">
-                <i class="bi bi-house-door-fill me-1"></i> Dashboard
-            </button>
-        </li>
-        <li class="nav-item me-2" role="presentation">
-            <button class="nav-link" id="grades-tab" data-bs-toggle="tab" data-bs-target="#grades" type="button" role="tab">
-                <i class="bi bi-journal-text me-1"></i> Past Grades
-            </button>
-        </li>
-        <li class="nav-item me-2" role="presentation">
-            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
-                <i class="bi bi-person-fill me-1"></i> Profile
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="change-password-tab" data-bs-toggle="tab" data-bs-target="#change-password" type="button" role="tab">
-                <i class="bi bi-key-fill me-1"></i> Change Password
-            </button>
-        </li>
-    </ul>
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="premium-sidebar p-4 rounded-4 shadow-sm sticky-top bg-white" style="top: 20px; height: calc(100%vh - 40px); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); animation: fadeIn 1s ease-in-out;">
+
+                <!-- Profile Initials -->
+                <div class="d-flex justify-content-center mb-3">
+                    <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center shadow profile-avatar"
+                         style="width:80px; height:80px; font-size:28px; font-weight:700;">
+                        @initials
+                    </div>
+                </div>
+
+                <h5 class="text-center fw-semibold mb-3" style="font-size: 1.25rem;">@Model.Profile.FullName</h5>
+
+                <div class="text-center mb-3 text-muted" style="font-size: 0.875rem;">
+                    <small>Student ID: @Model.Profile.StudentId</small>
+                </div>
+
+                <div class="mb-3">
+                    <hr class="divider" />
+                </div>
+
+                <div class="mb-4">
+                    <div class="text-center mb-2">
+                        <span class="d-inline-block px-3 py-1 bg-light text-dark fw-medium border shadow-sm small badge-hover" style="font-size: 0.875rem;">
+                            @Model.Profile.Department
+                        </span>
+                    </div>
+
+                    <div class="text-center mb-2">
+                        <span class="d-inline-block px-3 py-1 bg-light text-dark fw-medium border shadow-sm small badge-hover" style="font-size: 0.875rem;">
+                            Batch: @Model.Profile.Batch
+                        </span>
+                    </div>
+
+                    <div class="text-center mb-2">
+                        <span class="d-inline-block px-3 py-1 bg-light text-dark fw-medium border shadow-sm small badge-hover" style="font-size: 0.875rem;">
+                            Section: @Model.Profile.Section
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <hr class="divider" />
+                </div>
+
+                <div class="text-center mb-4 text-muted" style="font-size: 0.875rem;">
+                    <div class="mb-1">
+                        <span class="d-inline-block px-3 py-1 bg-light text-dark fw-medium border shadow-sm small badge-hover" style="font-size: 0.875rem;">
+                            @Model.Profile.Email
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="d-inline-block px-3 py-1 bg-light text-dark fw-medium border shadow-sm small badge-hover" style="font-size: 0.875rem;">
+                            @Model.Profile.Phone
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <hr class="divider" />
+                </div>
+
+                <div class="d-grid">
+                    <a asp-page="/Account/ChangePassword" class="btn btn-outline-primary fw-semibold btn-hover" style="font-size: 0.875rem;">
+                        Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
 
 
-    <div class="tab-content" id="dashboardTabsContent">
-
-        <!-- Dashboard Tab -->
-        <div class="tab-pane fade show active" id="home">
-            <div class="row g-4">
-
-                <!-- Classroom Map -->
-                <div class="col-12">
-                    <div class="card shadow-sm rounded-4 p-3">
-                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-building me-2"></i>Classroom Availability</h5>
-                        <div class="d-flex flex-wrap">
-                            @foreach (var room in Model.Classrooms)
-                            {
-                                var bgColor = room.IsOccupied ? "#fee2e2" : "#d1fae5";
-                                var badgeClass = room.IsOccupied ? "bg-danger" : "bg-success";
-                                var statusText = room.IsOccupied ? "Occupied" : "Free";
-                                <div class="card m-2 text-center shadow-sm" style="width: 100px; background-color: @bgColor; cursor:pointer;">
-                                    <div class="card-body p-2">
-                                        <strong>@room.RoomName</strong>
-                                        <div class="badge @badgeClass mt-1">@statusText</div>
-                                    </div>
-                                </div>
-                            }
+        <!-- Right Column: Metric Cards -->
+        <div class="col-lg-9">
+            <div class="row g-3">
+                <!-- Courses -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/courses")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <path d="M10 40V10l22 10 22-10v30L32 32 10 40z" fill="#6f42c1" />
+                            </svg>
+                            <div class="card-title">Courses</div>
+                            <div class="card-value">@Model.Metrics.Courses</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Upcoming Classes -->
-                <div class="col-lg-6">
-                    <div class="card shadow-sm rounded-4 p-3 h-100">
-                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-calendar-check-fill me-2"></i>Upcoming Classes</h5>
-                        <table class="table table-borderless align-middle">
-                            <thead class="text-muted">
-                                <tr>
-                                    <th>Course</th>
-                                    <th>Time</th>
-                                    <th>Room</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var c in Model.UpcomingClasses)
-                                {
-                                    <tr class="hover-shadow rounded">
-                                        <td>@c.CourseName</td>
-                                        <td>@c.Time</td>
-                                        <td>@c.Room</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                <!-- Assignments -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/assignments")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="#28a745" />
+                                <line x1="12" y1="22" x2="52" y2="22" stroke="#fff" stroke-width="2" />
+                            </svg>
+                            <div class="card-title">Assignments</div>
+                            <div class="card-value">@Model.Metrics.PendingAssignments</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Pending Assignments -->
-                <div class="col-lg-6">
-                    <div class="card shadow-sm rounded-4 p-3 h-100">
-                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-file-earmark-text-fill me-2"></i>Pending Assignments</h5>
-                        <div class="list-group">
-                            @foreach (var a in Model.PendingAssignments)
-                            {
-                                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm mb-2 rounded">
-                                    <div>
-                                        <strong>@a.Title</strong>
-                                        <div class="badge bg-warning text-muted small">Due: @a.DueDate.ToString("MMM d")</div>
-                                    </div>
-                                    <form method="post" asp-page-handler="SubmitAssignment" class="mt-2 mt-md-0">
-                                        <input type="hidden" name="AssignmentId" value="@a.Id" />
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-upload me-1"></i> Submit
-                                        </button>
-                                    </form>
-                                </div>
-                            }
+                <!-- Today’s Classes -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/schedule")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="#fd7e14" />
+                            </svg>
+                            <div class="card-title">Schedule</div>
+                            <div class="card-value">@Model.Metrics.TodayClasses</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/attendance")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <circle cx="32" cy="24" r="10" fill="#17a2b8" />
+                            </svg>
+                            <div class="card-title">Attendance</div>
+                            <div class="card-value">@Model.Metrics.AttendancePercent%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grades -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/grades")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <polygon points="32,4 60,44 4,44" fill="#ffc107" />
+                            </svg>
+                            <div class="card-title">Grades</div>
+                            <div class="card-value">@Model.Metrics.OverallGPA</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/notifications")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <path d="M32 4c-8 0-14 6-14 14v8l-6 6v2h40v-2l-6-6v-8c0-8-6-14-14-14z" fill="#dc3545" />
+                            </svg>
+                            <div class="card-title">Notifications</div>
+                            <div class="card-value">@Model.Metrics.UnreadNotifications</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/notes")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <rect x="10" y="8" width="44" height="32" rx="4" ry="4" fill="#6c757d" />
+                            </svg>
+                            <div class="card-title">Notes</div>
+                            <div class="card-value">@Model.Metrics.NotesCount</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Classrooms -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/student/classrooms")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <path d="M32 4L4 16l28 12 28-12L32 4z" fill="#007bff" />
+                            </svg>
+                            <div class="card-title">Classrooms</div>
+                            <div class="card-value">@Model.Metrics.Classrooms</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-        </div>
-
-        <!-- Grades Tab -->
-        <div class="tab-pane fade" id="grades">
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm rounded-4 p-3">
-                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-award-fill me-2"></i>Past Grades</h5>
-                        <table class="table table-hover mt-2">
-                            <thead class="text-muted">
+            <!-- Assignments Table -->
+            <div class="card shadow-sm rounded-4 mt-4 p-3">
+                <h5 class="fw-bold mb-3"><i class="bi bi-journal-text me-2"></i>My Assignments</h5>
+                @if (Model.Assignments.Any())
+                {
+                    <form method="post" enctype="multipart/form-data" asp-page-handler="SubmitAssignment">
+                        <table class="table table-sm">
+                            <thead>
                                 <tr>
-                                    <th>Semester</th>
-                                    <th>Subject</th>
-                                    <th>Grade</th>
+                                    <th>Title</th>
+                                    <th>Course</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Submit</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var g in Model.PastGrades)
+                                @foreach (var a in Model.Assignments)
                                 {
                                     <tr>
-                                        <td>@g.Semester</td>
-                                        <td>@g.Subject</td>
-                                        <td>@g.Grade</td>
+                                        <td>@a.Title</td>
+                                        <td>@a.CourseName</td>
+                                        <td>@a.DueDate.ToString("dd MMM yyyy")</td>
+                                        <td>@a.Status</td>
+                                        <td>
+                                            <input type="file" name="file_@a.Id" class="form-control form-control-sm" />
+                                            <button type="submit" name="assignmentId" value="@a.Id" class="btn btn-sm btn-success mt-1">Upload</button>
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
-                    </div>
-                </div>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted">No upcoming assignments 🎉</p>
+                }
+                <a asp-page="/Student/Assignments" class="btn btn-sm btn-outline-secondary mt-2">View All</a>
             </div>
         </div>
-
-        <!-- Profile Tab -->
-        <div class="tab-pane fade mb-5" id="profile" role="tabpanel">
-            <div class="container-fluid mt-lg-5 d-flex bg-light">
-                <div class="col-12 col-sm-10 col-md-10 col-lg-8 col-xl-6">
-                    <div class="row shadow rounded-4 overflow-hidden bg-white">
-                        <div class="col-12 p-4 p-md-5 d-flex align-items-center">
-                            <form method="post" asp-page-handler="UpdateProfile" class="w-100">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-semibold">First Name</label>
-                                        <input type="text" class="form-control form-control-sm rounded-3 w-100"
-                                               asp-for="Profile.FirstName" placeholder="First name" />
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-semibold">Last Name</label>
-                                        <input type="text" class="form-control form-control-sm rounded-3 w-100"
-                                               asp-for="Profile.LastName" placeholder="Last name" />
-                                    </div>
-                                </div>
-
-                                <div class="mb-3 mt-3">
-                                    <label class="form-label small fw-semibold">Email</label>
-                                    <input type="email" class="form-control form-control-sm rounded-3 w-100"
-                                           asp-for="Profile.Email" placeholder="Email address" readonly />
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">Phone</label>
-                                    <input type="text" class="form-control form-control-sm rounded-3 w-100"
-                                           asp-for="Profile.PhoneNumber" placeholder="Phone number" />
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">Date of Birth</label>
-                                    <input type="date" class="form-control form-control-sm rounded-3 w-100"
-                                           asp-for="Profile.DateOfBirth" />
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label small fw-semibold">Address</label>
-                                    <textarea class="form-control form-control-sm rounded-3 w-100" rows="2"
-                                              asp-for="Profile.Address" placeholder="Your address"></textarea>
-                                </div>
-
-                                <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm">
-                                    Save Changes
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-
-
-        <!-- Change Password Tab -->
-        <div class="tab-pane fade" id="change-password" role="tabpanel">
-            <div class="container-fluid mt-lg-5 d-flex bg-light">
-                <div class="col-12 col-sm-10 col-md-10 col-lg-8 col-xl-6">
-                    <div class="row shadow rounded-4 overflow-hidden bg-white">
-                        <div class="col-12 p-4 p-md-5">
-                            <form method="post" asp-page-handler="ChangePassword" class="w-100">
-                                <h5 class="mb-4 fw-semibold text-center text-md-start">Change Password</h5>
-
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">Current Password</label>
-                                    <input type="password"
-                                           class="form-control form-control-sm rounded-3 w-100"
-                                           asp-for="ChangePasswordModel.CurrentPassword"
-                                           placeholder="Enter current password" />
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">New Password</label>
-                                    <input type="password"
-                                           class="form-control form-control-sm rounded-3 w-100"
-                                           asp-for="ChangePasswordModel.NewPassword"
-                                           placeholder="Enter new password" />
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label small fw-semibold">Confirm New Password</label>
-                                    <input type="password"
-                                           class="form-control form-control-sm rounded-3 w-100"
-                                           asp-for="ChangePasswordModel.ConfirmPassword"
-                                           placeholder="Re-enter new password" />
-                                </div>
-
-                                <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm rounded-3">
-                                    Update Password
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-
     </div>
-
 </div>
-
-@section Scripts {
-    <script>
-        // Bootstrap tab functionality already included if using bootstrap.bundle.js
-    </script>
-}

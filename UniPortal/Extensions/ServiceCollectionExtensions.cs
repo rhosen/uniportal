@@ -13,7 +13,6 @@ namespace UniPortal.Extensions
             services.AddScoped<UserService>();
             services.AddScoped<AccountService>();
             services.AddScoped<AdminDashboardService>();
-            services.AddScoped<FacultyDashboardService>();
             services.AddScoped<TeacherService>();
             services.AddScoped<DepartmentService>();
             services.AddScoped<SemesterService>();
@@ -25,6 +24,13 @@ namespace UniPortal.Extensions
             services.AddSingleton<FileLogService>();
             services.AddScoped<LogService>();
             services.AddScoped<StudentService>();
+
+            services.AddScoped<FacultyDashboardService>();
+
+            services.AddScoped<StudentDashboardService>();
+            services.AddScoped<AssignmentService>();
+
+
 
             return services;
         }

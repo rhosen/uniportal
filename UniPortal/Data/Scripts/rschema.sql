@@ -1,4 +1,4 @@
-﻿USE [UniPortalDB];
+﻿sUSE [UniPortalDB];
 GO
 
 -- 1️⃣ Drop all foreign key constraints

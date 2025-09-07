@@ -1,258 +1,97 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
-using UniPortal.Constants;
 using UniPortal.Services;
+using UniPortal.Services.Student;
 using UniPortal.ViewModel;
 
 namespace UniPortal.Pages.Student
 {
-    [Authorize(Roles = Roles.Student)]
-    public class DashboardModel : PageModel
+    public class DashboardModel : BasePageModel
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly AccountService _accountService;
-        private readonly UserService _userService;
+        private readonly StudentDashboardService _studentDashboardService;
+        private readonly AssignmentService _assignmentService;
 
-        public DashboardModel(UserManager<IdentityUser> userManager,
-                              AccountService accountService,
-                              UserService userService)
+        public DashboardModel(StudentDashboardService studentDashboardService,
+                              AssignmentService assignmentService,
+                              AccountService accountService)
+            : base(accountService)
         {
-            _userManager = userManager;
-            _accountService = accountService;
-            _userService = userService;
+            _studentDashboardService = studentDashboardService;
+            _assignmentService = assignmentService;
         }
 
-        // -------------------------
-        // Dashboard data (mocked for now)
-        // -------------------------
-        public List<ClassInfo> UpcomingClasses { get; set; } = new();
-        public List<AssignmentInfo> PendingAssignments { get; set; } = new();
-        public List<ClassroomInfo> Classrooms { get; set; } = new();
-        public List<GradeInfo> PastGrades { get; set; } = new();
+        // -----------------------------
+        // Properties bound to the view
+        // -----------------------------
+        public StudentProfileViewModel Profile { get; set; } = new();
+        public List<AssignmentViewModel> Assignments { get; set; } = new();
+        public MetricsViewModel Metrics { get; set; } = new();
 
         [BindProperty]
-        public Guid AssignmentId { get; set; }  // For submission handler
+        public IFormFile AssignmentFile { get; set; } = null!;
 
-        // -------------------------
-        // Profile section
-        // -------------------------
-        [BindProperty]
-        public ProfileInputModel Profile { get; set; } = new();
-
-        public class ProfileInputModel
-        {
-            [Required, MaxLength(50)]
-            public string FirstName { get; set; } = string.Empty;
-
-            [Required, MaxLength(50)]
-            public string LastName { get; set; } = string.Empty;
-
-            [Required, EmailAddress, MaxLength(100)]
-            public string Email { get; set; } = string.Empty;
-
-            [DataType(DataType.Date)]
-            public DateTime DateOfBirth { get; set; }
-
-            [MaxLength(20)]
-            public string PhoneNumber { get; set; } = string.Empty;
-
-            [MaxLength(100)]
-            public string Address { get; set; } = string.Empty;
-        }
-
-        // -------------------------
-        // Password section
-        // -------------------------
-        [BindProperty]
-        public ChangePasswordInputModel ChangePasswordModel { get; set; } = new();
-
-        public class ChangePasswordInputModel
-        {
-            [Required, DataType(DataType.Password)]
-            public string CurrentPassword { get; set; } = string.Empty;
-
-            [Required, DataType(DataType.Password), MinLength(6)]
-            public string NewPassword { get; set; } = string.Empty;
-
-            [Required, DataType(DataType.Password)]
-            [Compare("NewPassword", ErrorMessage = "Passwords do not match.")]
-            public string ConfirmPassword { get; set; } = string.Empty;
-        }
-
-        // -------------------------
-        // GET
-        // -------------------------
+        // -----------------------------
+        // Page Load
+        // -----------------------------
         public async Task<IActionResult> OnGetAsync()
         {
-            LoadMockData();
+            if (CurrentAccount == null)
+                return LocalRedirect("/account/login"); // redirect if not logged in
 
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound("User not found.");
+            // Get internal student Id (Student.Id) using AccountId
+            var student = await _studentDashboardService.GetStudentAsync(CurrentAccount.Id);
 
-            var account = await _accountService.GetByUserIdAsync(user.Id);
-            if (account != null)
+            if (student == null)
+                return NotFound("Student profile not found.");
+
+            // Load profile and assignments
+            Profile = await _studentDashboardService.GetProfileAsync(CurrentAccount.Id);
+            Assignments = await _assignmentService.GetUpcomingAssignmentsAsync(student.Id, 3);
+
+            // Load dashboard metrics (all 8 cards)
+            Metrics = await _studentDashboardService.GetDashboardMetricsAsync(student.Id);
+
+            // Make sure all metrics are populated to avoid nulls in Razor
+            Metrics ??= new MetricsViewModel
             {
-                Profile = new ProfileInputModel
-                {
-                    FirstName = account.FirstName,
-                    LastName = account.LastName,
-                    PhoneNumber = account.Phone,
-                    Address = account.Address
-                };
-            }
+                Courses = 0,
+                PendingAssignments = 0,
+                TodayClasses = 0,
+                AttendancePercent = 0,
+                OverallGPA = "N/A",
+                UnreadNotifications = 0,
+                NotesCount = 0
+            };
 
             return Page();
         }
 
-        // -------------------------
-        // Submit assignment
-        // -------------------------
-        public IActionResult OnPostSubmitAssignment()
+        // -----------------------------
+        // Assignment Submission
+        // -----------------------------
+        public async Task<IActionResult> OnPostSubmitAssignmentAsync(Guid assignmentId)
         {
-            var assignment = PendingAssignments.FirstOrDefault(a => a.Id == AssignmentId);
-            if (assignment != null)
+            if (AssignmentFile == null || AssignmentFile.Length == 0)
             {
-                PendingAssignments.Remove(assignment);
-                TempData["SuccessMessage"] = $"Assignment '{assignment.Title}' submitted successfully!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Assignment not found.";
-            }
-
-            LoadMockData();
-            return RedirectToPage();
-        }
-
-        // -------------------------
-        // Update profile
-        // -------------------------
-        public async Task<IActionResult> OnPostUpdateProfileAsync()
-        {
-            if (!ModelState.IsValid)
-                return Page();
-
-            // Get the current logged-in user
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-                return NotFound("User not found.");
-
-            // Map the ProfileViewModel
-            var profileVm = new ProfileViewModel
-            {
-                AccountId = Guid.Parse(user.Id),
-                FirstName = Profile.FirstName,
-                LastName = Profile.LastName,
-                DateOfBirth = Profile.DateOfBirth,
-                Phone = Profile.PhoneNumber,
-                Address = Profile.Address,
-                Email = Profile.Email // Include email if you want it to be editable
-            };
-
-            // Call service method
-            var success = await _accountService.UpdateProfileAsync(profileVm);
-
-            if (!success)
-            {
-                ModelState.AddModelError(string.Empty, "Failed to update profile.");
+                ModelState.AddModelError(string.Empty, "Please select a file to upload.");
+                await OnGetAsync();
                 return Page();
             }
 
-            TempData["SuccessMessage"] = "Profile updated successfully!";
-            return RedirectToPage();
-        }
+            if (CurrentAccount == null)
+                return Unauthorized();
 
-
-        // -------------------------
-        // Change password
-        // -------------------------
-        public async Task<IActionResult> OnPostChangePasswordAsync()
-        {
-            if (!ModelState.IsValid) return Page();
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound("User not found.");
-
-            var result = await _userService.ChangePasswordAsync(
-                user,
-                ChangePasswordModel.CurrentPassword,
-                ChangePasswordModel.NewPassword
-            );
-
-            if (!result.Succeeded)
+            try
             {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return Page();
+                await _assignmentService.SubmitAssignmentAsync(assignmentId, AssignmentFile, CurrentAccount.Id);
+                TempData["SuccessMessage"] = "Assignment submitted successfully!";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Error uploading assignment: {ex.Message}");
             }
 
-            TempData["SuccessMessage"] = "Password changed successfully!";
-            return RedirectToPage();
+            await OnGetAsync();
+            return Page();
         }
-
-        // -------------------------
-        // Mock Data Loader
-        // -------------------------
-        private void LoadMockData()
-        {
-            UpcomingClasses = new List<ClassInfo>
-            {
-                new ClassInfo { CourseName = "Math 101", Time = "10:00 - 11:30", Room = "A1" },
-                new ClassInfo { CourseName = "Physics 201", Time = "12:00 - 13:30", Room = "B2" }
-            };
-
-            PendingAssignments = new List<AssignmentInfo>
-            {
-                new AssignmentInfo { Id = Guid.NewGuid(), Title = "Math Homework 1", DueDate = DateTime.Now.AddDays(2) },
-                new AssignmentInfo { Id = Guid.NewGuid(), Title = "Physics Lab Report", DueDate = DateTime.Now.AddDays(4) }
-            };
-
-            Classrooms = new List<ClassroomInfo>
-            {
-                new ClassroomInfo { RoomName = "A1", IsOccupied = false },
-                new ClassroomInfo { RoomName = "B2", IsOccupied = true },
-                new ClassroomInfo { RoomName = "C3", IsOccupied = false }
-            };
-
-            PastGrades = new List<GradeInfo>
-            {
-                new GradeInfo { Semester = "Fall 2024", Subject = "Math 101", Grade = "A" },
-                new GradeInfo { Semester = "Fall 2024", Subject = "Physics 201", Grade = "B+" },
-                new GradeInfo { Semester = "Spring 2025", Subject = "Chemistry 101", Grade = "A-" }
-            };
-        }
-    }
-
-    // Supporting classes
-    public class ClassInfo
-    {
-        public string CourseName { get; set; } = string.Empty;
-        public string Time { get; set; } = string.Empty;
-        public string Room { get; set; } = string.Empty;
-    }
-
-    public class AssignmentInfo
-    {
-        public Guid Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public DateTime DueDate { get; set; }
-    }
-
-    public class ClassroomInfo
-    {
-        public string RoomName { get; set; } = string.Empty;
-        public bool IsOccupied { get; set; }
-    }
-
-    public class GradeInfo
-    {
-        public string Semester { get; set; } = string.Empty;
-        public string Subject { get; set; } = string.Empty;
-        public string Grade { get; set; } = string.Empty;
     }
 }

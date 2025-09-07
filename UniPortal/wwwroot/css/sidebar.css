@@ -1,0 +1,80 @@
+﻿/* Sidebar Base Styles */
+.premium-sidebar {
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+}
+
+    /* Badge Styling */
+    .premium-sidebar .badge {
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Avatar Style */
+    .premium-sidebar .rounded-circle {
+        font-size: 32px;
+        font-weight: 700;
+        background-color: #007bff; /* Primary color */
+    }
+
+    /* Button Style */
+    .premium-sidebar .btn-outline-primary {
+        border: 1px solid #007bff;
+        color: #007bff;
+        background-color: transparent;
+    }
+
+    /* Text Muted Styling */
+    .premium-sidebar .text-muted {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+
+/* Fade In Animation for Sidebar */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Hover Effects for Avatar */
+.profile-avatar {
+    transition: transform 0.3s ease;
+}
+
+    .profile-avatar:hover {
+        transform: scale(1.1); /* Slightly enlarge on hover */
+    }
+
+/* Hover Effects for Badges */
+.badge-hover {
+    transition: all 0.3s ease;
+}
+
+    .badge-hover:hover {
+        background-color: #007bff; /* Change background on hover */
+        color: #fff; /* Change text color */
+        transform: translateY(-5px); /* Lift effect */
+    }
+
+/* Hover Effect for Buttons */
+.btn-hover {
+    transition: all 0.3s ease;
+}
+
+    .btn-hover:hover {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+        transform: translateY(-3px); /* Button lift effect */
+    }
