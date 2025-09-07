@@ -1,43 +1,53 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using UniPortal.Constants;
+using Microsoft.AspNetCore.Mvc;
+using UniPortal.Services;
 using UniPortal.Services.Faculty;
+using UniPortal.ViewModel;
 
 namespace UniPortal.Pages.Faculty
 {
-    [Authorize(Roles = Roles.Faculty)]
-    public class DashboardModel : PageModel
+    public class DashboardModel : BasePageModel
     {
-        private readonly FacultyDashboardService _dashboardService;
+        private readonly FacultyDashboardService _facultyDashboardService;
 
-        public DashboardModel(FacultyDashboardService dashboardService)
+        public DashboardModel(FacultyDashboardService facultyDashboardService,
+                              AccountService accountService)
+            : base(accountService)
         {
-            _dashboardService = dashboardService;
+            _facultyDashboardService = facultyDashboardService;
         }
 
-        public int TotalCourses { get; set; }
-        public int TotalStudents { get; set; }
-        public int TotalAssignments { get; set; }
-        public int TotalSubmissions { get; set; }
-        public int TotalNotes { get; set; }
-        public int PendingAttendance { get; set; }
-        public int RecentNotifications { get; set; }
-        public int TotalEnrollments { get; set; }
-        public int TotalScheduledClasses { get; set; }
+        // -----------------------------
+        // Properties bound to the view
+        // -----------------------------
+        public FacultyProfileViewModel Profile { get; set; } = new();
+        public FacultyMetricsViewModel Metrics { get; set; } = new();
 
-        public async Task OnGetAsync()
+        // -----------------------------
+        // Page Load
+        // -----------------------------
+        public async Task<IActionResult> OnGetAsync()
         {
-            var accountId = Guid.Parse(User.FindFirst("AccountId")?.Value ?? Guid.Empty.ToString());
+            if (CurrentAccount == null)
+                return LocalRedirect("/account/login");
 
-            TotalCourses = await _dashboardService.GetTotalCoursesAsync(accountId);
-            TotalStudents = await _dashboardService.GetTotalStudentsAsync(accountId);
-            TotalAssignments = await _dashboardService.GetTotalAssignmentsAsync(accountId);
-            TotalSubmissions = await _dashboardService.GetTotalSubmissionsAsync(accountId);
-            TotalNotes = await _dashboardService.GetTotalNotesAsync(accountId);
-            PendingAttendance = await _dashboardService.GetPendingAttendanceAsync(accountId);
-            RecentNotifications = await _dashboardService.GetRecentNotificationsAsync(accountId);
-            TotalEnrollments = await _dashboardService.GetTotalEnrollmentsAsync(accountId);
-            TotalScheduledClasses = await _dashboardService.GetTotalScheduledClassesAsync(accountId);
+            // Load faculty profile using account ID
+            var faculty = await _facultyDashboardService.GetFacultyProfileAsync(CurrentAccount.Id);
+            if (faculty == null)
+                return NotFound("Faculty profile not found.");
+
+            Profile = faculty;
+
+            // Load dashboard metrics
+            Metrics = await _facultyDashboardService.GetDashboardMetricsAsync(CurrentAccount.Id);
+
+            // Ensure metrics are populated
+            Metrics ??= new FacultyMetricsViewModel
+            {
+                TotalCourses = 0,
+                UpcomingClass = "N/A"
+            };
+
+            return Page();
         }
     }
 }

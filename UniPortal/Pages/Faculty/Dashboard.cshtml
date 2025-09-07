@@ -3,80 +3,158 @@
 @{
     ViewData["Title"] = "Faculty Dashboard";
     Layout = "_FacultyLayout";
+
+    string initials = string.Join("", Model.Profile.FullName
+                                       .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                       .Select(n => n[0]))
+                        .ToUpper();
 }
 
-<div class="row g-4">
+<link href="~/css/metric-card.css" rel="stylesheet" />
+<link href="~/css/sidebar.css" rel="stylesheet" />
 
-    <!-- Total Courses -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Courses You Teach</h6>
-                <h3 class="fw-bold">@Model.TotalCourses</h3>
+<div class="container my-4">
+    <div class="row g-4">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="premium-sidebar p-4 rounded-4 shadow-sm sticky-top bg-white" style="top: 20px; height: calc(100%vh - 40px); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); animation: fadeIn 1s ease-in-out;">
+                <!-- Profile Initials -->
+                <div class="d-flex justify-content-center mb-3">
+                    <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center shadow profile-avatar"
+                         style="width:80px; height:80px; font-size:28px; font-weight:700;">
+                        @initials
+                    </div>
+                </div>
+
+                <h5 class="text-center fw-semibold mb-3" style="font-size: 1.25rem;">@Model.Profile.FullName</h5>
+
+                <div class="text-center mb-4 text-muted" style="font-size: 0.875rem;">
+                    <div class="mb-1">
+                        <span class="d-inline-block px-3 py-1 bg-light text-dark fw-medium border shadow-sm small badge-hover">
+                            @Model.Profile.Email
+                        </span>
+                    </div>
+                    <div>
+                        <span class="d-inline-block px-3 py-1 bg-light text-dark fw-medium border shadow-sm small badge-hover">
+                            @Model.Profile.Phone
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <hr class="divider" />
+                </div>
+
+                <div class="d-grid">
+                    <a asp-page="/Account/ChangePassword" class="btn btn-outline-primary fw-semibold btn-hover" style="font-size: 0.875rem;">
+                        Change Password
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Total Students -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Students Enrolled</h6>
-                <h3 class="fw-bold">@Model.TotalStudents</h3>
+        <!-- Right Column: Metric Cards -->
+        <div class="col-lg-9">
+            <div class="row g-3">
+                <!-- Stats Row -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <path d="M10 40V10l22 10 22-10v30L32 32 10 40z" fill="#6f42c1" />
+                            </svg>
+                            <div class="card-title">Total Courses</div>
+                            <div class="card-value">@Model.Metrics.TotalCourses</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="#fd7e14" />
+                            </svg>
+                            <div class="card-title">Upcoming Class</div>
+                            <div class="card-value">@Model.Metrics.UpcomingClass</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Row -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/Faculty/EnrollStudents")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <path d="M32 4C18 4 6 16 6 30s12 26 26 26 26-12 26-26S46 4 32 4zm0 4a22 22 0 1022 22A22 22 0 0032 8z" fill="#007bff" />
+                            </svg>
+                            <div class="card-title">Enroll </div>
+                            <div class="card-title">Students</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/Faculty/UploadNotes")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <rect x="10" y="8" width="44" height="32" rx="4" ry="4" fill="#6c757d" />
+                            </svg>
+                            <div class="card-title">Upload</div>
+                            <div class="card-title">Notes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/Faculty/CreateAssignment")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="#28a745" />
+                                <line x1="12" y1="22" x2="52" y2="22" stroke="#fff" stroke-width="2" />
+                            </svg>
+                            <div class="card-title">Create</div>
+                            <div class="card-title">Assignment</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/Faculty/GradeCourse")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <polygon points="32,4 60,44 4,44" fill="#ffc107" />
+                            </svg>
+                            <div class="card-title">Grade</div>
+                            <div class="card-title">Course</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/Faculty/Notifications")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <path d="M32 4c-8 0-14 6-14 14v8l-6 6v2h40v-2l-6-6v-8c0-8-6-14-14-14z" fill="#dc3545" />
+                            </svg>
+                            <div class="card-title">Notify</div>
+                            <div class="card-title">Students</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/Faculty/Attendance")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <circle cx="32" cy="24" r="10" fill="#17a2b8" />
+                            </svg>
+                            <div class="card-title">Record</div>
+                            <div class="card-title">Attendance</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Total Assignments -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Assignments Created</h6>
-                <h3 class="fw-bold">@Model.TotalAssignments</h3>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notifications (last month) -->
-    <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm p-3">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Recent Notifications</h6>
-                <h3 class="fw-bold">@Model.RecentNotifications</h3>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="col-md-3 col-sm-6 mt-3">
-        <div class="card text-center shadow-sm p-3 border-primary">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Total Enrollments</h6>
-                <h3 class="fw-bold">@Model.TotalEnrollments</h3>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="col-md-3 col-sm-6 mt-3">
-        <div class="card text-center shadow-sm p-3 border-success">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Scheduled Classes</h6>
-                <h3 class="fw-bold">@Model.TotalScheduledClasses</h3>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Links -->
-<div class="mt-5">
-    <h5 class="mb-3">Quick Links</h5>
-    <div class="d-flex flex-wrap gap-3">
-        <a class="btn btn-outline-primary" asp-page="/Faculty/Courses">My Courses</a>
-        <a class="btn btn-outline-primary" asp-page="/Faculty/Assignments">Assignments</a>
-        <a class="btn btn-outline-primary" asp-page="/Faculty/ClassNotes">Class Notes</a>
-        <a class="btn btn-outline-primary" asp-page="/Faculty/Notifications">Notifications</a>
-        <a class="btn btn-outline-primary" asp-page="/Coordinator/Enrollments">Manage Enrollments</a>
-        <a class="btn btn-outline-primary" asp-page="/Coordinator/ClassSchedule">Class Schedule</a>
     </div>
 </div>
