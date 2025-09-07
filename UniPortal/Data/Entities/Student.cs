@@ -7,12 +7,11 @@ namespace UniPortal.Data.Entities
         public Guid AccountId { get; set; }
         public string StudentId { get; set; } = string.Empty;
         public string BatchNumber { get; set; } = string.Empty;
-        public Guid DepartmentId { get; set; }
+        public Guid? DepartmentId { get; set; }
         public string Section { get; set; } = string.Empty;  // New property
 
         // Navigation
-        [ForeignKey(nameof(AccountId))]
-        public Account StudentAccount { get; set; }
-        public Department Department { get; set; }
+        public Account Account { get; set; }
+        public Department? Department { get; set; }
     }
 }
