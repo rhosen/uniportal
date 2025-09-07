@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using UniPortal.Constants;
 using UniPortal.Data;
+using UniPortal.ViewModel;
 
 namespace UniPortal.Services.Admin
 {
@@ -15,6 +16,20 @@ namespace UniPortal.Services.Admin
         {
             _context = context;
             _userManager = userManager;
+        }
+
+        public async Task<AdminProfileViewModel?> GetAdminProfileAsync(Guid accountId)
+        {
+            return await _context.Accounts
+                .Where(a => a.Id == accountId && !a.IsDeleted && a.IsActive)
+                .Select(a => new AdminProfileViewModel
+                {
+                    Id = a.Id,
+                    FullName = a.FirstName + " " + a.LastName,
+                    Email = a.Email,
+                    Phone = a.Phone
+                })
+                .FirstOrDefaultAsync();
         }
 
         // Students
@@ -55,13 +70,6 @@ namespace UniPortal.Services.Admin
             return await _context.Courses.CountAsync(c => !c.IsDeleted);
         }
 
-        // Notifications (last 30 days)
-        public async Task<int> GetPendingNotificationsAsync()
-        {
-            var oneMonthAgo = DateTime.Now.AddMonths(-1);
-
-            return await _context.Notifications
-                .CountAsync(n => !n.IsDeleted && n.CreatedAt >= oneMonthAgo);
-        }
+       
     }
 }
