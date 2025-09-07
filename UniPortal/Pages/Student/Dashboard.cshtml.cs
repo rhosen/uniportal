@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using UniPortal.Constants;
 using UniPortal.Services;
+using UniPortal.ViewModel;
 
 namespace UniPortal.Pages.Student
 {
@@ -53,7 +54,7 @@ namespace UniPortal.Pages.Student
             public string Email { get; set; } = string.Empty;
 
             [DataType(DataType.Date)]
-            public DateTime? DateOfBirth { get; set; }
+            public DateTime DateOfBirth { get; set; }
 
             [MaxLength(20)]
             public string PhoneNumber { get; set; } = string.Empty;
@@ -131,18 +132,28 @@ namespace UniPortal.Pages.Student
         // -------------------------
         public async Task<IActionResult> OnPostUpdateProfileAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+                return Page();
 
+            // Get the current logged-in user
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound("User not found.");
+            if (user == null)
+                return NotFound("User not found.");
 
-            var success = await _accountService.UpdateProfileAsync(
-                user.Id,
-                Profile.FirstName,
-                Profile.LastName,
-                Profile.PhoneNumber,
-                Profile.Address
-            );
+            // Map the ProfileViewModel
+            var profileVm = new ProfileViewModel
+            {
+                AccountId = Guid.Parse(user.Id),
+                FirstName = Profile.FirstName,
+                LastName = Profile.LastName,
+                DateOfBirth = Profile.DateOfBirth,
+                Phone = Profile.PhoneNumber,
+                Address = Profile.Address,
+                Email = Profile.Email // Include email if you want it to be editable
+            };
+
+            // Call service method
+            var success = await _accountService.UpdateProfileAsync(profileVm);
 
             if (!success)
             {
@@ -153,6 +164,7 @@ namespace UniPortal.Pages.Student
             TempData["SuccessMessage"] = "Profile updated successfully!";
             return RedirectToPage();
         }
+
 
         // -------------------------
         // Change password

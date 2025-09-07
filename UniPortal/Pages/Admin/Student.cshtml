@@ -70,8 +70,8 @@
                             <td>@Model.Departments.FirstOrDefault(d => d.Id == student.DepartmentId)?.Code</td>
                             <td>@student.Email</td>
                             <td class="d-flex gap-2">
-                                <button type="submit" asp-page-handler="Edit" name="id" value="@student.Id" class="btn btn-sm btn-warning">✏️ Edit</button>
-                                <a href="/Admin/StudentDetails?id=@student.Id" class="btn btn-sm btn-info">🔍 Details</a>
+                                <button type="submit" asp-page-handler="Edit" name="id" value="@student.Id" class="btn btn-sm btn-warning"> Edit</button>
+                                <a href="/admin/profile?id=@student.AccountId" class="btn btn-sm btn-info"> Details</a>
                             </td>
                         }
                         </form>

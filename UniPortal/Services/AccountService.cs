@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
+using UniPortal.ViewModel;
 
 namespace UniPortal.Services
 {
@@ -76,18 +77,24 @@ namespace UniPortal.Services
             return await _dbContext.Accounts.FirstOrDefaultAsync(a => a.IdentityUserId == userId && !a.IsDeleted);
         }
 
-        public async Task<bool> UpdateProfileAsync(string userId, string firstName, string lastName, string phone, string address)
+        public async Task<bool> UpdateProfileAsync(ProfileViewModel profile)
         {
-            var account = await GetByUserIdAsync(userId);
+            if (profile == null || profile.AccountId == Guid.Empty)
+                return false;
+
+            var account = await GetByIdAsync(profile.AccountId);
             if (account == null) return false;
 
-            account.FirstName = firstName;
-            account.LastName = lastName;
-            account.Phone = phone;
-            account.Address = address;
+            account.FirstName = profile.FirstName;
+            account.LastName = profile.LastName;
+            account.Phone = profile.Phone;
+            account.Address = profile.Address;
+            account.DateOfBirth = profile.DateOfBirth;
 
             _dbContext.Accounts.Update(account);
             await _dbContext.SaveChangesAsync();
+
+            await UpdateEmailAsync(account.Id, profile.Email);
             return true;
         }
 
@@ -137,5 +144,35 @@ namespace UniPortal.Services
             _dbContext.Accounts.Update(account);
             await _dbContext.SaveChangesAsync();
         }
+
+        internal async Task<Account> GetByIdAsync(Guid accountId)
+        {
+            return await _dbContext.Accounts
+               .FirstOrDefaultAsync(a => a.Id == accountId && a.IsActive && !a.IsDeleted);
+        }
+
+        public async Task<IdentityResult> UpdatePasswordAsync(Guid accountId, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(newPassword))
+                return IdentityResult.Failed(new IdentityError { Description = "Password cannot be empty." });
+
+            // Get the account from your application's account table
+            var account = await _dbContext.Accounts.FindAsync(accountId);
+            if (account == null || string.IsNullOrWhiteSpace(account.IdentityUserId))
+                return IdentityResult.Failed(new IdentityError { Description = "Associated IdentityUser not found." });
+
+            // Use IdentityUserId to find the Identity user
+            var user = await _userManager.FindByIdAsync(account.IdentityUserId);
+            if (user == null)
+                return IdentityResult.Failed(new IdentityError { Description = "User not found in Identity system." });
+
+            // Reset the password
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            return result;
+        }
+
+
     }
 }

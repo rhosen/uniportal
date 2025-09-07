@@ -79,7 +79,8 @@ namespace UniPortal.Services.Student
                     BatchNumber = s.BatchNumber,
                     Section = s.Section,
                     DepartmentId = s.DepartmentId,
-                    Email = s.Account.Email
+                    Email = s.Account.Email,
+                    AccountId = s.AccountId
                 })
                 .OrderBy(s => s.StudentId)
                 .ToListAsync();
