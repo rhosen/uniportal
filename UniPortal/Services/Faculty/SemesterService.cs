@@ -2,7 +2,7 @@
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 
-namespace UniPortal.Services
+namespace UniPortal.Services.Faculty
 {
     public class SemesterService
     {
@@ -19,6 +19,17 @@ namespace UniPortal.Services
                 .OrderBy(s => s.StartDate)
                 .ToListAsync();
         }
+
+        public async Task<List<Semester>> GetOnGoingSemestersAsync()
+        {
+            var currentDate = DateTime.Now;
+
+            return await _context.Semesters
+                .Where(s => !s.IsDeleted && s.EndDate > currentDate)
+                .OrderBy(s => s.StartDate)
+                .ToListAsync();
+        }
+
 
         public async Task<Semester> GetByIdAsync(string id)
         {

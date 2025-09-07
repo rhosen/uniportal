@@ -18,10 +18,7 @@ CREATE TABLE dbo.Accounts
     Phone NVARCHAR(50) NULL,
     Address NVARCHAR(500) NULL,
     IdentityUserId NVARCHAR(450) NOT NULL,
-    IdentityNumber NVARCHAR(100) NULL,       -- Roll number / Job ID
-    BatchNumber NVARCHAR(50) NULL,           -- Only for students, nullable for others
-    DepartmentId UNIQUEIDENTIFIER NULL,      -- Nullable FK to Departments
-    CreatedById UNIQUEIDENTIFIER NULL,       -- tracks creator
+    CreatedById UNIQUEIDENTIFIER NULL,
     IsActive BIT NOT NULL DEFAULT 0,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
@@ -33,13 +30,9 @@ CREATE TABLE dbo.Accounts
         ON DELETE CASCADE,
 
     CONSTRAINT FK_Accounts_CreatedBy FOREIGN KEY (CreatedById)
-        REFERENCES dbo.Accounts(Id),
-
-    CONSTRAINT FK_Accounts_Departments FOREIGN KEY (DepartmentId)
-        REFERENCES dbo.Departments(Id)
+        REFERENCES dbo.Accounts(Id)
 );
 GO
-
 
 -- =========================
 -- Departments Table
@@ -50,8 +43,8 @@ GO
 
 CREATE TABLE dbo.Departments (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    Name NVARCHAR(200) NOT NULL,
-    Description NVARCHAR(500) NULL,
+    Code NVARCHAR(200) NOT NULL,
+    Name NVARCHAR(500) NULL,
     HeadId UNIQUEIDENTIFIER NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
@@ -63,6 +56,38 @@ CREATE TABLE dbo.Departments (
         REFERENCES dbo.Accounts(Id),
     CONSTRAINT FK_Departments_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
+);
+GO
+
+-- =========================
+-- Students Table
+-- =========================
+IF OBJECT_ID('dbo.Students', 'U') IS NOT NULL
+    DROP TABLE dbo.Students;
+GO
+
+CREATE TABLE dbo.Students
+(
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    AccountId UNIQUEIDENTIFIER NOT NULL,
+    StudentId NVARCHAR(100) NULL,    -- Human-readable ID for display
+    BatchNumber NVARCHAR(50) NULL,
+    Section NVARCHAR(50) NULL,
+    DepartmentId UNIQUEIDENTIFIER NULL,
+    IsDeleted BIT NOT NULL DEFAULT 0,
+    DeletedAt DATETIME2 NULL,
+    CreatedById UNIQUEIDENTIFIER NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UpdatedAt DATETIME2 NULL,
+   
+    CONSTRAINT FK_Students_Account FOREIGN KEY (AccountId)
+        REFERENCES dbo.Accounts(Id)
+        ON DELETE CASCADE,
+    CONSTRAINT FK_Students_Department FOREIGN KEY (DepartmentId)
+        REFERENCES dbo.Departments(Id),
+    CONSTRAINT FK_Students_CreatedBy FOREIGN KEY (CreatedById)
+        REFERENCES dbo.Accounts(Id),
+    CONSTRAINT UQ_Students_StudentId UNIQUE (StudentId)
 );
 GO
 
@@ -98,11 +123,11 @@ GO
 
 CREATE TABLE dbo.Subjects (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    Code NVARCHAR(50) NOT NULL UNIQUE,            -- Unique code for the subject (e.g., "CS", "MATH")
-    Name NVARCHAR(200) NOT NULL,                  -- Full name of the subject (e.g., "Computer Science", "Mathematics")
-    CreatedById UNIQUEIDENTIFIER NULL,            -- Who created this subject
-    IsDeleted BIT NOT NULL DEFAULT 0,             -- Logical delete flag
-    DeletedAt DATETIME2 NULL,                     -- When the subject was deleted
+    Code NVARCHAR(50) NOT NULL UNIQUE,
+    Name NVARCHAR(200) NOT NULL,
+    CreatedById UNIQUEIDENTIFIER NULL,
+    IsDeleted BIT NOT NULL DEFAULT 0,
+    DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
     
@@ -110,7 +135,6 @@ CREATE TABLE dbo.Subjects (
         REFERENCES dbo.Accounts(Id)
 );
 GO
-
 
 -- =========================
 -- Courses Table
@@ -121,21 +145,21 @@ GO
 
 CREATE TABLE dbo.Courses (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    SubjectId UNIQUEIDENTIFIER NOT NULL,         -- Foreign key linking to the Subjects table
-    DepartmentId UNIQUEIDENTIFIER NOT NULL,       -- Department offering the course
-    TeacherId UNIQUEIDENTIFIER NOT NULL,          -- Teacher for this course
-    SemesterId UNIQUEIDENTIFIER NOT NULL,         -- Semester when the course is offered
-    Credits INT NOT NULL DEFAULT 3,               -- Credits for the course
-    CreatedById UNIQUEIDENTIFIER NULL,            -- Who created this course
-    IsDeleted BIT NOT NULL DEFAULT 0,             -- Logical delete flag
-    DeletedAt DATETIME2 NULL,                     -- When the course was deleted
+    SubjectId UNIQUEIDENTIFIER NOT NULL,
+    DepartmentId UNIQUEIDENTIFIER NOT NULL,
+    TeacherId UNIQUEIDENTIFIER NOT NULL,
+    SemesterId UNIQUEIDENTIFIER NOT NULL,
+    Credits INT NOT NULL DEFAULT 3,
+    CreatedById UNIQUEIDENTIFIER NULL,
+    IsDeleted BIT NOT NULL DEFAULT 0,
+    DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
 
     CONSTRAINT FK_Courses_Subject FOREIGN KEY (SubjectId)
-        REFERENCES dbo.Subjects(Id),             -- Links course to subject via SubjectId
+        REFERENCES dbo.Subjects(Id),
     CONSTRAINT FK_Courses_Department FOREIGN KEY (DepartmentId)
-        REFERENCES dbo.Departments(Id),          -- Links course to department
+        REFERENCES dbo.Departments(Id),
     CONSTRAINT FK_Courses_Teacher FOREIGN KEY (TeacherId)
         REFERENCES dbo.Accounts(Id),
     CONSTRAINT FK_Courses_Semester FOREIGN KEY (SemesterId)
@@ -144,8 +168,6 @@ CREATE TABLE dbo.Courses (
         REFERENCES dbo.Accounts(Id)
 );
 GO
-
-
 
 -- =========================
 -- Classrooms Table
@@ -158,6 +180,7 @@ CREATE TABLE dbo.Classrooms (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     RoomName NVARCHAR(50) NOT NULL,
     Capacity INT NOT NULL DEFAULT 30,
+    Location NVARCHAR(100) NOT NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
@@ -251,7 +274,7 @@ CREATE TABLE dbo.Assignments (
 GO
 
 -- =========================
--- Enrollments Table
+-- Enrollments Table (FK -> Students.Id)
 -- =========================
 IF OBJECT_ID('dbo.Enrollments', 'U') IS NOT NULL
     DROP TABLE dbo.Enrollments;
@@ -259,28 +282,34 @@ GO
 
 CREATE TABLE dbo.Enrollments (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    StudentId UNIQUEIDENTIFIER NOT NULL,
+    
+    StudentId UNIQUEIDENTIFIER NOT NULL,   -- FK to Students.Id
     CourseId UNIQUEIDENTIFIER NOT NULL,
     SemesterId UNIQUEIDENTIFIER NOT NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
+    
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     EnrollmentDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     
     CONSTRAINT FK_Enrollments_Student FOREIGN KEY (StudentId)
-        REFERENCES dbo.Accounts(Id),
+        REFERENCES dbo.Students(Id),
+    
     CONSTRAINT FK_Enrollments_Course FOREIGN KEY (CourseId)
         REFERENCES dbo.Courses(Id),
+    
     CONSTRAINT FK_Enrollments_Semester FOREIGN KEY (SemesterId)
         REFERENCES dbo.Semesters(Id),
+    
     CONSTRAINT FK_Enrollments_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id),
+    
     CONSTRAINT UQ_Enrollment UNIQUE(StudentId, CourseId, SemesterId)
 );
 GO
 
 -- =========================
--- Grades Table
+-- Grades Table (FK -> Students.Id)
 -- =========================
 IF OBJECT_ID('dbo.Grades', 'U') IS NOT NULL
     DROP TABLE dbo.Grades;
@@ -288,30 +317,37 @@ GO
 
 CREATE TABLE dbo.Grades (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    StudentId UNIQUEIDENTIFIER NOT NULL,
+    
+    StudentId UNIQUEIDENTIFIER NOT NULL,   -- FK to Students.Id
     CourseId UNIQUEIDENTIFIER NOT NULL,
     SemesterId UNIQUEIDENTIFIER NOT NULL,
+    
     Grade NVARCHAR(5) NULL,
     Marks DECIMAL(5,2) NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
+    
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     
     CONSTRAINT FK_Grades_Student FOREIGN KEY (StudentId)
-        REFERENCES dbo.Accounts(Id),
+        REFERENCES dbo.Students(Id),
+    
     CONSTRAINT FK_Grades_Course FOREIGN KEY (CourseId)
         REFERENCES dbo.Courses(Id),
+    
     CONSTRAINT FK_Grades_Semester FOREIGN KEY (SemesterId)
         REFERENCES dbo.Semesters(Id),
+    
     CONSTRAINT FK_Grades_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id),
+    
     CONSTRAINT UQ_Grade UNIQUE(StudentId, CourseId, SemesterId)
 );
 GO
 
 -- =========================
--- AssignmentSubmissions Table
+-- AssignmentSubmissions Table (FK -> Students.Id)
 -- =========================
 IF OBJECT_ID('dbo.AssignmentSubmissions', 'U') IS NOT NULL
     DROP TABLE dbo.AssignmentSubmissions;
@@ -320,19 +356,19 @@ GO
 CREATE TABLE dbo.AssignmentSubmissions (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     AssignmentId UNIQUEIDENTIFIER NOT NULL,
-    StudentId UNIQUEIDENTIFIER NOT NULL,
+    StudentId UNIQUEIDENTIFIER NOT NULL,  -- FK to Students.Id
     SubmittedDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     Status NVARCHAR(50) NOT NULL DEFAULT 'Pending',
     MarksAwarded DECIMAL(5,2) NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
-    
+
     CONSTRAINT FK_Submissions_Assignment FOREIGN KEY (AssignmentId)
         REFERENCES dbo.Assignments(Id),
     CONSTRAINT FK_Submissions_Student FOREIGN KEY (StudentId)
-        REFERENCES dbo.Accounts(Id),
-    CONSTRAINT FK_Submissions_CreatedById FOREIGN KEY (CreatedById)
+        REFERENCES dbo.Students(Id),
+    CONSTRAINT FK_Submissions_CreatedBy FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id),
     CONSTRAINT UQ_Submission UNIQUE(AssignmentId, StudentId)
 );
@@ -347,12 +383,12 @@ GO
 
 CREATE TABLE dbo.Logs (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    AccountId UNIQUEIDENTIFIER NULL,                   -- Made nullable
-    ActionType NVARCHAR(50) NOT NULL,                  -- Create, Update, Delete
-    Action NVARCHAR(200) NOT NULL,                     -- Free-text description
-    Entity NVARCHAR(100) NULL,                 
-    EntityId UNIQUEIDENTIFIER NULL,            
-    Details NVARCHAR(MAX) NULL,                        -- Optional JSON or extra info
+    AccountId UNIQUEIDENTIFIER NULL,
+    ActionType NVARCHAR(50) NOT NULL,
+    Action NVARCHAR(200) NOT NULL,
+    Entity NVARCHAR(100) NULL,
+    EntityId UNIQUEIDENTIFIER NULL,
+    Details NVARCHAR(MAX) NULL,
     Timestamp DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
 
     CONSTRAINT FK_Logs_Account FOREIGN KEY (AccountId)
@@ -385,7 +421,6 @@ CREATE TABLE dbo.NotificationTypes (
 );
 GO
 
-
 -- =========================
 -- Notifications Table
 -- =========================
@@ -399,7 +434,7 @@ CREATE TABLE dbo.Notifications (
     Message NVARCHAR(MAX) NOT NULL,
     CreatedById UNIQUEIDENTIFIER NOT NULL,
     NotificationTypeId UNIQUEIDENTIFIER NOT NULL,
-    ReceiverId NVARCHAR(100) NULL,  -- stores Account IdentityNumber
+    ReceiverId NVARCHAR(100) NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
@@ -408,13 +443,12 @@ CREATE TABLE dbo.Notifications (
     CONSTRAINT FK_Notifications_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id),
     CONSTRAINT FK_Notifications_NotificationType FOREIGN KEY (NotificationTypeId)
-        REFERENCES dbo.NotificationTypes(Id),
+        REFERENCES dbo.NotificationTypes(Id)
 );
 GO
 
-
 -- =========================
--- ClassSchedules / Timetable Table
+-- ClassSchedules Table
 -- =========================
 IF OBJECT_ID('dbo.ClassSchedules', 'U') IS NOT NULL
     DROP TABLE dbo.ClassSchedules;
@@ -424,7 +458,7 @@ CREATE TABLE dbo.ClassSchedules (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     CourseId UNIQUEIDENTIFIER NOT NULL,
     ClassroomId UNIQUEIDENTIFIER NOT NULL,
-    DayOfWeek INT NOT NULL, -- 1 = Monday, 2 = Tuesday, etc.
+    DayOfWeek INT NOT NULL,
     StartTime TIME NOT NULL,
     EndTime TIME NOT NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
@@ -464,7 +498,7 @@ CREATE TABLE dbo.CanceledClasses (
 GO
 
 -- =========================
--- Attendances Table
+-- Attendances Table (FK -> Students.Id)
 -- =========================
 IF OBJECT_ID('dbo.Attendances', 'U') IS NOT NULL
     DROP TABLE dbo.Attendances;
@@ -472,18 +506,22 @@ GO
 
 CREATE TABLE dbo.Attendances (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    StudentId UNIQUEIDENTIFIER NOT NULL,
+    
+    StudentId UNIQUEIDENTIFIER NOT NULL,    -- FK to Students.Id
     ClassScheduleId UNIQUEIDENTIFIER NOT NULL,
     Status NVARCHAR(20) NOT NULL DEFAULT 'Absent',
     CreatedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
-    RecordedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UpdatedAt DATETIME2 NULL,
     
     CONSTRAINT FK_Attendances_Student FOREIGN KEY (StudentId)
-        REFERENCES dbo.Accounts(Id),
+        REFERENCES dbo.Students(Id),
+    
     CONSTRAINT FK_Attendances_ClassSchedule FOREIGN KEY (ClassScheduleId)
         REFERENCES dbo.ClassSchedules(Id),
+    
     CONSTRAINT FK_Attendances_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
 );

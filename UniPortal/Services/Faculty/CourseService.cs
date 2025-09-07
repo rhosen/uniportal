@@ -24,6 +24,20 @@ namespace UniPortal.Services.Faculty
                 .ToListAsync();
         }
 
+        public async Task<List<Course>> GetOngoingCoursesAsync()
+        {
+            var currentDate = DateTime.Now;
+
+            return await _context.Courses
+                .Include(c => c.Subject)
+                .Include(c => c.Department)
+                .Include(c => c.Teacher)
+                .Include(c => c.Semester)
+                .Where(c => !c.IsDeleted && c.Semester.EndDate > currentDate)
+                .OrderBy(c => c.Subject.Name)
+                .ToListAsync();
+        }
+
         public async Task<Course?> GetByIdAsync(Guid courseId)
         {
             return await _context.Courses
@@ -43,7 +57,7 @@ namespace UniPortal.Services.Faculty
                 TeacherId = teacherId,
                 SemesterId = semesterId,
                 Credits = credits,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.Courses.Add(course);
@@ -67,7 +81,7 @@ namespace UniPortal.Services.Faculty
             course.TeacherId = teacherId;
             course.SemesterId = semesterId;
             course.Credits = credits;
-            course.UpdatedAt = DateTime.UtcNow;
+            course.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -81,7 +95,7 @@ namespace UniPortal.Services.Faculty
             if (course == null) return;
 
             course.IsDeleted = true;
-            course.DeletedAt = DateTime.UtcNow;
+            course.DeletedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
             await LogAsync(deletedById, ActionType.Delete, AppConstant.Course, course.Id);

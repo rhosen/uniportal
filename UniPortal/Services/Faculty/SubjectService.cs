@@ -33,7 +33,7 @@ namespace UniPortal.Services.Faculty
                 Code = code,
                 Name = name,
                 CreatedById = createdById,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.Subjects.Add(subject);
@@ -60,7 +60,7 @@ namespace UniPortal.Services.Faculty
 
             subject.Code = code;
             subject.Name = name;
-            subject.UpdatedAt = DateTime.UtcNow;
+            subject.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -79,7 +79,7 @@ namespace UniPortal.Services.Faculty
             if (subject == null) return;
 
             subject.IsDeleted = true;
-            subject.DeletedAt = DateTime.UtcNow;
+            subject.DeletedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 

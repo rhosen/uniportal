@@ -46,7 +46,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            await _classroomService.CreateAsync(NewClassroom.RoomName, NewClassroom.Capacity);
+            await _classroomService.CreateAsync(NewClassroom.RoomName, NewClassroom.Capacity, NewClassroom.Location);
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
@@ -60,7 +60,8 @@ namespace UniPortal.Pages.Admin
                 {
                     Id = classroom.Id,
                     RoomName = classroom.RoomName,
-                    Capacity = classroom.Capacity
+                    Capacity = classroom.Capacity,
+                    Location = classroom.Location,
                 };
             }
             await OnGetAsync();
@@ -75,7 +76,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task<IActionResult> OnPostSaveEditAsync(string id)
         {
-            await _classroomService.UpdateAsync(Guid.Parse(id), EditClassroom.RoomName, EditClassroom.Capacity);
+            await _classroomService.UpdateAsync(Guid.Parse(id), EditClassroom.RoomName, EditClassroom.Capacity, EditClassroom.Location);
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

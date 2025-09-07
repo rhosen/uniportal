@@ -36,7 +36,7 @@ namespace UniPortal.Services
                 Entity = entity,
                 EntityId = entityId,
                 Details = details != null ? JsonSerializer.Serialize(details) : null,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.Now
             };
 
             _context.Logs.Add(log);

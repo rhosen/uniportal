@@ -15,6 +15,7 @@ namespace UniPortal.Data
 
         // Accounts linked to IdentityUser
         public DbSet<Account> Accounts { get; set; }
+        public DbSet<Student> Students { get; set; }
 
         // Academic entities
         public DbSet<Department> Departments { get; set; }
@@ -37,6 +38,5 @@ namespace UniPortal.Data
 
         // System entities
         public DbSet<Log> Logs { get; set; }
-
     }
 }

@@ -24,6 +24,7 @@
                     <th>#</th>
                     <th>Room Name</th>
                     <th>Capacity</th>
+                    <th>Location</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -32,6 +33,7 @@
                     <td>New</td>
                     <td><input asp-for="NewClassroom.RoomName" class="form-control" required /></td>
                     <td><input asp-for="NewClassroom.Capacity" type="number" class="form-control" required /></td>
+                    <td><input asp-for="NewClassroom.Location" type="text" class="form-control" required /></td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
@@ -46,6 +48,7 @@
             <tr>
                 <th>Room Name</th>
                 <th>Capacity</th>
+                <th>Location</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -61,6 +64,7 @@
                             <!-- Editing Row -->
                         <td><input name="EditClassroom.RoomName" value="@Model.EditClassroom.RoomName" class="form-control" /></td>
                         <td><input name="EditClassroom.Capacity" type="number" value="@Model.EditClassroom.Capacity" class="form-control" /></td>
+                        <td><input name="EditClassroom.Location" type="text" value="@Model.EditClassroom.Location" class="form-control" /></td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
                             <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
@@ -71,6 +75,7 @@
                         <!-- Normal Row -->
                         <td>@room.RoomName</td>
                         <td>@room.Capacity</td>
+                        <td>@room.Location</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@room.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (!room.IsDeleted)

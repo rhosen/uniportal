@@ -5,9 +5,9 @@
         public Guid StudentId { get; set; }
         public Guid CourseId { get; set; }
         public Guid SemesterId { get; set; }
-
+        public DateTime EnrollmentDate { get; set; } = DateTime.Now;
         // Navigation
-        public Account Student { get; set; }
+        public Student Student { get; set; }
         public Course Course { get; set; }
         public Semester Semester { get; set; }
     }

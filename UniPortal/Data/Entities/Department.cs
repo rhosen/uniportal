@@ -2,8 +2,8 @@
 {
     public class Department : IEntity
     {
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; }
         public Guid? HeadId { get; set; }
 
         public Account Head { get; set; }

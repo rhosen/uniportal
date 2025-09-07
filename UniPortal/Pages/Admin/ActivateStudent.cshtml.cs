@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using UniPortal.Data.Entities;
 using UniPortal.Services;
+using UniPortal.Services.Student;
 
 namespace UniPortal.Pages.Admin
 {
@@ -15,21 +17,41 @@ namespace UniPortal.Pages.Admin
 
         public List<Data.Entities.Account> InactiveStudents { get; set; } = new();
 
-        [BindProperty]
-        public Guid StudentId { get; set; }
+        // Search & Pagination
+        [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
+        [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public int TotalPages { get; set; }
+
+        [BindProperty] public Guid AccountId { get; set; }
 
         public async Task OnGetAsync()
         {
-            InactiveStudents = await _accountService.GetInactiveStudentsAsync();
+            var allStudents = await _accountService.GetInactiveStudentsAsync();
+
+            if (!string.IsNullOrEmpty(SearchTerm))
+            {
+                allStudents = allStudents
+                    .Where(s => (s.FirstName + " " + s.LastName)
+                                .Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
+                             || s.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
+            InactiveStudents = allStudents
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        // Activate account
+        public async Task<IActionResult> OnPostActivateAsync()
         {
-            if (StudentId != Guid.Empty)
-            {
-                await _accountService.ActivateStudentAsync(StudentId);
-            }
-            return RedirectToPage();
+            if (AccountId != Guid.Empty)
+                await _accountService.ActivateAsync(AccountId);
+
+            return RedirectToPage(new { CurrentPage, SearchTerm });
         }
     }
 }

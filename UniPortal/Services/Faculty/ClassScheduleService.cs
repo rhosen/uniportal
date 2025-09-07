@@ -64,7 +64,7 @@ namespace UniPortal.Services.Faculty
                 DayOfWeek = dayOfWeek,
                 StartTime = startTime,
                 EndTime = endTime,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 CreatedById = createdById
             };
 
@@ -100,7 +100,7 @@ namespace UniPortal.Services.Faculty
             sched.DayOfWeek = dayOfWeek;
             sched.StartTime = startTime;
             sched.EndTime = endTime;
-            sched.UpdatedAt = DateTime.UtcNow;
+            sched.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -117,7 +117,7 @@ namespace UniPortal.Services.Faculty
             if (sched == null) return;
 
             sched.IsDeleted = true;
-            sched.DeletedAt = DateTime.UtcNow;
+            sched.DeletedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
             await LogAsync(deletedById, ActionType.Delete, "ClassSchedule", sched.Id);

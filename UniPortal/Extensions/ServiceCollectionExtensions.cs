@@ -1,6 +1,7 @@
 ﻿using UniPortal.Services;
 using UniPortal.Services.Admin;
 using UniPortal.Services.Faculty;
+using UniPortal.Services.Student;
 
 namespace UniPortal.Extensions
 {
@@ -23,6 +24,7 @@ namespace UniPortal.Extensions
             services.AddScoped<ClassScheduleService>();
             services.AddSingleton<FileLogService>();
             services.AddScoped<LogService>();
+            services.AddScoped<StudentService>();
 
             return services;
         }
