@@ -6,12 +6,12 @@ using UniPortal.Services.Faculty;
 
 namespace UniPortal.Pages.Admin
 {
-    public class AssignIdModel : PageModel
+    public class OnboardStudentModel : PageModel
     {
         private readonly StudentService _studentService;
         private readonly DepartmentService _departmentService;
 
-        public AssignIdModel(StudentService studentService,
+        public OnboardStudentModel(StudentService studentService,
                              DepartmentService departmentService)
         {
             _studentService = studentService;
@@ -66,7 +66,7 @@ namespace UniPortal.Pages.Admin
                 : ManualStudentId;
 
             // Save/Update student info via service
-            await _studentService.CreateOrUpdateStudentAsync(new  Data.Entities.Student
+            await _studentService.CreateOrUpdateStudentAsync(new Data.Entities.Student
             {
                 AccountId = AccountId,
                 StudentId = studentIdToAssign,
