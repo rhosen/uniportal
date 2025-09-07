@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UniPortal.Constants;
 using UniPortal.Services;
 using UniPortal.Services.Faculty;
 
 namespace UniPortal.Pages.Admin
 {
+    [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class SubjectsModel : BasePageModel
     {
         private readonly SubjectService _subjectService;

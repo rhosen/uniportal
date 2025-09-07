@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UniPortal.Constants;
 using UniPortal.Services;
 using UniPortal.Services.Faculty;
 
 namespace UniPortal.Pages.Admin
 {
+    [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class ClassScheduleModel : BasePageModel
     {
         private readonly ClassScheduleService _scheduleService;

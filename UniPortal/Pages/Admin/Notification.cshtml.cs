@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UniPortal.Constants;
 using UniPortal.Data.Entities;
 using UniPortal.Services;
 
 namespace UniPortal.Pages.Admin
 {
+    [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class NotificationsModel : BasePageModel
     {
         private readonly NotificationService _notificationService;

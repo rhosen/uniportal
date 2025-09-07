@@ -29,19 +29,35 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
+            @using UniPortal.Constants
+
             <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" asp-page="/admin/department">Departments</a></li>
                     <li class="nav-item"><a class="nav-link" asp-page="/admin/subject">Subjects</a></li>
                     <li class="nav-item"><a class="nav-link" asp-page="/admin/classroom">Classrooms</a></li>
                     <li class="nav-item"><a class="nav-link" asp-page="/admin/semester">Semesters</a></li>
-                    @* <li class="nav-item"><a class="nav-link" asp-page="/admin/notification">Notifications</a></li> *@
-                    @* <li class="nav-item"><a class="nav-link" asp-page="/admin/logs">Logs</a></li> *@
+
+                    @* Only show Root-specific links *@
+                    @if (User.IsInRole(Roles.Root))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-page="/admin/root">Admins</a></li>
+                        @* <li class="nav-item"><a class="nav-link" asp-page="/admin/logs">Logs</a></li> *@
+                    }
                 </ul>
 
                 <div class="d-flex align-items-center ms-auto">
                     <span class="me-3">Welcome, <strong>@fullName</strong></span>
-                    <span class="badge bg-danger me-3">Admin</span>
+
+                    @if (User.IsInRole(Roles.Root))
+                    {
+                        <span class="badge me-3" style="background-color:#000000; color:white;">Root</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger me-3">Admin</span>
+                    }
+
                     <form method="post" asp-page="/Account/Logout">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                     </form>

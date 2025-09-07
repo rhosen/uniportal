@@ -7,7 +7,8 @@ namespace UniPortal.Data.Seeders
     {
         public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
-            string[] roles = { Roles.Admin, Roles.Faculty, Roles.Student };
+            // Add new roles including Root
+            string[] roles = { Roles.Student, Roles.Faculty, Roles.Admin, Roles.Root };
 
             foreach (var role in roles)
             {

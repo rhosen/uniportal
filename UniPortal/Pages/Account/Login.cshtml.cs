@@ -60,10 +60,11 @@ namespace UniPortal.Pages.Account
         {
             var redirectUrl = role switch
             {
+                Roles.Root => "/admin/dashboard",
                 Roles.Admin => "/admin/dashboard",
                 Roles.Faculty => "/faculty/dashboard",
                 Roles.Student => "/student/dashboard",
-                _ => "/home/index" // Default redirection if no matching role is found
+                _ => "/account/login"
             };
 
             return LocalRedirect(redirectUrl);

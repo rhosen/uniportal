@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
+using UniPortal.Constants;
 using UniPortal.Services;
 using UniPortal.Services.Admin;
-using UniPortal.ViewModel; // assuming you have a ProfileViewModel
-
+using UniPortal.ViewModel; 
 namespace UniPortal.Pages.Admin
 {
+    [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class DashboardModel : BasePageModel
     {
         private readonly AdminDashboardService _dashboardService;

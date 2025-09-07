@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using UniPortal.Constants;
 using UniPortal.Services;
 using UniPortal.ViewModel;
 
 namespace UniPortal.Pages.Admin
 {
+    [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class ProfileModel : PageModel
     {
         private readonly AccountService _accountService;

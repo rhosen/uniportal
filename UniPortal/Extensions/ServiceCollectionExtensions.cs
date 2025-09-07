@@ -10,9 +10,12 @@ namespace UniPortal.Extensions
     {
         public static IServiceCollection AddAppServices(this IServiceCollection services)
         {
+            services.AddScoped<AdminDashboardService>();
+            services.AddScoped<AdminService>();
+
+
             services.AddScoped<UserService>();
             services.AddScoped<AccountService>();
-            services.AddScoped<AdminDashboardService>();
             services.AddScoped<TeacherService>();
             services.AddScoped<DepartmentService>();
             services.AddScoped<SemesterService>();

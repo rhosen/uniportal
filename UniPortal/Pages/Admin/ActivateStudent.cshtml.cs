@@ -1,11 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using UniPortal.Data.Entities;
+using UniPortal.Constants;
 using UniPortal.Services;
-using UniPortal.Services.Student;
 
 namespace UniPortal.Pages.Admin
 {
+    [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class ActivateStudentModel : PageModel
     {
         private readonly AccountService _accountService;

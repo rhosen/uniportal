@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UniPortal.Constants;
 using UniPortal.Services;
 using UniPortal.Services.Faculty;
 using UniPortal.ViewModel;
 
 namespace UniPortal.Pages.Faculty
 {
+    [Authorize(Roles = Roles.Faculty)]
     public class DashboardModel : BasePageModel
     {
         private readonly FacultyDashboardService _facultyDashboardService;

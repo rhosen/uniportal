@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using UniPortal.Constants;
 using UniPortal.Services.Faculty;
 
 namespace UniPortal.Pages.Admin
 {
+    [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class DepartmentsModel : PageModel
     {
         private readonly DepartmentService _departmentService;
