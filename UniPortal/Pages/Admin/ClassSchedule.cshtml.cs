@@ -36,7 +36,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task OnGetAsync()
         {
-            Courses = await _courseService.GetAllAsync();
+            Courses = await _courseService.GetOngoingCoursesAsync();
             Classrooms = await _classroomService.GetAllAsync();
 
             var allSchedules = await _scheduleService.GetAllAsync();

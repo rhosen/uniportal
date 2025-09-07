@@ -24,6 +24,20 @@ namespace UniPortal.Services.Faculty
                 .ToListAsync();
         }
 
+        public async Task<List<Course>> GetOngoingCoursesAsync()
+        {
+            var currentDate = DateTime.Now;
+
+            return await _context.Courses
+                .Include(c => c.Subject)
+                .Include(c => c.Department)
+                .Include(c => c.Teacher)
+                .Include(c => c.Semester)
+                .Where(c => !c.IsDeleted && c.Semester.EndDate > currentDate)
+                .OrderBy(c => c.Subject.Name)
+                .ToListAsync();
+        }
+
         public async Task<Course?> GetByIdAsync(Guid courseId)
         {
             return await _context.Courses

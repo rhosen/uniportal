@@ -20,6 +20,17 @@ namespace UniPortal.Services.Faculty
                 .ToListAsync();
         }
 
+        public async Task<List<Semester>> GetOnGoingSemestersAsync()
+        {
+            var currentDate = DateTime.Now;
+
+            return await _context.Semesters
+                .Where(s => !s.IsDeleted && s.EndDate > currentDate)
+                .OrderBy(s => s.StartDate)
+                .ToListAsync();
+        }
+
+
         public async Task<Semester> GetByIdAsync(string id)
         {
             return await _context.Semesters

@@ -48,7 +48,7 @@ namespace UniPortal.Pages.Admin
         {
             Departments = await _departmentService.GetAllAsync();
             Teachers = await _teacherService.GetAllAsync();
-            Semesters = await _semesterService.GetAllAsync();
+            Semesters = await _semesterService.GetOnGoingSemestersAsync();
             Subjects = await _subjectService.GetAllAsync();
 
             var allCourses = await _courseService.GetAllAsync();
