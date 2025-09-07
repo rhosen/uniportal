@@ -2,6 +2,7 @@
 using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
+using UniPortal.ViewModel;
 
 namespace UniPortal.Services.Student
 {
@@ -65,6 +66,32 @@ namespace UniPortal.Services.Student
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<StudentViewModel>> GetAllOnboardedStudentAsync()
+        {
+            return await _context.Students
+                .Where(s => !s.IsDeleted && s.Account.IsActive) // only active students
+                .Include(s => s.Account)
+                .Select(s => new StudentViewModel
+                {
+                    Id = s.Id,
+                    StudentId = s.StudentId,
+                    BatchNumber = s.BatchNumber,
+                    Section = s.Section,
+                    DepartmentId = s.DepartmentId,
+                    Email = s.Account.Email
+                })
+                .OrderBy(s => s.StudentId)
+                .ToListAsync();
+        }
+
+
+        public async Task<Data.Entities.Student> GetByIdAsync(Guid id)
+        {
+            return await _context.Students
+                .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+        }
+
 
         public async Task<string> GetSystemGeneratedStudentId(Guid accountId)
         {

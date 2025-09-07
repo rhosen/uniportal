@@ -116,5 +116,26 @@ namespace UniPortal.Services
                 .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsDeleted && a.IsActive)
                 .ToListAsync();
         }
+
+        public async Task UpdateEmailAsync(Guid accountId, string newEmail)
+        {
+            var account = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
+            if (account == null) return;
+
+            // Update AspNetUsers
+            var identityUser = await _userManager.FindByIdAsync(account.IdentityUserId);
+            if (identityUser != null && identityUser.Email != newEmail)
+            {
+                identityUser.Email = newEmail;
+                identityUser.UserName = newEmail; // keep username in sync if needed
+                await _userManager.UpdateAsync(identityUser);
+            }
+
+            // Update Accounts table
+            account.Email = newEmail;
+            account.UpdatedAt = DateTime.UtcNow;
+            _dbContext.Accounts.Update(account);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }
