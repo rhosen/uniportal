@@ -29,7 +29,7 @@ namespace UniPortal.Pages.Admin
        
         public async Task OnGetAsync()
         {
-            var account = await _accountService.GetByIdAsync(CurrentAccount.Id);
+            var account = await _accountService.GetAccountAsync(CurrentAccount.Id);
             if (account == null)
             {
                 Response.Redirect("/account/login");

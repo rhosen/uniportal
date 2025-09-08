@@ -1,102 +1,53 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
-using UniPortal.Data.Entities;
 
 namespace UniPortal.Services
 {
     public class UserService
     {
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UniPortalContext _dbContext;
         private readonly PasswordHasher<IdentityUser> _passwordHasher;
 
         public UserService(
             UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager,
-            RoleManager<IdentityRole> roleManager,
-
-            UniPortalContext dbContext)
+            RoleManager<IdentityRole> roleManager
+            )
         {
             _userManager = userManager;
-            _signInManager = signInManager;
             _roleManager = roleManager;
-            _dbContext = dbContext;
             _passwordHasher = new PasswordHasher<IdentityUser>();
         }
 
-
-        public async Task<IdentityResult> RegisterUserAsync(string email, string password, string role)
+        // Register IdentityUser and assign role
+        public async Task<IdentityUser> RegisterUserAsync(string email, string password, string role)
         {
-            if (string.IsNullOrWhiteSpace(role))
-                throw new ArgumentException("Role must be specified.", nameof(role));
-
-            // 1️⃣ Create IdentityUser
-            var user = new IdentityUser
-            {
-                UserName = email,
-                Email = email
-            };
+            var user = new IdentityUser { UserName = email, Email = email };
 
             var result = await _userManager.CreateAsync(user, password);
-            if (!result.Succeeded) return result;
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            // 2️⃣ Ensure role exists dynamically
             if (!await _roleManager.RoleExistsAsync(role))
-            {
                 await _roleManager.CreateAsync(new IdentityRole(role));
-            }
 
             await _userManager.AddToRoleAsync(user, role);
 
-            // 3️⃣ Create minimal Account entry
-            var account = new Account
-            {
-                Email = email,
-                IdentityUserId = user.Id,
-                IsActive = false, // student not active yet
-            };
-
-            _dbContext.Accounts.Add(account);
-            await _dbContext.SaveChangesAsync();
-
-            return result;
+            return user;
         }
 
-        public async Task<SignInResult> LoginUserAsync(string email, string password, bool rememberMe = false)
+
+        // Update IdentityUser
+        public async Task<IdentityResult> UpdateAsync(IdentityUser user)
         {
-            return await _signInManager.PasswordSignInAsync(email, password, rememberMe, lockoutOnFailure: false);
+            return await _userManager.UpdateAsync(user);
         }
 
-        public async Task LogoutUserAsync()
+        // Password update via Identity
+        public async Task<IdentityResult> UpdatePasswordAsync(IdentityUser user, string newPassword)
         {
-            await _signInManager.SignOutAsync();
-        }
-
-        public async Task<bool> IsUserInRoleAsync(IdentityUser user, string role)
-        {
-            return await _userManager.IsInRoleAsync(user, role);
-        }
-
-        public async Task<bool> VerifyPasswordAsync(string email, string password)
-        {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return false;
-
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-            return result == PasswordVerificationResult.Success;
-        }
-
-        public async Task<IdentityUser?> GetUserByEmailAsync(string email)
-        {
-            return await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
-        }
-
-        public async Task<IList<string>> GetUserRoleAsync(IdentityUser user)
-        {
-            return await _userManager.GetRolesAsync(user);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
         }
 
         public async Task<IdentityResult> ChangePasswordAsync(IdentityUser user, string currentPassword, string newPassword)
@@ -104,5 +55,40 @@ namespace UniPortal.Services
             return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
         }
 
+        // Verify plain password against IdentityUser's hashed password
+        public async Task<bool> VerifyPasswordAsync(string email, string password)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return false;
+
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            return result == PasswordVerificationResult.Success;
+        }
+
+
+        // Get IdentityUser by Id
+        public async Task<IdentityUser?> GetUserByIdAsync(string userId)
+        {
+            return await _userManager.FindByIdAsync(userId);
+        }
+
+        // Get IdentityUser by email
+        public async Task<IdentityUser?> GetUserByEmailAsync(string email)
+        {
+            return await _userManager.FindByEmailAsync(email);
+        }
+
+        public async Task<IList<IdentityUser>> GetUsersInRoleAsync(string role)
+        {
+            return await _userManager.GetUsersInRoleAsync(role);
+        }
+
+        public async Task<IList<string>> GetUserRoleAsync(IdentityUser user)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            return await _userManager.GetRolesAsync(user);
+        }
+
+     
     }
 }

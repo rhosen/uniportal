@@ -29,7 +29,7 @@ namespace UniPortal.Pages
 
             if (!string.IsNullOrEmpty(identityUserId))
             {
-                CurrentAccount = await _accountService.GetByUserIdAsync(identityUserId);
+                CurrentAccount = await _accountService.GetAccountAsync(null, identityUserId);
             }
         }
 

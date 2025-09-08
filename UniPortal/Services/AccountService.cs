@@ -7,92 +7,75 @@ using UniPortal.ViewModel;
 
 namespace UniPortal.Services
 {
-    public class AccountService
+    public class AccountService : BaseService<Account>
     {
-        private readonly UniPortalContext _dbContext;
-        private readonly UserManager<IdentityUser> _userManager;
-        public AccountService(UniPortalContext dbContext, UserManager<IdentityUser> userManager)
+        private readonly UserService _userService;
+        private readonly IUnitOfWork _unitOfWork;
+
+        public AccountService(
+            IUnitOfWork unitOfWork,
+            LogService logService,
+            UserService userService)
+            : base(unitOfWork.Context, logService)
         {
-            _dbContext = dbContext;
-            _userManager = userManager;
+            _unitOfWork = unitOfWork;
+            _userService = userService;
         }
 
-        // Create new account (linked to existing IdentityUser)
-        public async Task<Account> CreateAccountAsync(string identityUserId, string email, string? firstName = null, string? lastName = null)
+        // Create account + IdentityUser atomically
+        public async Task<Account> CreateAccountAsync(string email, string password, string role, string? firstName = null, string? lastName = null)
         {
-            var account = new Account
+            try
             {
-                IdentityUserId = identityUserId,
-                Email = email,
-                FirstName = firstName ?? "",
-                LastName = lastName ?? "",
-                IsActive = false, // student must be activated by admin
-                IsDeleted = false
-            };
+                var identityUser = await _userService.RegisterUserAsync(email, password, role);
 
-            _dbContext.Accounts.Add(account);
-            await _dbContext.SaveChangesAsync();
-            return account;
+                var account = new Account
+                {
+                    IdentityUserId = identityUser.Id,
+                    Email = email,
+                    FirstName = firstName ?? "",
+                    LastName = lastName ?? "",
+                    IsActive = false,
+                    IsDeleted = false
+                };
+
+                _unitOfWork.Context.Accounts.Add(account);
+
+                await LogAsync(null, ActionType.Create, "Account", account.Id, new { Email = email });
+
+                await _unitOfWork.CommitAsync();
+                return account;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackAsync();
+                throw;
+            }
         }
 
-        // Get active account by IdentityUserId
-        public async Task<Account?> GetActiveAccountAsync(string identityUserId)
+        // Flexible account retrieval
+        public async Task<Account?> GetAccountAsync(Guid? accountId = null, string? identityUserId = null)
         {
-            return await _dbContext.Accounts
-                .FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId && a.IsActive && !a.IsDeleted);
+            if (accountId.HasValue)
+                return await _unitOfWork.Context.Accounts
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
+
+            if (!string.IsNullOrEmpty(identityUserId))
+                return await _unitOfWork.Context.Accounts
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId && !a.IsDeleted);
+
+            return null;
         }
 
-        public async Task<Account?> GetAccountByIdentityIdAsync(string identityUserId)
-        {
-            if (string.IsNullOrWhiteSpace(identityUserId))
-                return null;
-
-            return await _dbContext.Accounts
-                .AsNoTracking()   // read-only, slightly faster
-                .FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId);
-        }
-
-        // Soft delete account
-        public async Task SoftDeleteAsync(Guid accountId)
-        {
-            var account = await _dbContext.Accounts.FindAsync(accountId);
-            if (account == null) return;
-
-            account.IsDeleted = true;
-            account.DeletedAt = DateTime.Now;
-            await _dbContext.SaveChangesAsync();
-        }
-
-        // Activate account (admin action)
-        public async Task ActivateAsync(Guid accountId)
-        {
-            var account = await _dbContext.Accounts.FindAsync(accountId);
-            if (account == null) return;
-
-            account.IsActive = true;
-            account.UpdatedAt = DateTime.Now;
-            await _dbContext.SaveChangesAsync();
-        }
-
-        // Optional: update profile
-        public async Task UpdateProfileAsync(Account account)
-        {
-            account.UpdatedAt = DateTime.Now;
-            _dbContext.Accounts.Update(account);
-            await _dbContext.SaveChangesAsync();
-        }
-
-        public async Task<Account?> GetByUserIdAsync(string userId)
-        {
-            return await _dbContext.Accounts.FirstOrDefaultAsync(a => a.IdentityUserId == userId && !a.IsDeleted);
-        }
-
+        // Update profile
         public async Task<bool> UpdateProfileAsync(ProfileViewModel profile)
         {
             if (profile == null || profile.AccountId == Guid.Empty)
                 return false;
 
-            var account = await GetByIdAsync(profile.AccountId);
+            var account = await _unitOfWork.Context.Accounts.FirstOrDefaultAsync(a => a.Id == profile.AccountId && !a.IsDeleted);
             if (account == null) return false;
 
             account.FirstName = profile.FirstName;
@@ -100,110 +83,121 @@ namespace UniPortal.Services
             account.Phone = profile.Phone;
             account.Address = profile.Address;
             account.DateOfBirth = profile.DateOfBirth;
+            account.UpdatedAt = DateTime.UtcNow;
 
-            _dbContext.Accounts.Update(account);
-            await _dbContext.SaveChangesAsync();
+            _unitOfWork.Context.Accounts.Update(account);
 
-            await UpdateEmailAsync(account.Id, profile.Email);
+            await LogAsync(account.Id, ActionType.Update, "Account", account.Id, profile);
+
+            await _unitOfWork.CommitAsync();
             return true;
         }
 
-        public async Task<List<Account>> GetInactiveStudentsAsync()
+        // Soft delete
+        public async Task SoftDeleteAsync(Guid accountId)
         {
-            // Get the user IDs of students (in memory)
-            var studentIds = (await _userManager.GetUsersInRoleAsync(Roles.Student))
-                             .Select(u => u.Id)
-                             .ToList();
-
-            // Query the Accounts filtering with the studentIds list
-            return await _dbContext.Accounts
-                .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsDeleted && !a.IsActive)
-                .ToListAsync();
-        }
-
-        public async Task<List<Account>> GetActiveStudentsAsync()
-        {
-            // Get the user IDs of students (in memory)
-            var studentIds = (await _userManager.GetUsersInRoleAsync(Roles.Student))
-                             .Select(u => u.Id)
-                             .ToList();
-
-            // Query the Accounts filtering with the studentIds list
-            return await _dbContext.Accounts
-                .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsDeleted && a.IsActive)
-                .ToListAsync();
-        }
-
-        public async Task UpdateEmailAsync(Guid accountId, string newEmail)
-        {
-            var account = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
+            var account = await _unitOfWork.Context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
             if (account == null) return;
 
-            // Update AspNetUsers
-            var identityUser = await _userManager.FindByIdAsync(account.IdentityUserId);
-            if (identityUser != null && identityUser.Email != newEmail)
-            {
-                identityUser.Email = newEmail;
-                identityUser.UserName = newEmail; // keep username in sync if needed
-                await _userManager.UpdateAsync(identityUser);
-            }
+            account.IsDeleted = true;
+            account.DeletedAt = DateTime.UtcNow;
 
-            // Update Accounts table
-            account.Email = newEmail;
+            _unitOfWork.Context.Accounts.Update(account);
+
+            await LogAsync(account.Id, ActionType.Delete, "Account", account.Id);
+
+            await _unitOfWork.CommitAsync();
+        }
+
+        // Activate account
+        public async Task ActivateAsync(Guid accountId)
+        {
+            var account = await _unitOfWork.Context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
+            if (account == null) return;
+
+            account.IsActive = true;
             account.UpdatedAt = DateTime.UtcNow;
-            _dbContext.Accounts.Update(account);
-            await _dbContext.SaveChangesAsync();
+
+            _unitOfWork.Context.Accounts.Update(account);
+
+            await LogAsync(account.Id, ActionType.Activate, "Account", account.Id);
+
+            await _unitOfWork.CommitAsync();
         }
 
-        internal async Task<Account> GetByIdAsync(Guid accountId)
+        // Update email atomically
+        public async Task UpdateEmailAsync(Guid accountId, string newEmail)
         {
-            return await _dbContext.Accounts
-               .FirstOrDefaultAsync(a => a.Id == accountId && a.IsActive && !a.IsDeleted);
+            try
+            {
+                var account = await _unitOfWork.Context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
+                if (account == null) throw new Exception("Account not found");
+
+                var identityUser = await _userService.GetUserByIdAsync(account.IdentityUserId);
+                if (identityUser != null && identityUser.Email != newEmail)
+                {
+                    identityUser.Email = newEmail;
+                    identityUser.UserName = newEmail;
+                    await _userService.UpdateAsync(identityUser);
+                }
+
+                account.Email = newEmail;
+                account.UpdatedAt = DateTime.UtcNow;
+
+                _unitOfWork.Context.Accounts.Update(account);
+
+                await LogAsync(account.Id, ActionType.Update, "Account", account.Id, new { newEmail });
+
+                await _unitOfWork.CommitAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackAsync();
+                throw;
+            }
         }
 
-        private async Task<(IdentityUser? user, IdentityError? error)> GetIdentityUserAsync(Guid accountId)
-        {
-            var account = await _dbContext.Accounts.FindAsync(accountId);
-            if (account == null || string.IsNullOrWhiteSpace(account.IdentityUserId))
-                return (null, new IdentityError { Description = "Associated IdentityUser not found." });
-
-            var user = await _userManager.FindByIdAsync(account.IdentityUserId);
-            if (user == null)
-                return (null, new IdentityError { Description = "User not found in Identity system." });
-
-            return (user, null);
-        }
-
+        // Password operations delegated to UserService
         public async Task<IdentityResult> UpdatePasswordAsync(Guid accountId, string newPassword)
         {
-            if (string.IsNullOrWhiteSpace(newPassword))
-                return IdentityResult.Failed(new IdentityError { Description = "Password cannot be empty." });
+            var account = await _unitOfWork.Context.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
+            if (account == null) return IdentityResult.Failed(new IdentityError { Description = "Account not found" });
 
-            var (user, error) = await GetIdentityUserAsync(accountId);
-            if (user == null)
-                return IdentityResult.Failed(error!);
+            var identityUser = await _userService.GetUserByIdAsync(account.IdentityUserId);
+            if (identityUser == null) return IdentityResult.Failed(new IdentityError { Description = "User not found" });
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            return await _userManager.ResetPasswordAsync(user, token, newPassword);
+            return await _userService.UpdatePasswordAsync(identityUser, newPassword);
         }
 
         public async Task<IdentityResult> ChangePasswordAsync(Guid accountId, string currentPassword, string newPassword)
         {
-            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
-                return IdentityResult.Failed(new IdentityError { Description = "Passwords cannot be empty." });
+            var account = await _unitOfWork.Context.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
+            if (account == null) return IdentityResult.Failed(new IdentityError { Description = "Account not found" });
 
-            var (user, error) = await GetIdentityUserAsync(accountId);
-            if (user == null)
-                return IdentityResult.Failed(error!);
+            var identityUser = await _userService.GetUserByIdAsync(account.IdentityUserId);
+            if (identityUser == null) return IdentityResult.Failed(new IdentityError { Description = "User not found" });
 
-            if (currentPassword == newPassword)
-                return IdentityResult.Failed(new IdentityError { Description = "New password cannot be the same as the old password." });
+            return await _userService.ChangePasswordAsync(identityUser, currentPassword, newPassword);
+        }
 
-            var passwordValid = await _userManager.CheckPasswordAsync(user, currentPassword);
-            if (!passwordValid)
-                return IdentityResult.Failed(new IdentityError { Description = "Current password is incorrect." });
+        // Get active students
+        public async Task<List<Account>> GetActiveStudentsAsync()
+        {
+            var studentIds = (await _userService.GetUsersInRoleAsync("Student")).Select(u => u.Id).ToList();
+            return await _unitOfWork.Context.Accounts
+                .AsNoTracking()
+                .Where(a => studentIds.Contains(a.IdentityUserId) && a.IsActive && !a.IsDeleted)
+                .ToListAsync();
+        }
 
-            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        // Get inactive students
+        public async Task<List<Account>> GetInactiveStudentsAsync()
+        {
+            var studentIds = (await _userService.GetUsersInRoleAsync("Student")).Select(u => u.Id).ToList();
+            return await _unitOfWork.Context.Accounts
+                .AsNoTracking()
+                .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsActive && !a.IsDeleted)
+                .ToListAsync();
         }
     }
 }

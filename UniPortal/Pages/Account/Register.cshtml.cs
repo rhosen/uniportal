@@ -8,37 +8,41 @@ namespace UniPortal.Pages.Account
 {
     public class RegisterModel : PageModel
     {
-        private readonly UserService _userService;
+        private readonly AccountService _accountService;
 
-        public RegisterModel(UserService userService)
+        public RegisterModel(AccountService accountService)
         {
-            _userService = userService;
+            _accountService = accountService;
         }
 
         [BindProperty]
         public RegistrationVM Input { get; set; }
 
-        public bool RegistrationSucceeded { get; set; }  // <-- Make sure this is here
+        public bool RegistrationSucceeded { get; set; }  // <-- Flag to show success message
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
                 return Page();
 
-            var result = await _userService.RegisterUserAsync(Input.Email, Input.Password, Roles.Student);
-
-            if (result.Succeeded)
+            try
             {
-                RegistrationSucceeded = true; // <-- Set this to show message
+                // Use AccountService to create both IdentityUser and Account
+                var account = await _accountService.CreateAccountAsync(
+                    Input.Email,
+                    Input.Password,
+                    Roles.Student
+                );
+
+                RegistrationSucceeded = true; // <-- success flag
                 return Page();
             }
-
-            foreach (var error in result.Errors)
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                // Show friendly error messages
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return Page();
             }
-
-            return Page();
         }
     }
 }

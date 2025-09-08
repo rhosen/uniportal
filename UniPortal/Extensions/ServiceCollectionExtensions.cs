@@ -1,4 +1,5 @@
-﻿using UniPortal.Services;
+﻿using UniPortal.Data;
+using UniPortal.Services;
 using UniPortal.Services.Admin;
 using UniPortal.Services.Faculty;
 using UniPortal.Services.Student;
@@ -32,6 +33,13 @@ namespace UniPortal.Extensions
 
             services.AddScoped<StudentDashboardService>();
             services.AddScoped<AssignmentService>();
+
+
+            services.AddScoped<IUnitOfWork>(provider =>
+            {
+                var context = provider.GetRequiredService<UniPortalContext>();
+                return new UnitOfWork(context);
+            });
 
 
 

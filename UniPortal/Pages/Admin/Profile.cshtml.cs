@@ -31,7 +31,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task<IActionResult> OnGetAsync(Guid id)
         {
-            var account = await _accountService.GetByIdAsync(id);
+            var account = await _accountService.GetAccountAsync(id);
             if (account == null) return NotFound();
 
             Profile = account;

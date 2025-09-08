@@ -39,7 +39,7 @@ namespace UniPortal.Pages.Account
             // 2️⃣ Get account info if user exists
             Data.Entities.Account? account = null;
             if (user != null)
-                account = await _accountService.GetAccountByIdentityIdAsync(user.Id);
+                account = await _accountService.GetAccountAsync(null, user.Id);
 
             // 4️⃣ For all other invalid cases → generic message
             if (!credentialsValid || account == null || account.IsDeleted)
