@@ -1,26 +1,66 @@
 ﻿@page
-@model ErrorModel
+@model UniPortal.Pages.ErrorModel
 @{
     ViewData["Title"] = "Error";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="d-flex justify-content-center align-items-center mt-5">
+    <div class="card shadow-lg text-center p-4 rounded-4" style="max-width: 30%; width: 100%;">
+        <div class="card-body">
+            <div class="display-1 mb-3">😬</div>
+            <h5 class="text-danger fw-semibold mb-2">Oops! Something went wrong.</h5>
+            <p class="text-secondary mb-2">Don't worry, it's not you — it's us.</p>
+            <p class="mb-3">Please share this ticket ID with support:</p>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+            @if (!string.IsNullOrEmpty(Model.TicketId))
+            {
+                <div class="bg-primary-subtle text-primary fw-bold mb-3 d-inline-flex align-items-center">
+                    <span id="ticketId">@Model.TicketId</span>
+                    <button class="btn btn-sm p-1" onclick="copyTicketId()" title="Copy Ticket ID">
+                        <!-- Clipboard SVG icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi" viewBox="0 0 16 16">
+                            <path d="M10 1.5H6a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1z" />
+                            <path d="M4.5 2A1.5 1.5 0 0 0 3 3.5v10A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 11.5 2h-7zm7 1a.5.5 0 0 1 .5.5V5h-8V3.5a.5.5 0 0 1 .5-.5h7z" />
+                        </svg>
+                    </button>
+                </div>
+            }
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to the <strong>Development</strong> environment displays detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+            <div class="d-flex justify-content-center gap-2 mb-3">
+                <a href="/" class="btn btn-primary btn-sm shadow-sm">⬅ Back to Dashboard</a>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <form method="post" asp-page="/Accounts/Logout">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+                    </form>
+                }
+            </div>
+            <p class="text-muted small">Logging out clears session and cache if needed.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap alert placeholder -->
+<div id="copyAlert" class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3" style="display:none; z-index:1050;" role="alert">
+    Ticket ID copied!
+    <button type="button" class="btn-close" onclick="hideAlert()"></button>
+</div>
+
+<script>
+    function copyTicketId() {
+        const ticket = document.getElementById('ticketId').innerText;
+        navigator.clipboard.writeText(ticket).then(() => {
+            const alertDiv = document.getElementById('copyAlert');
+            alertDiv.style.display = 'block';
+
+            // Auto hide after 2 seconds
+            setTimeout(() => { alertDiv.style.display = 'none'; }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    function hideAlert() {
+        document.getElementById('copyAlert').style.display = 'none';
+    }
+</script>

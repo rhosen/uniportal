@@ -19,7 +19,7 @@
     <!-- Admin Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" asp-page="/Admin/Dashboard">
+            <a class="navbar-brand fw-bold" asp-page="/dashboards/admin">
                 <img src="~/favicon.ico" alt="UniPortal Logo" width="30" height="30" class="me-2" />
                 UniPortal
             </a>
@@ -33,16 +33,14 @@
 
             <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" asp-page="/admin/department">Departments</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/admin/subject">Subjects</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/admin/classroom">Classrooms</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/admin/semester">Semesters</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/academics/department">Departments</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/academics/subject">Subjects</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/academics/classroom">Classrooms</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/academics/semester">Semesters</a></li>
 
-                    @* Only show Root-specific links *@
                     @if (User.IsInRole(Roles.Root))
                     {
-                        <li class="nav-item"><a class="nav-link" asp-page="/admin/root">Admins</a></li>
-                        @* <li class="nav-item"><a class="nav-link" asp-page="/admin/logs">Logs</a></li> *@
+                        <li class="nav-item"><a class="nav-link" asp-page="/users/admin">Admins</a></li>
                     }
                 </ul>
 
@@ -58,7 +56,7 @@
                         <span class="badge bg-danger me-3">Admin</span>
                     }
 
-                    <form method="post" asp-page="/Account/Logout">
+                    <form method="post" asp-page="/Accounts/Logout">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                     </form>
                 </div>

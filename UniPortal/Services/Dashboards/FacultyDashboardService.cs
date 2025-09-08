@@ -1,0 +1,60 @@
+﻿using Microsoft.EntityFrameworkCore;
+using UniPortal.Data;
+using UniPortal.ViewModels.Dashboards;
+using UniPortal.ViewModels.Users;
+
+namespace UniPortal.Services.Dashboards
+{
+    public class FacultyDashboardService
+    {
+        private readonly UniPortalContext _context;
+
+        public FacultyDashboardService(UniPortalContext context)
+        {
+            _context = context;
+        }
+
+        // -----------------------------
+        // Get faculty profile by account ID
+        // -----------------------------
+        public async Task<FacultyProfileViewModel> GetFacultyProfileAsync(Guid accountId)
+        {
+            return await _context.Accounts
+                .Where(a => a.Id == accountId && !a.IsDeleted)
+                .Select(a => new FacultyProfileViewModel
+                {
+                    Id = a.Id,
+                    FullName = a.FirstName + " " + a.LastName,
+                    Email = a.Email,
+                    Phone = a.Phone
+                })
+                .FirstOrDefaultAsync();
+        }
+
+        // -----------------------------
+        // Get dashboard metrics
+        // -----------------------------
+        public async Task<FacultyMetricsViewModel> GetDashboardMetricsAsync(Guid accountId)
+        {
+            // Total courses taught by faculty
+            int totalCourses = await _context.Courses
+                .Where(c => c.TeacherId == accountId && !c.IsDeleted)
+                .CountAsync();
+
+            // Upcoming class (next scheduled)
+            var nextClass = await _context.ClassSchedules
+                .Include(cs => cs.Course)
+                .ThenInclude(c => c.Subject)
+                .Where(cs => cs.Course.TeacherId == accountId && !cs.IsDeleted)
+                .OrderBy(cs => cs.StartTime)
+                .Select(cs => cs.StartTime.ToString(@"hh\:mm") + " - " + cs.Course.Subject.Name)
+                .FirstOrDefaultAsync();
+
+            return new FacultyMetricsViewModel
+            {
+                TotalCourses = totalCourses,
+                UpcomingClass = nextClass ?? "N/A"
+            };
+        }
+    }
+}

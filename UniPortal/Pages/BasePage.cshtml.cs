@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
-using UniPortal.Services;
+using UniPortal.Constants;
+using UniPortal.Services.Accounts;
 
 namespace UniPortal.Pages
 {
@@ -15,7 +16,6 @@ namespace UniPortal.Pages
         }
 
         public Data.Entities.Account CurrentAccount { get; private set; }
-
 
         public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
         {
@@ -36,5 +36,21 @@ namespace UniPortal.Pages
         public string CurrentUserDisplayName => CurrentAccount != null
             ? $"{CurrentAccount.FirstName} {CurrentAccount.LastName}"
             : "Unknown";
+
+        public string LayoutForRole
+        {
+            get
+            {
+                var role = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+                return role switch
+                {
+                    Roles.Root => "_AdminLayout",
+                    Roles.Admin => "_AdminLayout",
+                    Roles.Faculty => "_FacultyLayout",
+                    Roles.Student => "_StudentLayout",
+                    _ => "_Layout"
+                };
+            }
+        }
     }
 }

@@ -18,7 +18,7 @@
     <!-- Faculty Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" asp-page="/Faculty/Dashboard">
+            <a class="navbar-brand fw-bold" asp-page="/dashboards/faculty">
                 <img src="~/favicon.ico" alt="UniPortal Logo" width="30" height="30" class="me-2" />
                 UniPortal
             </a>
@@ -30,19 +30,19 @@
 
             <div class="collapse navbar-collapse" id="facultyNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Courses">Courses</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Assignments">Assignments</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Notes">Notes</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Grades">Grades</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/faculty/courses">Courses</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/faculty/assignments">Assignments</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/faculty/notes">Notes</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/faculty/grades">Grades</a></li>
                     @* <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Attendance">Attendance</a></li> *@
-                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Notifications">Notifications</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/Faculty/Enrollments">Enrollments</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/faculty/notices">Notices</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/faculty/enrollments">Enrollments</a></li>
                 </ul>
 
                 <div class="d-flex align-items-center ms-auto">
                     <span class="me-3">Welcome, <strong>@fullName</strong></span>
                     <span class="badge bg-success me-2">Faculty</span>
-                    <form method="post" asp-page="/Account/Logout">
+                    <form method="post" asp-page="/Accounts/Logout">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                     </form>
                 </div>

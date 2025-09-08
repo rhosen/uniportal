@@ -1,0 +1,22 @@
+﻿@page
+@model UniPortal.Pages.NotFoundModel
+@{
+    ViewData["Title"] = "Page Not Found";
+}
+
+<div class="d-flex justify-content-center align-items-center mt-5">
+    <div class="card shadow-lg text-center p-4 rounded-4" style="max-width: 30%; width: 100%;">
+        <div class="card-body">
+            <div class="display-1 mb-3">🤔</div>
+            <h5 class="text-warning fw-semibold mb-2">Oops! Page lost in space.</h5>
+            <p class="text-secondary mb-2">Looks like the page you’re looking for doesn’t exist.</p>
+            <p class="mb-3">Maybe it went on vacation? Or never existed at all. 😅</p>
+
+            <div class="d-flex justify-content-center gap-2 mb-3">
+                <a href="/" class="btn btn-primary btn-sm shadow-sm">⬅ Back to Dashboard</a>
+            </div>
+
+            <p class="text-muted small">If you think this is a mistake, you can report it to support.</p>
+        </div>
+    </div>
+</div>

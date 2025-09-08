@@ -1,9 +1,11 @@
 ﻿using UniPortal.Data;
 using UniPortal.Helpers;
-using UniPortal.Services;
-using UniPortal.Services.Admin;
-using UniPortal.Services.Faculty;
-using UniPortal.Services.Student;
+using UniPortal.Services.Academics.Configs;
+using UniPortal.Services.Academics.Operations;
+using UniPortal.Services.Accounts;
+using UniPortal.Services.Dashboards;
+using UniPortal.Services.Infrastructures;
+using UniPortal.Services.Notices;
 
 namespace UniPortal.Extensions
 {
@@ -23,7 +25,7 @@ namespace UniPortal.Extensions
             services.AddScoped<SemesterService>();
             services.AddScoped<CourseService>();
             services.AddScoped<ClassroomService>();
-            services.AddScoped<NotificationService>();
+            services.AddScoped<NoticeService>();
             services.AddScoped<SubjectService>();
             services.AddScoped<ClassScheduleService>();
             services.AddSingleton<FileLogService>();

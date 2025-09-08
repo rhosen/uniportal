@@ -1,0 +1,102 @@
+﻿@page
+@model UniPortal.Pages.Users.StudentModel
+@{
+    ViewData["Title"] = "Student Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">🎓 Student Management</h2>
+
+    <!-- Search -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by Student ID or Email..." />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    @if (!Model.Students.Any())
+    {
+        <p class="text-muted">No students found.</p>
+    }
+    else
+    {
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Student ID</th>
+                    <th>Batch</th>
+                    <th>Section</th>
+                    <th>Department</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in Model.Students)
+                {
+                    <tr>
+                        <form method="post">
+                            @if (Model.EditStudentId == student.Id.ToString())
+                            {
+                                <!-- EDIT MODE -->
+                                <input type="hidden" asp-for="EditStudent.Id" />
+
+                            <td><input asp-for="EditStudent.StudentId" class="form-control" /></td>
+                            <td><input asp-for="EditStudent.BatchNumber" class="form-control" /></td>
+                            <td><input asp-for="EditStudent.Section" class="form-control" /></td>
+                            <td>
+                                <select asp-for="EditStudent.DepartmentId" class="form-select">
+                                    <option value="">-- Select Department --</option>
+                                    @foreach (var dept in Model.Departments)
+                                    {
+                                        <option value="@dept.Id">@dept.Code</option>
+                                    }
+                                </select>
+                            </td>
+                            <td><input asp-for="EditStudent.Email" class="form-control" /></td>
+                            <td class="d-flex gap-2">
+                                <button type="submit" asp-page-handler="Save" class="btn btn-sm btn-primary">💾 Save</button>
+                                <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                            </td>
+                        }
+                        else
+                        {
+                            <!-- READ MODE -->
+                            <td>@student.StudentId</td>
+                            <td>@student.BatchNumber</td>
+                            <td>@student.Section</td>
+                            <td>@Model.Departments.FirstOrDefault(d => d.Id == student.DepartmentId)?.Code</td>
+                            <td>@student.Email</td>
+                            <td class="d-flex gap-2">
+                                <button type="submit" asp-page-handler="Edit" name="id" value="@student.Id" class="btn btn-sm btn-warning"> Edit</button>
+                                <button type="submit" asp-page-handler="Delete" name="id" value="@student.AccountId" class="btn btn-sm btn-danger">Delete</button>
+                                <a href="/accounts/profile?id=@student.AccountId" class="btn btn-sm btn-info"> Details</a>
+                            </td>
+                        }
+                        </form>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <nav>
+            <ul class="pagination">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="?CurrentPage=@(Model.CurrentPage - 1)&SearchTerm=@Model.SearchTerm">Previous</a>
+                </li>
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="?CurrentPage=@i&SearchTerm=@Model.SearchTerm">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="?CurrentPage=@(Model.CurrentPage + 1)&SearchTerm=@Model.SearchTerm">Next</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

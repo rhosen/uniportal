@@ -400,50 +400,51 @@ CREATE INDEX IX_Logs_Timestamp ON dbo.Logs(Timestamp);
 GO
 
 -- =========================
--- NotificationTypes Table
+-- Drop existing RecipientTypes table
 -- =========================
-IF OBJECT_ID('dbo.NotificationTypes', 'U') IS NOT NULL
-    DROP TABLE dbo.NotificationTypes;
+IF OBJECT_ID('dbo.RecipientTypes', 'U') IS NOT NULL
+    DROP TABLE dbo.RecipientTypes;
 GO
 
-CREATE TABLE dbo.NotificationTypes (
+-- =========================
+-- RecipientTypes Table
+-- =========================
+CREATE TABLE dbo.RecipientTypes (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     Name NVARCHAR(50) NOT NULL UNIQUE,
     Description NVARCHAR(200) NULL,
-    CreatedById UNIQUEIDENTIFIER NULL,
+    CreatedById UNIQUEIDENTIFIER NULL,  -- audit column
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
     
-    CONSTRAINT FK_NotificationTypes_CreatedById FOREIGN KEY (CreatedById)
+    CONSTRAINT FK_RecipientTypes_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
 );
 GO
 
 -- =========================
--- Notifications Table
+-- Notices Table
 -- =========================
-IF OBJECT_ID('dbo.Notifications', 'U') IS NOT NULL
-    DROP TABLE dbo.Notifications;
-GO
-
-CREATE TABLE dbo.Notifications (
+CREATE TABLE dbo.Notices (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     Title NVARCHAR(200) NOT NULL,
     Message NVARCHAR(MAX) NOT NULL,
-    CreatedById UNIQUEIDENTIFIER NOT NULL,
-    NotificationTypeId UNIQUEIDENTIFIER NOT NULL,
-    ReceiverId NVARCHAR(100) NULL,
+    CreatedById UNIQUEIDENTIFIER NOT NULL,  -- audit column
+    RecipientTypeId UNIQUEIDENTIFIER NOT NULL,
+    RecipientId NVARCHAR(100) NULL,          -- target student, nullable
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
     
-    CONSTRAINT FK_Notifications_CreatedById FOREIGN KEY (CreatedById)
+    CONSTRAINT FK_Notices_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id),
-    CONSTRAINT FK_Notifications_NotificationType FOREIGN KEY (NotificationTypeId)
-        REFERENCES dbo.NotificationTypes(Id)
+    CONSTRAINT FK_Notices_RecipientType FOREIGN KEY (RecipientTypeId)
+        REFERENCES dbo.RecipientTypes(Id),
+    CONSTRAINT FK_Notices_RecipientStudent FOREIGN KEY (RecipientId)
+        REFERENCES dbo.Students(StudentId)
 );
 GO
 

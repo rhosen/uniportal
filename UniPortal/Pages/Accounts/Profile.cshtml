@@ -1,0 +1,113 @@
+﻿@page
+@model UniPortal.Pages.Accounts.ProfileModel
+@{
+    ViewData["Title"] = "Edit User Profile";
+    Layout = Model.LayoutForRole;
+
+    var fullName = $"{Model.Profile?.FirstName} {Model.Profile?.LastName}".Trim();
+    var displayName = string.IsNullOrWhiteSpace(fullName) ? "Unnamed User" : fullName;
+}
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@error.ErrorMessage</div>
+        }
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Page Title -->
+<div class="row d-flex justify-content-center mb-4">
+    <div class="col-12 col-lg-6 text-center">
+        <h6 class="fw-bold text-primary">Editing User: @displayName</h6>
+        <p class="text-muted small mb-0">
+            Email: @Model.Profile.Email &bull;
+            Joined: @(Model.Profile?.CreatedAt.ToString("yyyy-MM-dd") ?? "N/A")
+        </p>
+    </div>
+</div>
+
+<!-- Forms -->
+<div class="row g-4 justify-content-center" style="max-width: 80%; margin: 0 auto;">
+
+
+    <!-- Left Column: User Info -->
+    <div class="col-12 col-md-6">
+        <div class="shadow rounded-4 overflow-hidden bg-white p-4 p-md-5 h-100">
+            <h5 class="fw-bold mb-2 text-primary">👤 User Information</h5>
+            <p class="text-muted small mb-4">Update user contact and profile details.</p>
+            <form method="post" asp-page-handler="UpdateProfile">
+                <input asp-for="Profile.Id" type="hidden" />
+                <div class="row g-3">
+                    <!-- Name -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">First Name</label>
+                        <input asp-for="Profile.FirstName" class="form-control form-control-sm rounded-3" placeholder="First name" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Last Name</label>
+                        <input asp-for="Profile.LastName" class="form-control form-control-sm rounded-3" placeholder="Last name" />
+                    </div>
+
+                    <!-- Phone + Email -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Phone</label>
+                        <input asp-for="Profile.Phone" class="form-control form-control-sm rounded-3" placeholder="Phone number" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Email</label>
+                        <input asp-for="Profile.Email" type="email" class="form-control form-control-sm rounded-3" placeholder="Email address" />
+                    </div>
+
+                    <!-- DOB + Address -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Date of Birth</label>
+                        <input asp-for="Profile.DateOfBirth" type="date" class="form-control form-control-sm rounded-3" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Address</label>
+                        <input asp-for="Profile.Address" class="form-control form-control-sm rounded-3" placeholder="User address" />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm mt-4"> Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Password Reset -->
+    <div class="col-12 col-md-6">
+        <div class="shadow rounded-4 overflow-hidden bg-white p-4 p-md-5 h-100">
+            <h5 class="fw-bold mb-2 text-warning">🔐 Set New Password</h5>
+            <p class="text-muted small mb-4">Force reset the user's password below.</p>
+            <form method="post" asp-page-handler="ResetPassword">
+                <input asp-for="Profile.Id" type="hidden" />
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">New Password</label>
+                    <input asp-for="NewPassword" type="password" class="form-control form-control-sm rounded-3" placeholder="New password" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Confirm Password</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control form-control-sm rounded-3" placeholder="Confirm password" />
+                </div>
+
+                <button type="submit" class="btn btn-warning w-100 fw-semibold btn-sm mt-4"> Set Password</button>
+            </form>
+            <p class="text-muted small mt-3 mb-0">
+                💡 This will immediately change the user's login password.
+            </p>
+        </div>
+    </div>
+</div>

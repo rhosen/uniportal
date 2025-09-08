@@ -1,0 +1,140 @@
+﻿@page
+@model UniPortal.Pages.Notices.NoticeModel
+@{
+    ViewData["Title"] = "Notice Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">🔔 Notices Management</h2>
+
+    <!-- Search Box -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by title..." />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <!-- Add New Notice -->
+    <form method="post">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Message</th>
+                    <th>Recipient Type</th>
+                    <th>Recipient</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>New</td>
+                    <td><input asp-for="NewNotice.Title" class="form-control" required /></td>
+                    <td><input asp-for="NewNotice.Message" class="form-control" required /></td>
+                    <td>
+                        <select asp-for="NewNotice.RecipientTypeId" class="form-select" required>
+                            <option value="">-- Select Type --</option>
+                            @foreach (var type in Model.RecipientTypes)
+                            {
+                                <option value="@type.Id.ToString()">@type.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td><input asp-for="NewNotice.RecipientId" class="form-control" placeholder="Optional Recipient ID" /></td>
+                    <td>
+                        <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <!-- Existing Notices Table -->
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Title</th>
+                <th>Message</th>
+                <th>Type</th>
+                <th>Target</th>
+                <th>Created By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var notice in Model.Notices)
+            {
+                <tr>
+                    <form method="post">
+                        <input type="hidden" name="id" value="@notice.Id" />
+
+                        @if (Model.EditNoticeId == notice.Id.ToString())
+                        {
+                            <!-- Editing Row -->
+                        <td><input name="EditNotice.Title" value="@Model.EditNotice.Title" class="form-control" /></td>
+                        <td><input name="EditNotice.Message" value="@Model.EditNotice.Message" class="form-control" /></td>
+                        <td>
+                            <select name="EditNotice.NotificationTypeId" class="form-select">
+                                <option value="">-- Select Type --</option>
+                                @foreach (var type in Model.RecipientTypes)
+                                {
+                                    <option value="@type.Id" selected="@(type.Id == Model.EditNotice.RecipientTypeId ? "selected" : null)">
+                                        @type.Name
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td><input name="EditNotice.StudentId" value="@Model.EditNotice.RecipientId" class="form-control" placeholder="Optional target ID" /></td>
+                        <td>@notice.Sender?.FirstName @notice.Sender?.LastName</td>
+                        <td>
+                            <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
+                            <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <!-- Normal Row -->
+                        <td>@notice.Title</td>
+                        <td>@notice.Message</td>
+                        <td>@notice.RecipientType?.Name</td>
+                        <td>@notice.RecipientId</td>
+                        <td>@notice.Sender?.FirstName @notice.Sender?.LastName</td>
+                        <td>
+                            <button type="submit" asp-page-handler="Edit" name="id" value="@notice.Id" class="btn btn-sm btn-warning">Edit</button>
+                            @if (!notice.IsDeleted)
+                            {
+                                <button type="submit" asp-page-handler="Delete" name="id" value="@notice.Id" class="btn btn-sm btn-danger">Delete</button>
+                            }
+                            else
+                            {
+                                <button type="submit" asp-page-handler="Activate" name="id" value="@notice.Id" class="btn btn-sm btn-success">Activate</button>
+                            }
+                        </td>
+                    }
+                    </form>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage - 1)&SearchTerm=@Model.SearchTerm">Previous</a>
+            </li>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="?CurrentPage=@i&SearchTerm=@Model.SearchTerm">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage + 1)&SearchTerm=@Model.SearchTerm">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>

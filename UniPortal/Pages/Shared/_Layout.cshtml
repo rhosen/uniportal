@@ -19,7 +19,7 @@
         <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom shadow-sm mb-3">
             <div class="container">
                 <!-- Brand -->
-                <a class="navbar-brand fw-bold fs-4" asp-area="" asp-page="/Index">
+                <a class="navbar-brand fw-bold fs-4" asp-area="" asp-page="/Accounts/Login">
                     <img src="~/favicon.ico" alt="UniPortal Logo" width="30" height="30" class="me-2" />
                     UniPortal
                 </a>
@@ -45,7 +45,7 @@
                         @if (User.Identity.IsAuthenticated)
                         {
                             <span class="text-muted">Welcome, <strong>@fullName</strong></span>
-                            <form method="post" asp-page="/Account/Logout">
+                            <form method="post" asp-page="/Accounts/Logout">
                                 <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                             </form>
                         }
