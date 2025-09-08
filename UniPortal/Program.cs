@@ -3,6 +3,7 @@ using Serilog;
 using UniPortal.Data.Seeders;
 using UniPortal.Extensions;
 using UniPortal.Middlewares;
+using UniPortal.Services.Infrastructures;
 using static UniPortal.Constants.AppConstant;
 
 internal class Program
@@ -41,11 +42,8 @@ internal class Program
 
         using (var scope = app.Services.CreateScope())
         {
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            await RoleSeeder.SeedRolesAsync(roleManager);
-            await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
-            await FacultySeeder.SeedFacultyAsync(scope.ServiceProvider);
-            await RecipientTypeSeeder.SeedRecipientTypesAsync(scope.ServiceProvider);
+            var initializer = scope.ServiceProvider.GetRequiredService<AppInitializer>();
+            await initializer.InitializeAsync();
         }
 
         // Configure the HTTP request pipeline.

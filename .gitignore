@@ -35,3 +35,5 @@ msbuild.wrn
 
 .env
 Logs/
+
+UniPortal/Properties/PublishProfiles/

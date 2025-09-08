@@ -14,35 +14,36 @@ namespace UniPortal.Extensions
     {
         public static IServiceCollection AddAppServices(this IServiceCollection services)
         {
-            services.AddScoped<AdminDashboardService>();
-            services.AddScoped<AdminService>();
-
-
-            services.AddScoped<UserService>();
-            services.AddScoped<AccountService>();
-            services.AddScoped<TeacherService>();
-            services.AddScoped<DepartmentService>();
-            services.AddScoped<SemesterService>();
-            services.AddScoped<CourseService>();
-            services.AddScoped<ClassroomService>();
-            services.AddScoped<NoticeService>();
-            services.AddScoped<SubjectService>();
-            services.AddScoped<ClassScheduleService>();
-            services.AddSingleton<FileLogService>();
-            services.AddScoped<LogService>();
-            services.AddScoped<StudentService>();
-
-            services.AddScoped<FacultyDashboardService>();
-
-            services.AddScoped<StudentDashboardService>();
-            services.AddScoped<AssignmentService>();
-
+            services.AddScoped<AppInitializer>();
 
             services.AddScoped<IUnitOfWork>(provider =>
             {
                 var context = provider.GetRequiredService<UniPortalContext>();
                 return new UnitOfWork(context);
             });
+
+            services.AddScoped<UserService>();
+            services.AddScoped<AccountService>();
+            services.AddScoped<TeacherService>();
+            services.AddScoped<StudentService>();
+            services.AddScoped<AdminService>();
+
+            services.AddScoped<AdminDashboardService>();
+            services.AddScoped<FacultyDashboardService>();
+            services.AddScoped<StudentDashboardService>();
+
+            services.AddScoped<DepartmentService>();
+            services.AddScoped<SemesterService>();
+            services.AddScoped<ClassroomService>();
+            services.AddScoped<NoticeService>();
+            services.AddScoped<SubjectService>();
+
+            services.AddScoped<CourseService>();
+            services.AddScoped<ClassScheduleService>();
+            services.AddScoped<AssignmentService>();
+
+            services.AddSingleton<FileLogService>();
+            services.AddScoped<LogService>();
 
             services.AddScoped<StudentIdGenerator>();
 
