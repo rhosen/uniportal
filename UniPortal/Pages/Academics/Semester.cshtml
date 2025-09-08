@@ -80,7 +80,7 @@
                             <button type="submit" asp-page-handler="Edit" name="id" value="@sem.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (!sem.IsDeleted)
                             {
-                                <button type="submit" asp-page-handler="Delete" name="id" value="@sem.Id" class="btn btn-sm btn-danger">Delete</button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@sem.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')"> Delete </button>
                             }
                             else
                             {

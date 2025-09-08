@@ -1,6 +1,6 @@
 ﻿namespace UniPortal.ViewModels.Users
 {
-    public class ProfileViewModel
+    public class AccountViewModel
     {
         public Guid AccountId { get; set; }
         public string FirstName { get; set; } = string.Empty;

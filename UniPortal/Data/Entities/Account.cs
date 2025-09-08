@@ -10,9 +10,5 @@
         public string Address { get; set; } = string.Empty;
         public string IdentityUserId { get; set; } = string.Empty; // Link to AspNetUsers
         public bool IsActive { get; set; } = true;
-
-        // Navigation
-        public Student? Student { get; set; }   // Only if this account is a student
-
     }
 }

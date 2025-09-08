@@ -23,6 +23,7 @@ namespace UniPortal.Pages.Dashboards
         public int TotalStudents { get; set; }
         public int ActiveStudents { get; set; }
         public int InactiveStudents { get; set; }
+        public int PendingStudents { get; set; }
         public int TotalTeachers { get; set; }
         public int TotalCourses { get; set; }
 
@@ -42,6 +43,7 @@ namespace UniPortal.Pages.Dashboards
             // Load dashboard metrics
             ActiveStudents = await _dashboardService.GetTotalStudentsAsync(isActive: true);
             InactiveStudents = await _dashboardService.GetTotalStudentsAsync(isActive: false);
+            PendingStudents = await _dashboardService.GetPendingStudentsAsync();
             TotalTeachers = await _dashboardService.GetTotalTeachersAsync();
             TotalCourses = await _dashboardService.GetTotalCoursesAsync();
         }

@@ -1,29 +1,22 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using UniPortal.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using UniPortal.Constants;
-using UniPortal.Data;
-using UniPortal.Data.Entities;
+using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Services.Accounts
 {
     public class AdminService
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UniPortalContext _context;
+        private readonly AccountService _accountService;
+        private readonly UniPortal.Data.UniPortalContext _context;
 
-        public AdminService(UserManager<IdentityUser> userManager,
-                            RoleManager<IdentityRole> roleManager,
-                            UniPortalContext context)
+        public AdminService(AccountService accountService, UniPortal.Data.UniPortalContext context)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
+            _accountService = accountService;
             _context = context;
         }
 
-        // -------------------------
-        // Get all active admins
-        // -------------------------
+
         public async Task<List<Account>> GetAllAsync()
         {
             var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == Roles.Admin);
@@ -41,112 +34,42 @@ namespace UniPortal.Services.Accounts
             return admins;
         }
 
-        // -------------------------
-        // Get admin by AccountId
-        // -------------------------
-        public async Task<Account> GetByIdAsync(string accountId)
+
+        public async Task<Account> GetByIdAsync(Guid accountId)
         {
-            var account = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.Id.ToString() == accountId && !a.IsDeleted);
-
-            if (account == null) return null;
-
-            var user = await _userManager.FindByIdAsync(account.IdentityUserId);
-            if (user != null && await _userManager.IsInRoleAsync(user, Roles.Admin))
-                return account;
-
-            return null;
+            return await _accountService.GetAccountAsync(accountId);
         }
 
-        // -------------------------
-        // Create new admin
-        // -------------------------
-        public async Task<IdentityResult> CreateAsync(string email, string password, string firstName, string lastName)
+
+        public async Task CreateAsync(string email, string password, string firstName, string lastName)
         {
-            var user = new IdentityUser { UserName = email, Email = email };
-            var result = await _userManager.CreateAsync(user, password);
-            if (!result.Succeeded) return result;
-
-            // Ensure Admin role exists
-            if (!await _roleManager.RoleExistsAsync(Roles.Admin))
-                await _roleManager.CreateAsync(new IdentityRole(Roles.Admin));
-
-            await _userManager.AddToRoleAsync(user, Roles.Admin);
-
-            // Add to Accounts table
-            var account = new Account
-            {
-                IdentityUserId = user.Id,
-                FirstName = firstName,
-                LastName = lastName,
-                Email = email,
-                IsActive = true,
-                IsDeleted = false,
-                CreatedAt = DateTime.Now
-            };
-
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
-
-            return result;
+            await _accountService.CreateAccountAsync(email, password, Roles.Admin, firstName, lastName);
         }
 
-        // -------------------------
-        // Update admin info
-        // -------------------------
-        public async Task<bool> UpdateAsync(Guid accountId, string firstName, string lastName, string email)
+
+        public async Task<bool> UpdateAsync(AccountViewModel profile)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
+            var account = await _accountService.GetAccountAsync(accountId: profile.AccountId);
             if (account == null) return false;
 
-            var user = await _userManager.FindByIdAsync(account.IdentityUserId);
-            if (user == null) return false;
+            // Update email if changed
+            if (account.Email != profile.Email)
+                await _accountService.UpdateEmailAsync(profile.AccountId, profile.Email);
 
-            // Update IdentityUser
-            user.Email = email;
-            user.UserName = email;
-            var identityResult = await _userManager.UpdateAsync(user);
-            if (!identityResult.Succeeded) return false;
-
-            // Update Account info
-            account.FirstName = firstName;
-            account.LastName = lastName;
-            account.Email = email;
-            account.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-            return true;
+            // Update full profile
+            return await _accountService.UpdateProfileAsync(profile);
         }
 
-        // -------------------------
-        // Soft delete admin
-        // -------------------------
-        public async Task<bool> DeleteAsync(Guid accountId)
+
+        public async Task DeleteAsync(Guid accountId)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
-            if (account == null) return false;
-
-            account.IsActive = false;
-            account.IsDeleted = true;
-            account.DeletedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-            return true;
+            await _accountService.SoftDeleteAsync(accountId);
         }
 
-        // -------------------------
-        // Activate admin
-        // -------------------------
-        public async Task<bool> ActivateAsync(string identityUserId)
+        public async Task ActivateAsync(Guid accountId)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId && !a.IsDeleted);
-            if (account == null) return false;
-
-            account.IsActive = true;
-            account.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-            return true;
+            var account = await _accountService.GetAccountAsync(accountId: accountId);
+            if (account != null) await _accountService.ActivateAsync(account.Id);
         }
     }
 }

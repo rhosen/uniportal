@@ -41,7 +41,7 @@ namespace UniPortal.Pages.Accounts
         public async Task<IActionResult> OnPostUpdateProfileAsync()
         {
             if (!ModelState.IsValid) return Page();
-            var model = new ProfileViewModel
+            var model = new AccountViewModel
             {
                 FirstName = Profile.FirstName,
                 LastName = Profile.LastName,

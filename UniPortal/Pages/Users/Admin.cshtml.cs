@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Constants;
 using UniPortal.Services.Accounts;
+using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Pages.Users
 {
@@ -81,7 +82,7 @@ namespace UniPortal.Pages.Users
         public async Task<IActionResult> OnPostEditAsync(string id)
         {
             EditAdminId = id;
-            var admin = await _adminService.GetByIdAsync(id);
+            var admin = await _adminService.GetByIdAsync(Guid.Parse(id));
             if (admin != null)
             {
                 EditAdmin = new Data.Entities.Account
@@ -117,7 +118,16 @@ namespace UniPortal.Pages.Users
             if (!User.IsInRole(Roles.Root))
                 return Forbid();
 
-            await _adminService.UpdateAsync(Guid.Parse(id), EditAdmin.FirstName, EditAdmin.LastName, EditAdmin.Email);
+
+            var profile = new AccountViewModel
+            {
+                AccountId = Guid.Parse(id),
+                FirstName = EditAdmin.FirstName,
+                LastName = EditAdmin.LastName,
+                Email = EditAdmin.Email,
+            };
+
+            await _adminService.UpdateAsync(profile);
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
@@ -142,7 +152,7 @@ namespace UniPortal.Pages.Users
             if (!User.IsInRole(Roles.Root))
                 return Forbid();
 
-            await _adminService.ActivateAsync(id);
+            await _adminService.ActivateAsync(Guid.Parse(id));
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
     }

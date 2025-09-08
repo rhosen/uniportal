@@ -35,18 +35,36 @@ namespace UniPortal.Services.Dashboards
         // Students
         public async Task<int> GetTotalStudentsAsync(bool? isActive = null)
         {
-            var studentIds = (await _userManager.GetUsersInRoleAsync(Roles.Student))
-                .Select(u => u.Id)
-                .ToList();
+            // Start query joining Accounts with Students
+            var query = from account in _context.Accounts
+                        join student in _context.Students
+                            on account.Id equals student.AccountId
+                        where !account.IsDeleted
+                        select account;
 
-            var query = _context.Accounts
-                .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsDeleted);
-
+            // Filter by IsActive if specified
             if (isActive.HasValue)
+            {
                 query = query.Where(a => a.IsActive == isActive.Value);
+            }
 
             return await query.CountAsync();
         }
+
+        public async Task<int> GetPendingStudentsAsync()
+        {
+            var query = from account in _context.Accounts
+                        where account.IsActive
+                              && !account.IsDeleted
+                              && !_context.Students.Any(s => s.AccountId == account.Id)
+                        join userRole in _context.UserRoles on account.IdentityUserId equals userRole.UserId
+                        join role in _context.Roles on userRole.RoleId equals role.Id
+                        where role.Name == Roles.Student
+                        select account;
+
+            return await query.CountAsync();
+        }
+
 
         // Teachers
         public async Task<int> GetTotalTeachersAsync(bool? isActive = null)

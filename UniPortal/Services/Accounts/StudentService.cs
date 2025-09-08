@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Constants;
-using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Helpers;
 using UniPortal.Services.Infrastructures;
@@ -90,7 +89,7 @@ namespace UniPortal.Services.Accounts
         public async Task<List<StudentViewModel>> GetAllOnboardedStudentsAsync()
         {
             return await _unitOfWork.Context.Students
-                .Where(s => !s.IsDeleted && s.Account.IsActive)
+                .Where(s => !s.IsDeleted && s.Account.IsActive && !s.Account.IsDeleted)
                 .Include(s => s.Account)
                 .Select(s => new StudentViewModel
                 {
@@ -159,14 +158,8 @@ namespace UniPortal.Services.Accounts
             return _idGenerator.GenerateStudentId(admissionYear, existingIds);
         }
 
-        // Soft-delete a student (delegates account deletion)
         public async Task<bool> DeleteAsync(Guid accountId)
         {
-            var account = await _unitOfWork.Context.Accounts
-                .FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
-
-            if (account == null) return false;
-
             // Delegate soft delete to AccountService
             await _accountService.SoftDeleteAsync(accountId);
 
@@ -177,8 +170,6 @@ namespace UniPortal.Services.Accounts
             if (student != null)
                 await LogAsync(accountId, ActionType.Delete, "Student", student.Id);
 
-            // Commit all changes via UnitOfWork
-            await _unitOfWork.CommitAsync();
             return true;
         }
     }

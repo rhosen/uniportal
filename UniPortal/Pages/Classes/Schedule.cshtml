@@ -141,7 +141,7 @@
                         <td>@sched.StartTime - @sched.EndTime</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@sched.Id" class="btn btn-sm btn-warning">Edit</button>
-                            <button type="submit" asp-page-handler="Delete" name="id" value="@sched.Id" class="btn btn-sm btn-danger">Delete</button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@sched.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')"> Delete </button>
                         </td>
                     }
                     </form>

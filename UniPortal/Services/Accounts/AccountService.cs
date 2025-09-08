@@ -36,7 +36,7 @@ namespace UniPortal.Services.Accounts
                     Email = email,
                     FirstName = firstName ?? "",
                     LastName = lastName ?? "",
-                    IsActive = false,
+                    IsActive = !string.Equals(role, Roles.Student, StringComparison.OrdinalIgnoreCase), // activate if not Student
                     IsDeleted = false
                 };
 
@@ -53,6 +53,7 @@ namespace UniPortal.Services.Accounts
                 throw;
             }
         }
+
 
         // Flexible account retrieval
         public async Task<Account> GetAccountAsync(Guid? accountId = null, string identityUserId = null)
@@ -71,7 +72,7 @@ namespace UniPortal.Services.Accounts
         }
 
         // Update profile
-        public async Task<bool> UpdateProfileAsync(ProfileViewModel profile)
+        public async Task<bool> UpdateProfileAsync(AccountViewModel profile)
         {
             if (profile == null || profile.AccountId == Guid.Empty)
                 return false;

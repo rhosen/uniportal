@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Constants;
 using UniPortal.Services.Accounts;
+using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Pages.Users
 {
@@ -62,7 +63,7 @@ namespace UniPortal.Pages.Users
         public async Task<IActionResult> OnPostEditAsync(string id)
         {
             EditTeacherId = id;
-            var teacher = await _teacherService.GetByIdAsync(id);
+            var teacher = await _teacherService.GetByIdAsync(Guid.Parse(id));
             if (teacher != null)
             {
                 EditTeacher = new Data.Entities.Account
@@ -87,7 +88,15 @@ namespace UniPortal.Pages.Users
         {
             if (!ModelState.IsValid) return Page();
 
-            await _teacherService.UpdateAsync(Guid.Parse(id), EditTeacher.FirstName, EditTeacher.LastName, EditTeacher.Email);
+            var profile = new AccountViewModel
+            {
+                AccountId = Guid.Parse(id), 
+                FirstName = EditTeacher.FirstName,
+                LastName = EditTeacher.LastName,
+                Email = EditTeacher.Email,
+            };
+
+            await _teacherService.UpdateAsync(profile);
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
@@ -100,7 +109,7 @@ namespace UniPortal.Pages.Users
 
         public async Task<IActionResult> OnPostActivateAsync(string id)
         {
-            await _teacherService.ActivateAsync(id);
+            await _teacherService.ActivateAsync(Guid.Parse(id));
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
     }

@@ -102,7 +102,7 @@ namespace UniPortal.Pages.Users
         {
             if (EditStudent == null) return RedirectToPage(new { CurrentPage, SearchTerm });
 
-            var student = await _studentService.GetStudentAsync(null, EditStudent.Id);
+            var student = await _studentService.GetStudentAsync(studentId: EditStudent.Id);
             if (student != null)
             {
                 student.StudentId = EditStudent.StudentId;

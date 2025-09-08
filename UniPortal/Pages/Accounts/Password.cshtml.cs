@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using UniPortal.Constants;
 using UniPortal.Services.Accounts;
+using static UniPortal.Constants.AppConstant;
 
 namespace UniPortal.Pages.Accounts
 {
@@ -53,7 +54,7 @@ namespace UniPortal.Pages.Accounts
             // One-time message to show on login page
             TempData["Message"] = "Your password has been changed. Please log in again.";
 
-            return RedirectToPage("/account/login");
+            return RedirectToPage(AppRoutes.Login);
         }
 
 
