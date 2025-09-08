@@ -42,6 +42,16 @@ namespace UniPortal.Services
                 .FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId && a.IsActive && !a.IsDeleted);
         }
 
+        public async Task<Account?> GetAccountByIdentityIdAsync(string identityUserId)
+        {
+            if (string.IsNullOrWhiteSpace(identityUserId))
+                return null;
+
+            return await _dbContext.Accounts
+                .AsNoTracking()   // read-only, slightly faster
+                .FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId);
+        }
+
         // Soft delete account
         public async Task SoftDeleteAsync(Guid accountId)
         {

@@ -122,5 +122,11 @@ namespace UniPortal.Pages.Admin
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
+
+        public async Task<IActionResult> OnPostDeleteAsync(string id)
+        {
+            await _studentService.DeleteAsync(Guid.Parse(id));
+            return RedirectToPage(new { CurrentPage, SearchTerm });
+        }
     }
 }

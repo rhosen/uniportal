@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
@@ -165,6 +166,21 @@ namespace UniPortal.Services.Student
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Range(0, length)
                 .Select(_ => chars[_random.Next(chars.Length)]).ToArray());
+        }
+
+        public async Task<bool> DeleteAsync(Guid accoundId)
+        {
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.Id == accoundId && !a.IsDeleted);
+
+            if (account == null) return false;
+
+            account.IsActive = false;
+            account.IsDeleted = true;
+            account.DeletedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

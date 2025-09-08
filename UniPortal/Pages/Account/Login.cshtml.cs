@@ -30,29 +30,37 @@ namespace UniPortal.Pages.Account
         public LoginVM Input { get; set; } = new();
 
         // This method is used for both GET and POST to validate the user
-        private async Task<(bool IsValid, string ErrorMessage, string DisplayName, string Role, string identityId)> ValidateUserAsync(string email, string password)
+        private async Task<(bool IsValid, string ErrorMessage, string DisplayName, string Role, string IdentityId)> ValidateUserAsync(string email, string password)
         {
-            // 1️⃣ Validate user credentials via IdentityService
+            // 1️⃣ Validate user credentials
             var user = await _userService.GetUserByEmailAsync(email);
-            if (user == null || !await _userService.VerifyPasswordAsync(email, password))
-                return (false, "Invalid login attempt.", string.Empty, string.Empty, string.Empty);
+            var credentialsValid = user != null && await _userService.VerifyPasswordAsync(email, password);
 
-            // 2️⃣ Get active account via AccountService
-            var account = await _accountService.GetActiveAccountAsync(user.Id);
-            if (account == null)
-                return (false, "Your account is not yet activated. Please contact admin.", string.Empty, string.Empty, string.Empty);
+            // 2️⃣ Get account info if user exists
+            Data.Entities.Account? account = null;
+            if (user != null)
+                account = await _accountService.GetAccountByIdentityIdAsync(user.Id);
 
-            // 3️⃣ Determine display name
+            // 4️⃣ For all other invalid cases → generic message
+            if (!credentialsValid || account == null || account.IsDeleted)
+                return (false, "Invalid login.", string.Empty, string.Empty, string.Empty);
+
+            // 3️⃣ Account exists but not activated → specific message
+            if (account != null && !account.IsActive)
+                return (false, "Your account is not yet activated. Please contact the administrator.", string.Empty, string.Empty, string.Empty);
+
+            // 5️⃣ Determine display name
             string displayName = !string.IsNullOrWhiteSpace(account.FirstName + account.LastName)
                 ? $"{account.FirstName} {account.LastName}".Trim()
                 : user.Email!.Split('@')[0];
 
-            // 4️⃣ Get roles for the user
+            // 6️⃣ Get roles
             var roles = await _userService.GetUserRoleAsync(user);
-            var role = roles.FirstOrDefault();
+            var role = roles.FirstOrDefault() ?? string.Empty;
 
             return (true, string.Empty, displayName, role, user.Id.ToString());
         }
+
 
         // Helper method to handle redirection based on role
         private IActionResult RedirectToRoleBasedPage(string role)
