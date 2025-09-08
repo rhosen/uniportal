@@ -32,23 +32,30 @@ namespace UniPortal.Services.Dashboards
                 .FirstOrDefaultAsync();
         }
 
-        // Students
-        public async Task<int> GetTotalStudentsAsync(bool? isActive = null)
+        public async Task<int> GetOnboardedStudentsAsync()
         {
-            // Start query joining Accounts with Students
-            var query = from account in _context.Accounts
-                        join student in _context.Students
-                            on account.Id equals student.AccountId
-                        where !account.IsDeleted
-                        select account;
+            return await (from account in _context.Accounts
+                          join student in _context.Students
+                              on account.Id equals student.AccountId
+                          where !account.IsDeleted && account.IsActive
+                          select account).CountAsync();
+        }
 
-            // Filter by IsActive if specified
-            if (isActive.HasValue)
-            {
-                query = query.Where(a => a.IsActive == isActive.Value);
-            }
+        public async Task<int> GetNewStudentsAsync()
+        {
+            // Get all users with Student role
+            var studentIds = (await _userManager.GetUsersInRoleAsync(Roles.Student))
+                             .Select(u => u.Id)
+                             .ToList();
 
-            return await query.CountAsync();
+            var count = await _context.Accounts
+                .Where(a => studentIds.Contains(a.IdentityUserId)
+                            && !a.IsDeleted
+                            && !a.IsActive
+                            && !_context.Students.Any(s => s.AccountId == a.Id))
+                .CountAsync();
+
+            return count;
         }
 
         public async Task<int> GetPendingStudentsAsync()
@@ -65,8 +72,6 @@ namespace UniPortal.Services.Dashboards
             return await query.CountAsync();
         }
 
-
-        // Teachers
         public async Task<int> GetTotalTeachersAsync(bool? isActive = null)
         {
             var teacherIds = (await _userManager.GetUsersInRoleAsync(Roles.Faculty))
@@ -82,12 +87,9 @@ namespace UniPortal.Services.Dashboards
             return await query.CountAsync();
         }
 
-        // Courses
         public async Task<int> GetTotalCoursesAsync()
         {
             return await _context.Courses.CountAsync(c => !c.IsDeleted);
         }
-
-       
     }
 }
