@@ -1,4 +1,5 @@
 ﻿using UniPortal.Data;
+using UniPortal.Helpers;
 using UniPortal.Services;
 using UniPortal.Services.Admin;
 using UniPortal.Services.Faculty;
@@ -41,7 +42,7 @@ namespace UniPortal.Extensions
                 return new UnitOfWork(context);
             });
 
-
+            services.AddScoped<StudentIdGenerator>();
 
             return services;
         }

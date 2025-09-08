@@ -12,14 +12,17 @@ namespace UniPortal.Pages.Student
     {
         private readonly StudentDashboardService _studentDashboardService;
         private readonly AssignmentService _assignmentService;
+        private readonly StudentService _studentService;
 
         public DashboardModel(StudentDashboardService studentDashboardService,
                               AssignmentService assignmentService,
-                              AccountService accountService)
+                              AccountService accountService,
+                              StudentService studentService)
             : base(accountService)
         {
             _studentDashboardService = studentDashboardService;
             _assignmentService = assignmentService;
+            this._studentService = studentService;
         }
 
         // -----------------------------
@@ -41,7 +44,7 @@ namespace UniPortal.Pages.Student
                 return LocalRedirect("/account/login"); // redirect if not logged in
 
             // Get internal student Id (Student.Id) using AccountId
-            var student = await _studentDashboardService.GetStudentAsync(CurrentAccount.Id);
+            var student = await _studentService.GetStudentAsync(CurrentAccount.Id);
 
             if (student == null)
                 return NotFound("Student profile not found.");

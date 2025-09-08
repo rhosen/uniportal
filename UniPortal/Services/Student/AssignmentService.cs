@@ -8,16 +8,15 @@ namespace UniPortal.Services.Student
     {
         private readonly UniPortalContext _context;
 
-        private readonly StudentDashboardService _studentDashboardService;
-
+        private readonly StudentService _studentService;
         private readonly IWebHostEnvironment _env;
 
         public AssignmentService(UniPortalContext context,
-            StudentDashboardService studentDashboardService,
+            StudentService studentService,
             IWebHostEnvironment env)
         {
             _context = context;
-            _studentDashboardService = studentDashboardService;
+            this._studentService = studentService;
             _env = env;
         }
 
@@ -54,7 +53,7 @@ namespace UniPortal.Services.Student
             if (file == null || file.Length == 0)
                 throw new Exception("File is required.");
 
-            var student = await _studentDashboardService.GetStudentAsync(accountId);
+            var student = await _studentService.GetStudentAsync(accountId);
             var course = await GetCourseForAssignmentAsync(assignmentId);
             var uploadFolder = BuildUploadFolderPath(course.Subject.Code, assignmentId, student.StudentId);
 

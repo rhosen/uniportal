@@ -1,77 +1,95 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
+using UniPortal.Helpers;
 using UniPortal.ViewModel;
 
 namespace UniPortal.Services.Student
 {
-    public class StudentService
+    public class StudentService : BaseService<Data.Entities.Student>
     {
-        private readonly UniPortalContext _context;
-        private readonly Random _random = new();
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly StudentIdGenerator _idGenerator;
+        private readonly AccountService _accountService;
 
-        public StudentService(UniPortalContext context)
+        public StudentService(
+            IUnitOfWork unitOfWork,
+            LogService logService,
+            StudentIdGenerator idGenerator,
+            AccountService accountService)
+            : base(unitOfWork.Context, logService)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+            _idGenerator = idGenerator;
+            _accountService = accountService;
         }
 
+        // Get accounts of active students without StudentId
         public async Task<List<Account>> GetStudentsWithoutStudentIdAsync()
         {
             var studentRoleName = Roles.Student;
 
-            var query = from account in _context.Accounts
-                        join user in _context.Users
+            var query = from account in _unitOfWork.Context.Accounts
+                        join user in _unitOfWork.Context.Users
                             on account.IdentityUserId equals user.Id
-                        join userRole in _context.UserRoles
+                        join userRole in _unitOfWork.Context.UserRoles
                             on user.Id equals userRole.UserId
-                        join role in _context.Roles
+                        join role in _unitOfWork.Context.Roles
                             on userRole.RoleId equals role.Id
                         where role.Name == studentRoleName
                               && account.IsActive && !account.IsDeleted
-                              && !_context.Students
+                              && !_unitOfWork.Context.Students
                                   .Any(s => s.AccountId == account.Id && !string.IsNullOrEmpty(s.StudentId))
                         select account;
 
-            return await query.ToListAsync();
+            return await query.AsNoTracking().ToListAsync();
         }
 
+        // Create or update student record
         public async Task CreateOrUpdateStudentAsync(Data.Entities.Student student)
         {
             if (student == null) throw new ArgumentNullException(nameof(student));
 
-            // Check if student already exists
-            var existingStudent = await _context.Students
-                .FirstOrDefaultAsync(s => s.AccountId == student.AccountId);
-
-            if (existingStudent != null)
+            try
             {
-                // Update existing student
-                existingStudent.StudentId = student.StudentId;
-                existingStudent.BatchNumber = student.BatchNumber;
-                existingStudent.Section = student.Section;
-                existingStudent.DepartmentId = student.DepartmentId;
-                existingStudent.UpdatedAt = DateTime.UtcNow;
+                var existingStudent = await _unitOfWork.Context.Students
+                    .FirstOrDefaultAsync(s => s.AccountId == student.AccountId);
 
-                _context.Students.Update(existingStudent);
+                if (existingStudent != null)
+                {
+                    existingStudent.StudentId = student.StudentId;
+                    existingStudent.BatchNumber = student.BatchNumber;
+                    existingStudent.Section = student.Section;
+                    existingStudent.DepartmentId = student.DepartmentId;
+                    existingStudent.UpdatedAt = DateTime.UtcNow;
+
+                    _unitOfWork.Context.Students.Update(existingStudent);
+                    await LogAsync(existingStudent.AccountId, ActionType.Update, "Student", existingStudent.Id, student);
+                }
+                else
+                {
+                    student.Id = Guid.NewGuid();
+                    student.CreatedAt = DateTime.UtcNow;
+
+                    await _unitOfWork.Context.Students.AddAsync(student);
+                    await LogAsync(student.AccountId, ActionType.Create, "Student", student.Id, student);
+                }
+
+                await _unitOfWork.CommitAsync();
             }
-            else
+            catch
             {
-                // Create new student
-                student.Id = Guid.NewGuid();
-                student.CreatedAt = DateTime.UtcNow;
-
-                await _context.Students.AddAsync(student);
+                await _unitOfWork.RollbackAsync();
+                throw;
             }
-
-            await _context.SaveChangesAsync();
         }
 
-        public async Task<List<StudentViewModel>> GetAllOnboardedStudentAsync()
+        // Get all onboarded students
+        public async Task<List<StudentViewModel>> GetAllOnboardedStudentsAsync()
         {
-            return await _context.Students
-                .Where(s => !s.IsDeleted && s.Account.IsActive) // only active students
+            return await _unitOfWork.Context.Students
+                .Where(s => !s.IsDeleted && s.Account.IsActive)
                 .Include(s => s.Account)
                 .Select(s => new StudentViewModel
                 {
@@ -84,24 +102,46 @@ namespace UniPortal.Services.Student
                     AccountId = s.AccountId
                 })
                 .OrderBy(s => s.StudentId)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
-
-        public async Task<Data.Entities.Student> GetByIdAsync(Guid id)
+        public async Task<Data.Entities.Student?> GetStudentAsync(
+            Guid? accountId = null,
+            Guid? studentId = null,
+            string? studentCode = null) // student.StudentId
         {
-            return await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+            if (accountId == null && studentId == null && string.IsNullOrEmpty(studentCode))
+                throw new ArgumentException("At least one identifier must be provided.");
+
+            var query = _context.Students
+                .Include(s => s.Account)       // for profile info
+                .Include(s => s.Department)    // for department name
+                .AsQueryable();
+
+            if (accountId.HasValue)
+                query = query.Where(s => s.AccountId == accountId.Value);
+
+            if (studentId.HasValue)
+                query = query.Where(s => s.Id == studentId.Value);
+
+            if (!string.IsNullOrEmpty(studentCode))
+                query = query.Where(s => s.StudentId == studentCode);
+
+            query = query.Where(s => !s.IsDeleted && s.Account.IsActive);
+
+            return await query.AsNoTracking().FirstOrDefaultAsync();
         }
 
 
+        // Generate a unique StudentId
         public async Task<string> GetSystemGeneratedStudentId(Guid accountId)
         {
             if (accountId == Guid.Empty)
                 throw new ArgumentException("Invalid account ID");
 
-            // Get the account's admission year from CreatedAt
-            var account = await _context.Accounts
+            var account = await _unitOfWork.Context.Accounts
+                .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == accountId);
 
             if (account == null)
@@ -109,77 +149,35 @@ namespace UniPortal.Services.Student
 
             int admissionYear = account.CreatedAt.Year;
 
-            // Generate unique student ID
-            string studentId = await GenerateUniqueStudentIdAsync(admissionYear);
-
-            return studentId;
-        }
-
-        private async Task<string> GenerateUniqueStudentIdAsync(int admissionYear)
-        {
-            string studentId;
-            int maxAttempts = 10;
-            int attempt = 0;
-
-            do
-            {
-                attempt++;
-                string sequentialNumber = await GetNextSequentialNumberAsync(admissionYear);
-                string suffix = GenerateRandomSuffix(2);
-
-                studentId = $"Y{admissionYear % 100:D2}{sequentialNumber}{suffix}";
-
-            } while (await _context.Students.AnyAsync(s => s.StudentId == studentId) && attempt < maxAttempts);
-
-            if (attempt >= maxAttempts)
-                throw new Exception("Unable to generate unique Student ID after multiple attempts.");
-
-            return studentId;
-        }
-
-        private async Task<string> GetNextSequentialNumberAsync(int admissionYear)
-        {
-            var existingIds = await _context.Students
+            // Provide all existing IDs to generator
+            var existingIds = await _unitOfWork.Context.Students
                 .Where(s => s.StudentId.StartsWith($"Y{admissionYear % 100:D2}"))
                 .Select(s => s.StudentId)
                 .ToListAsync();
 
-            int nextNumber = 1;
-            if (existingIds.Any())
-            {
-                var numbers = existingIds
-                    .Select(id =>
-                    {
-                        if (id.Length >= 6 && int.TryParse(id.Substring(3, 4), out var num))
-                            return num;
-                        return 0;
-                    }).ToList();
-
-                nextNumber = numbers.Max() + 1;
-            }
-
-            return nextNumber.ToString("D4");
+            return _idGenerator.GenerateStudentId(admissionYear, existingIds);
         }
 
-        private string GenerateRandomSuffix(int length)
+        // Soft-delete a student (delegates account deletion)
+        public async Task<bool> DeleteAsync(Guid accountId)
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Range(0, length)
-                .Select(_ => chars[_random.Next(chars.Length)]).ToArray());
-        }
-
-        public async Task<bool> DeleteAsync(Guid accoundId)
-        {
-            var account = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.Id == accoundId && !a.IsDeleted);
+            var account = await _unitOfWork.Context.Accounts
+                .FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
 
             if (account == null) return false;
 
-            account.IsActive = false;
-            account.IsDeleted = true;
-            account.DeletedAt = DateTime.Now;
+            // Delegate soft delete to AccountService
+            await _accountService.SoftDeleteAsync(accountId);
 
-            await _context.SaveChangesAsync();
+            // Log deletion for student entity
+            var student = await _unitOfWork.Context.Students
+                .FirstOrDefaultAsync(s => s.AccountId == accountId);
+
+            if (student != null)
+                await LogAsync(accountId, ActionType.Delete, "Student", student.Id);
+
+            // Commit all changes via UnitOfWork
+            await _unitOfWork.CommitAsync();
             return true;
         }
     }

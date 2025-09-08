@@ -43,7 +43,7 @@ namespace UniPortal.Pages.Admin
         public async Task OnGetAsync()
         {
             Departments = await _departmentService.GetAllAsync();
-            var allStudents = await _studentService.GetAllOnboardedStudentAsync();
+            var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
 
             if (!string.IsNullOrEmpty(SearchTerm))
             {
@@ -66,7 +66,7 @@ namespace UniPortal.Pages.Admin
             EditStudentId = id;
 
             Departments = await _departmentService.GetAllAsync();
-            var allStudents = await _studentService.GetAllOnboardedStudentAsync();
+            var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
 
             TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
             Students = allStudents
@@ -103,7 +103,7 @@ namespace UniPortal.Pages.Admin
         {
             if (EditStudent == null) return RedirectToPage(new { CurrentPage, SearchTerm });
 
-            var student = await _studentService.GetByIdAsync(EditStudent.Id);
+            var student = await _studentService.GetStudentAsync(null, EditStudent.Id);
             if (student != null)
             {
                 student.StudentId = EditStudent.StudentId;

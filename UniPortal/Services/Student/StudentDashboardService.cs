@@ -7,56 +7,19 @@ namespace UniPortal.Services.Student
     public class StudentDashboardService
     {
         private readonly UniPortalContext _context;
+        private readonly StudentService _studentService;
 
-        public StudentDashboardService(UniPortalContext context)
+        public StudentDashboardService(
+            UniPortalContext context,
+            StudentService studentService)
         {
             _context = context;
+            this._studentService = studentService;
         }
 
-        /// <summary>
-        /// Retrieves a student from the database using either AccountId, Student.Id, or Student.StudentId (human-readable code).
-        /// </summary>
-        /// <param name="accountId">Optional. The Account.Id of the logged-in user.</param>
-        /// <param name="studentId">Optional. The internal Student.Id.</param>
-        /// <param name="studentCode">Optional. The human-readable Student.StudentId.</param>
-        /// <returns>
-        /// Returns a <see cref="Data.Entities.Student"/> including <see cref="Data.Entities.Account"/> and <see cref="Data.Entities.Department"/> 
-        /// if found and active; otherwise, returns null.
-        /// </returns>
-        /// <exception cref="ArgumentException">Thrown if none of the identifiers are provided.</exception>
-        public async Task<Data.Entities.Student?> GetStudentAsync(
-            Guid? accountId = null,
-            Guid? studentId = null,
-            string? studentCode = null) // student.StudentId
-        {
-            if (accountId == null && studentId == null && string.IsNullOrEmpty(studentCode))
-                throw new ArgumentException("At least one identifier must be provided.");
-
-            var query = _context.Students
-                .Include(s => s.Account)       // for profile info
-                .Include(s => s.Department)    // for department name
-                .AsQueryable();
-
-            // Filter by whichever identifier is provided
-            if (accountId.HasValue)
-                query = query.Where(s => s.AccountId == accountId.Value);
-
-            if (studentId.HasValue)
-                query = query.Where(s => s.Id == studentId.Value);
-
-            if (!string.IsNullOrEmpty(studentCode))
-                query = query.Where(s => s.StudentId == studentCode);
-
-            // Only active and not deleted students
-            query = query.Where(s => !s.IsDeleted && s.Account.IsActive);
-
-            return await query.FirstOrDefaultAsync();
-        }
-
-        // Get Profile for View
         public async Task<StudentProfileViewModel> GetProfileAsync(Guid accountId)
         {
-            var student = await GetStudentAsync(accountId);
+            var student = await _studentService.GetStudentAsync(accountId);
 
             if (student == null || student.Account == null)
                 throw new Exception("Student not found.");
