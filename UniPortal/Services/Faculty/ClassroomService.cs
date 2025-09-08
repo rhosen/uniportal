@@ -15,7 +15,7 @@ namespace UniPortal.Services.Faculty
 
         public async Task<List<Classroom>> GetAllAsync()
         {
-            return await _context.Classrooms
+            return await _context.Classrooms.Where(c=> !c.IsDeleted)
                 .OrderBy(c => c.RoomName)
                 .ToListAsync();
         }

@@ -6,7 +6,7 @@
 }
 
 <div class="container my-4">
-    <h2 class="mb-4">👨‍💼 Root</h2>
+    <h2 class="mb-4">👨‍💼 Admin Management</h2>
 
     <!-- Search Box -->
     <form method="get" class="mb-3">
@@ -77,7 +77,7 @@
                             <button type="submit" asp-page-handler="Edit" name="id" value="@admin.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (admin.IsActive)
                             {
-                                <button type="submit" asp-page-handler="Delete" name="id" value="@admin.Id" class="btn btn-sm btn-danger">Deactivate</button>
+                                <button type="submit" asp-page-handler="Delete" name="id" value="@admin.Id" class="btn btn-sm btn-danger">Delete</button>
                             }
                             else
                             {

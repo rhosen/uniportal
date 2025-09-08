@@ -121,9 +121,9 @@ namespace UniPortal.Services.Admin
         // -------------------------
         // Soft delete admin
         // -------------------------
-        public async Task<bool> DeleteAsync(string identityUserId)
+        public async Task<bool> DeleteAsync(Guid accountId)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId && !a.IsDeleted);
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
             if (account == null) return false;
 
             account.IsActive = false;

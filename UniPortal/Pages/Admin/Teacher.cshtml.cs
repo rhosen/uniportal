@@ -94,7 +94,7 @@ namespace UniPortal.Pages.Admin
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await _teacherService.DeleteAsync(id);
+            await _teacherService.DeleteAsync(Guid.Parse(id));
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

@@ -130,7 +130,7 @@ namespace UniPortal.Pages.Admin
             if (!User.IsInRole(Roles.Root))
                 return Forbid();
 
-            await _adminService.DeleteAsync(id);
+            await _adminService.DeleteAsync(Guid.Parse(id));
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

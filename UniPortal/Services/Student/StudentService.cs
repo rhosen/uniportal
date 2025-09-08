@@ -28,7 +28,7 @@ namespace UniPortal.Services.Student
                         join role in _context.Roles
                             on userRole.RoleId equals role.Id
                         where role.Name == studentRoleName
-                              && account.IsActive
+                              && account.IsActive && !account.IsDeleted
                               && !_context.Students
                                   .Any(s => s.AccountId == account.Id && !string.IsNullOrEmpty(s.StudentId))
                         select account;

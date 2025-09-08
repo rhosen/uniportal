@@ -15,7 +15,7 @@ namespace UniPortal.Services.Faculty
 
         public async Task<List<Department>> GetAllAsync()
         {
-            return await _context.Departments
+            return await _context.Departments.Where(x=> !x.IsDeleted)
                 .Include(d => d.Head)
                 .OrderBy(d => d.Code)
                 .ToListAsync();

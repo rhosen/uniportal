@@ -117,10 +117,10 @@ namespace UniPortal.Services.Faculty
         }
 
         // Soft delete teacher
-        public async Task<bool> DeleteAsync(string identityUserId)
+        public async Task<bool> DeleteAsync(Guid accoundId)
         {
             var account = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId && !a.IsDeleted);
+                .FirstOrDefaultAsync(a => a.Id == accoundId && !a.IsDeleted);
 
             if (account == null) return false;
 

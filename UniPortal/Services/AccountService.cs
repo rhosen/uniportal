@@ -151,28 +151,49 @@ namespace UniPortal.Services
                .FirstOrDefaultAsync(a => a.Id == accountId && a.IsActive && !a.IsDeleted);
         }
 
+        private async Task<(IdentityUser? user, IdentityError? error)> GetIdentityUserAsync(Guid accountId)
+        {
+            var account = await _dbContext.Accounts.FindAsync(accountId);
+            if (account == null || string.IsNullOrWhiteSpace(account.IdentityUserId))
+                return (null, new IdentityError { Description = "Associated IdentityUser not found." });
+
+            var user = await _userManager.FindByIdAsync(account.IdentityUserId);
+            if (user == null)
+                return (null, new IdentityError { Description = "User not found in Identity system." });
+
+            return (user, null);
+        }
+
         public async Task<IdentityResult> UpdatePasswordAsync(Guid accountId, string newPassword)
         {
             if (string.IsNullOrWhiteSpace(newPassword))
                 return IdentityResult.Failed(new IdentityError { Description = "Password cannot be empty." });
 
-            // Get the account from your application's account table
-            var account = await _dbContext.Accounts.FindAsync(accountId);
-            if (account == null || string.IsNullOrWhiteSpace(account.IdentityUserId))
-                return IdentityResult.Failed(new IdentityError { Description = "Associated IdentityUser not found." });
-
-            // Use IdentityUserId to find the Identity user
-            var user = await _userManager.FindByIdAsync(account.IdentityUserId);
+            var (user, error) = await GetIdentityUserAsync(accountId);
             if (user == null)
-                return IdentityResult.Failed(new IdentityError { Description = "User not found in Identity system." });
+                return IdentityResult.Failed(error!);
 
-            // Reset the password
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
-
-            return result;
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
         }
 
+        public async Task<IdentityResult> ChangePasswordAsync(Guid accountId, string currentPassword, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+                return IdentityResult.Failed(new IdentityError { Description = "Passwords cannot be empty." });
 
+            var (user, error) = await GetIdentityUserAsync(accountId);
+            if (user == null)
+                return IdentityResult.Failed(error!);
+
+            if (currentPassword == newPassword)
+                return IdentityResult.Failed(new IdentityError { Description = "New password cannot be the same as the old password." });
+
+            var passwordValid = await _userManager.CheckPasswordAsync(user, currentPassword);
+            if (!passwordValid)
+                return IdentityResult.Failed(new IdentityError { Description = "Current password is incorrect." });
+
+            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        }
     }
 }

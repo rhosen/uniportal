@@ -15,7 +15,7 @@ namespace UniPortal.Services
 
         public async Task<List<Notification>> GetAllAsync()
         {
-            return await _context.Notifications
+            return await _context.Notifications.Where(x=> !x.IsDeleted)
                 .Include(n => n.CreatedByAccount)
                 .Include(n => n.NotificationType)
                 .OrderByDescending(n => n.CreatedAt)
