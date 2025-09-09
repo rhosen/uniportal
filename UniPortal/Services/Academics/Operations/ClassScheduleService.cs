@@ -107,10 +107,11 @@ namespace UniPortal.Services.Academics.Operations
                 .Select(c => new SelectOption
                 {
                     Id = c.Id,
-                    Name = $"{c.Department.Code} · {c.Subject.Name} ({c.Subject.Code}) · {c.Teacher.FirstName} {c.Teacher.LastName}"
+                    Name = $"{c.Semester.Name} · {c.Department.Code} · {c.Subject.Name} ({c.Subject.Code}) · {c.Teacher.FirstName} {c.Teacher.LastName}" 
                 })
                 .ToListAsync();
         }
+
 
 
         // ======================
