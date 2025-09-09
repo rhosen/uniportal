@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
+using UniPortal.Dtos;
 
 namespace UniPortal.Services.Academics.Configs
 {
@@ -37,30 +38,65 @@ namespace UniPortal.Services.Academics.Configs
                 .FirstOrDefaultAsync(s => s.Id.ToString() == id);
         }
 
-        public async Task CreateAsync(string name, DateTime startDate, DateTime endDate)
+        public async Task<OperationResult> CreateAsync(string name, DateTime startDate, DateTime endDate)
         {
-            var semester = new Semester
+            var validationResult = await ValidateSemesterDatesAsync(startDate, endDate);
+            if (validationResult != null)
+                return validationResult;
+
+            var semester = new Data.Entities.Semester
             {
                 Name = name,
                 StartDate = startDate,
                 EndDate = endDate
             };
+
             _context.Semesters.Add(semester);
             await _context.SaveChangesAsync();
+
+            return OperationResult.Ok("Semester created successfully.");
         }
 
-        public async Task UpdateAsync(Guid id, string name, DateTime startDate, DateTime endDate)
+
+        private async Task<OperationResult?> ValidateSemesterDatesAsync(DateTime startDate, DateTime endDate, Guid? ignoreId = null)
         {
-            var semester = await _context.Semesters.FindAsync(id);
-            if (semester != null)
-            {
-                semester.Name = name;
-                semester.StartDate = startDate;
-                semester.EndDate = endDate;
-                semester.UpdatedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
-            }
+            if (endDate <= startDate)
+                return OperationResult.Fail("End date must be after start date.");
+
+            bool overlapExists = await _context.Semesters
+                .AnyAsync(s => !s.IsDeleted &&
+                               (ignoreId == null || s.Id != ignoreId) &&
+                               ((startDate >= s.StartDate && startDate <= s.EndDate) ||
+                                (endDate >= s.StartDate && endDate <= s.EndDate) ||
+                                (startDate <= s.StartDate && endDate >= s.EndDate)));
+
+            if (overlapExists)
+                return OperationResult.Fail("A semester already exists within this timeline.");
+
+            return null; // null = validation passed
         }
+
+
+        public async Task<OperationResult> UpdateAsync(Guid id, string name, DateTime startDate, DateTime endDate)
+        {
+            var validationResult = await ValidateSemesterDatesAsync(startDate, endDate, id);
+            if (validationResult != null)
+                return validationResult;
+
+            var semester = await _context.Semesters.FindAsync(id);
+            if (semester == null)
+                return OperationResult.Fail("Semester not found.");
+
+            semester.Name = name;
+            semester.StartDate = startDate;
+            semester.EndDate = endDate;
+            semester.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return OperationResult.Ok("Semester updated successfully.");
+        }
+
 
         public async Task DeleteAsync(string id)
         {

@@ -53,7 +53,14 @@ namespace UniPortal.Pages.Academics
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            await _semesterService.CreateAsync(NewSemester.Name, NewSemester.StartDate, NewSemester.EndDate);
+            var result = await _semesterService.CreateAsync(NewSemester.Name, NewSemester.StartDate, NewSemester.EndDate);
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError("", result.Message);
+                await OnGetAsync();
+                return Page();
+            }
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
@@ -83,9 +90,17 @@ namespace UniPortal.Pages.Academics
 
         public async Task<IActionResult> OnPostSaveEditAsync(string id)
         {
-            await _semesterService.UpdateAsync(Guid.Parse(id), EditSemester.Name, EditSemester.StartDate, EditSemester.EndDate);
+            var result = await _semesterService.UpdateAsync(Guid.Parse(id), EditSemester.Name, EditSemester.StartDate, EditSemester.EndDate);
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError("", result.Message);
+                await OnGetAsync();
+                return Page();
+            }
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
+
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {

@@ -8,6 +8,19 @@
 <div class="container my-4">
     <h2 class="mb-4">📅 Semester Management</h2>
 
+    <!-- Validation errors -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
     <!-- Search Box -->
     <form method="get" class="mb-3">
         <div class="input-group">
