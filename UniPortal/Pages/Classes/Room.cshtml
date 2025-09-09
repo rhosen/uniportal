@@ -1,0 +1,66 @@
+﻿@page
+@model UniPortal.Pages.Classes.RoomModel
+@{
+    ViewData["Title"] = "Rooms";
+    Layout = Model.LayoutForRole;
+}
+
+<div class="container mt-4">
+    <h3 class="mb-3"><i class="bi bi-building me-2"></i>Classroom Availability</h3>
+
+    <div class="mb-3">
+        <input type="text" class="form-control" id="roomSearch" placeholder="Search by Room Number...">
+    </div>
+
+    <div class="row" id="classroomContainer">
+        @foreach (var room in Model.Classrooms)
+        {
+            var bgColor = room.IsOccupied ? "#fee2e2" : "#d1fae5";
+            var badgeClass = room.IsOccupied ? "bg-danger" : "bg-success";
+            var statusText = room.IsOccupied ? "Occupied" : "Free";
+
+            <div class="col-md-2 mb-3 classroom-card">
+                <a href="@Url.Page("/Classes/RoomSchedule", new { roomId = room.Id })" style="text-decoration:none;">
+                    <div class="card text-center shadow-sm h-100"
+                         style="background-color:@bgColor; border-radius:12px; cursor:pointer; transition: transform .2s;">
+                        <div class="card-body d-flex flex-column justify-content-between p-2">
+                            <div>
+                                <strong>@room.RoomName</strong>
+                                <div class="badge @badgeClass mt-1">@statusText</div>
+
+                                @if (room.IsOccupied && room.CurrentSchedules.Any())
+                                {
+                                    var schedule = room.CurrentSchedules.First();
+                                    <div class="mt-1 small text-muted">
+                                        <strong>@schedule.SubjectCode</strong> <br />
+                                        @(schedule.SubjectName.Length > 15 ? schedule.SubjectName.Substring(0, 15) + "…" : schedule.SubjectName) <br />
+                                        @schedule.StartTime.ToString("hh\\:mm tt") - @schedule.EndTime.ToString("hh\\:mm tt")
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    const searchInput = document.getElementById('roomSearch');
+    const classroomContainer = document.getElementById('classroomContainer');
+    const cards = classroomContainer.querySelectorAll('.classroom-card');
+
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        cards.forEach(card => {
+            const roomName = card.querySelector('strong').textContent.toLowerCase();
+            card.style.display = roomName.includes(query) ? 'block' : 'none';
+        });
+    });
+
+    cards.forEach(card => {
+        card.addEventListener('mouseover', () => card.style.transform = "scale(1.05)");
+        card.addEventListener('mouseout', () => card.style.transform = "scale(1)");
+    });
+</script>
