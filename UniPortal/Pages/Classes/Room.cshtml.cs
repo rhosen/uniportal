@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Accounts;
 using UniPortal.ViewModels.Academics;
 
 namespace UniPortal.Pages.Classes
 {
+    [Authorize]
     public class RoomModel : BasePageModel
     {
         private readonly ClassroomService _classroomService;

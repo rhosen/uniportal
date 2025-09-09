@@ -64,7 +64,7 @@
                                 <path d="M10 40V10l22 10 22-10v30L32 32 10 40z" fill="#6f42c1" />
                             </svg>
                             <div class="card-title">Total Courses</div>
-                            <div class="card-value">@Model.Metrics.TotalCourses</div>
+                            <div class="card-title fw-bold text-black">@Model.Metrics.TotalCourses</div>
                         </div>
                     </div>
                 </div>
@@ -76,7 +76,20 @@
                                 <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="#fd7e14" />
                             </svg>
                             <div class="card-title">Upcoming Class</div>
-                            <div class="card-value">@Model.Metrics.UpcomingClass</div>
+                            <div class="card-title fw-bold text-black">@Model.Metrics.UpcomingClass</div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Classrooms -->
+                <div class="col-md-3 col-sm-6">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/classes/room")'">
+                        <div class="metric-content">
+                            <svg class="metric-icon" viewBox="0 0 64 48">
+                                <path d="M32 4L4 16l28 12 28-12L32 4z" fill="#007bff" />
+                            </svg>
+                            <div class="card-title">Room <br /> Status</div>
                         </div>
                     </div>
                 </div>

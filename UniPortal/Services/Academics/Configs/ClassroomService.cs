@@ -79,7 +79,7 @@ namespace UniPortal.Services.Academics.Configs
         public async Task<List<ClassroomAvailabilityViewModel>> GetClassroomAvailabilityAsync()
         {
             var now = DateTime.Now;
-            var currentDay = (int)now.DayOfWeek == 0 ? 7 : (int)now.DayOfWeek; // Sunday = 0 → 7
+            var currentDay = (int)now.DayOfWeek; // 0 = Sunday … 6 = Saturday
             var currentTime = TimeOnly.FromDateTime(now);
 
             // Get current semester
@@ -88,14 +88,12 @@ namespace UniPortal.Services.Academics.Configs
                 .Select(s => s.Id)
                 .FirstOrDefaultAsync();
 
-            // Fetch all schedules with entries for today in one query
+            // Fetch schedules for today
             var schedulesToday = await _context.ClassScheduleEntries
                 .Where(e => !e.IsDeleted &&
-                            e.Schedule.Course.SemesterId == semesterId &&
                             !e.Schedule.IsDeleted &&
-                            e.DayOfWeek == currentDay &&
-                            e.StartTime <= currentTime &&
-                            e.EndTime >= currentTime)
+                            e.Schedule.Course.SemesterId == semesterId &&
+                            e.DayOfWeek == currentDay)
                 .Include(e => e.Schedule)
                     .ThenInclude(cs => cs.Course)
                         .ThenInclude(c => c.Subject)
@@ -106,6 +104,12 @@ namespace UniPortal.Services.Academics.Configs
                     .ThenInclude(cs => cs.Classroom)
                 .ToListAsync();
 
+            // Filter schedules that are currently ongoing, covering overnight
+            var ongoingSchedules = schedulesToday.Where(e =>
+                (e.StartTime <= e.EndTime && e.StartTime <= currentTime && e.EndTime >= currentTime) || // normal
+                (e.StartTime > e.EndTime && (currentTime >= e.StartTime || currentTime <= e.EndTime))   // overnight
+            ).ToList();
+
             // Fetch all classrooms
             var classrooms = await _context.Classrooms
                 .Where(c => !c.IsDeleted)
@@ -114,7 +118,7 @@ namespace UniPortal.Services.Academics.Configs
             // Map classrooms with current schedules
             var result = classrooms.Select(c =>
             {
-                var currentSchedules = schedulesToday
+                var currentSchedules = ongoingSchedules
                     .Where(e => e.Schedule.ClassroomId == c.Id)
                     .Select(e => new ScheduleInfo
                     {
@@ -138,8 +142,5 @@ namespace UniPortal.Services.Academics.Configs
 
             return result;
         }
-
-
-
     }
 }

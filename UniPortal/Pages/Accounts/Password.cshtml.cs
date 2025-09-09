@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
-using UniPortal.Constants;
 using UniPortal.Services.Accounts;
 using static UniPortal.Constants.AppConstant;
 

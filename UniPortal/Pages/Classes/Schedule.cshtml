@@ -31,15 +31,15 @@
         <!-- Multi-day selection for new schedule -->
         <div class="mb-3 py-2 d-flex align-items-center">
             <label class="form-label me-3 mb-0">Days:</label>
-            @for (int i = 1; i <= 7; i++)
+            @for (int i = 0; i <= 6; i++)  // loop 0..6
             {
-                var dayShort = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames[i - 1];
+                var dayShort = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames[i];
                 <div class="form-check form-check-inline me-2 mb-0">
                     <input class="form-check-input"
                            type="checkbox"
                            id="day@(i)"
                            name="Schedule.SelectedDays"
-                           value="@(i)"
+                           value="@(i)" 
                            @(Model.Schedule.SelectedDays.Contains(i) ? "checked" : "") />
                     <label class="form-check-label" for="day@(i)">@dayShort</label>
                 </div>

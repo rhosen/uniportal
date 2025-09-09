@@ -107,7 +107,7 @@ namespace UniPortal.Services.Academics.Operations
                 .Select(c => new SelectOption
                 {
                     Id = c.Id,
-                    Name = $"{c.Semester.Name} · {c.Department.Code} · {c.Subject.Name} ({c.Subject.Code}) · {c.Teacher.FirstName} {c.Teacher.LastName}" 
+                    Name = $"{c.Semester.Name} · {c.Department.Code} · {c.Subject.Name} ({c.Subject.Code}) · {c.Teacher.FirstName} {c.Teacher.LastName}"
                 })
                 .ToListAsync();
         }
@@ -187,11 +187,25 @@ namespace UniPortal.Services.Academics.Operations
             schedule.ClassroomId = classroomId;
             schedule.UpdatedAt = DateTime.Now;
 
+            // Get all existing entries for this schedule
+            var existingEntries = await _context.ClassScheduleEntries
+                .Where(e => e.ScheduleId == scheduleId && !e.IsDeleted)
+                .ToListAsync();
+
+            // Soft-delete entries that are no longer selected
+            foreach (var entry in existingEntries)
+            {
+                if (!days.Contains(entry.DayOfWeek))
+                {
+                    entry.IsDeleted = true;
+                    entry.UpdatedAt = DateTime.Now;
+                }
+            }
+
+            // Update existing or create new entries for selected days
             foreach (var day in days)
             {
-                var entry = await _context.ClassScheduleEntries
-                    .FirstOrDefaultAsync(e => e.ScheduleId == scheduleId && e.DayOfWeek == day && !e.IsDeleted);
-
+                var entry = existingEntries.FirstOrDefault(e => e.DayOfWeek == day && !e.IsDeleted);
                 if (entry != null)
                 {
                     // Update existing entry
@@ -201,7 +215,7 @@ namespace UniPortal.Services.Academics.Operations
                 }
                 else
                 {
-                    // Create new entry if it doesn’t exist
+                    // Create new entry
                     var newEntry = new ClassScheduleEntry
                     {
                         ScheduleId = scheduleId,
