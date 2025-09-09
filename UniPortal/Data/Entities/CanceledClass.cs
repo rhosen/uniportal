@@ -2,11 +2,11 @@
 {
     public class CanceledClass : IEntity
     {
-        public Guid ClassScheduleId { get; set; }   // Reference to the scheduled class
-        public DateOnly Date { get; set; }          // The specific date the class is canceled
-        public string Reason { get; set; }          // Optional reason
+        public Guid ClassScheduleEntryId { get; set; } 
+        public DateOnly Date { get; set; }
+        public string Reason { get; set; }
 
         // Navigation property
-        public ClassSchedule ClassSchedule { get; set; }
+        public ClassScheduleEntry ClassScheduleEntry { get; set; }
     }
 }

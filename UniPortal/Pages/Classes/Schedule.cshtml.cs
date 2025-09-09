@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UniPortal.Constants;
+using UniPortal.Dtos;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
+using UniPortal.ViewModels;
+using UniPortal.ViewModels.Classes;
 
 namespace UniPortal.Pages.Classes
 {
@@ -11,100 +14,145 @@ namespace UniPortal.Pages.Classes
     public class ScheduleModel : BasePageModel
     {
         private readonly ClassScheduleService _scheduleService;
-        private readonly CourseService _courseService;
-        private readonly ClassroomService _classroomService;
 
         public ScheduleModel(
             ClassScheduleService scheduleService,
-            CourseService courseService,
-            ClassroomService classroomService,
             AccountService accountService) : base(accountService)
         {
             _scheduleService = scheduleService;
-            _courseService = courseService;
-            _classroomService = classroomService;
         }
 
-        public List<Data.Entities.ClassSchedule> Schedules { get; set; } = new();
-        public List<Data.Entities.Course> Courses { get; set; } = new();
-        public List<Data.Entities.Classroom> Classrooms { get; set; } = new();
+        // ======================
+        // Display Schedules
+        // ======================
+        public List<ScheduleViewModel> Schedules { get; set; } = new();
 
-        [BindProperty] public Data.Entities.ClassSchedule NewSchedule { get; set; } = new();
-        [BindProperty] public Data.Entities.ClassSchedule EditSchedule { get; set; } = new();
-        [BindProperty(SupportsGet = true)] public string EditScheduleId { get; set; }
+        // ======================
+        // Dropdowns
+        // ======================
+        public List<SelectOption> Courses { get; set; } = new();
+        public List<SelectOption> Classrooms { get; set; } = new();
 
-        [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
-        [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
-        public int TotalPages { get; set; }
+        // ======================
+        // Input binding for create/edit
+        // ======================
+        [BindProperty]
+        public ScheduleInputModel Schedule { get; set; } = new();
 
+        // ======================
+        // Pagination & search
+        // ======================
+        [BindProperty(SupportsGet = true)]
+        public PageInfo PageInfo { get; set; } = new();
+
+
+        [BindProperty(SupportsGet = true)]
+        public Guid? EditScheduleId { get; set; }
+
+        // ======================
+        // OnGet
+        // ======================
         public async Task OnGetAsync()
         {
-            Courses = await _courseService.GetOngoingCoursesAsync();
-            Classrooms = await _classroomService.GetAllAsync();
+            Courses = await _scheduleService.GetCoursesForDropdownAsync();
+            Classrooms = await _scheduleService.GetClassroomsForDropdownAsync();
+            Schedules = await _scheduleService.GetSchedulesAsync(PageInfo.SearchTerm);
 
-            var allSchedules = await _scheduleService.GetAllAsync();
-
-            if (!string.IsNullOrEmpty(SearchTerm))
-            {
-                allSchedules = allSchedules
-                    .Where(s =>
-                        s.Course.Subject.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                        s.Course.Subject.Code.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                        (s.Course.Teacher.FirstName + " " + s.Course.Teacher.LastName)
-                            .Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-
-            TotalPages = (int)Math.Ceiling(allSchedules.Count / (double)PageSize);
-            Schedules = allSchedules
-                .Skip((CurrentPage - 1) * PageSize)
-                .Take(PageSize)
+            // Pagination
+            PageInfo.TotalPages = (int)Math.Ceiling(Schedules.Count / (double)PageInfo.PageSize);
+            Schedules = Schedules
+                .Skip((PageInfo.CurrentPage - 1) * PageInfo.PageSize)
+                .Take(PageInfo.PageSize)
                 .ToList();
+
+            // Load schedule into top form if editing
+            if (EditScheduleId.HasValue)
+            {
+                await LoadSelectedScheduleAsync();
+            }
         }
 
+        private async Task LoadSelectedScheduleAsync()
+        {
+
+            var sched = await _scheduleService.GetScheduleByIdAsync(EditScheduleId.Value);
+            if (sched == null) return;
+
+
+            Schedule = new ScheduleInputModel
+            {
+                ScheduleId = sched.ScheduleId,
+                SelectedCourseId = sched.SelectedCourseId,
+                SelectedClassroomId = sched.SelectedClassroomId,
+                StartTime = sched.StartTime,
+                EndTime = sched.EndTime,
+                SelectedDays = sched.SelectedDays
+            };
+        }
+
+
+
+        // ======================
+        // Create multiple entries
+        // ======================
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            await _scheduleService.CreateAsync(NewSchedule.CourseId, NewSchedule.ClassroomId, NewSchedule.DayOfWeek, NewSchedule.StartTime, NewSchedule.EndTime, CurrentAccount.Id);
-            return RedirectToPage(new { CurrentPage, SearchTerm });
+            if (Schedule.SelectedCourseId == Guid.Empty ||
+                Schedule.SelectedClassroomId == Guid.Empty ||
+                !Schedule.SelectedDays.Any())
+                return Page();
+
+            await _scheduleService.CreateScheduleAsync(
+                Schedule.SelectedCourseId,
+                Schedule.SelectedClassroomId,
+                Schedule.SelectedDays,
+                Schedule.StartTime,
+                Schedule.EndTime,
+                CurrentAccount.Id
+            );
+
+            return RedirectToPage(new { PageInfo.CurrentPage, PageInfo.SearchTerm });
         }
 
-        public async Task<IActionResult> OnPostEditAsync(string id)
+        public IActionResult OnPostEdit(Guid scheduleId)
         {
-            EditScheduleId = id;
-            var sched = await _scheduleService.GetByIdAsync(id);
-            if (sched != null)
-            {
-                EditSchedule = new Data.Entities.ClassSchedule
-                {
-                    Id = sched.Id,
-                    CourseId = sched.CourseId,
-                    ClassroomId = sched.ClassroomId,
-                    DayOfWeek = sched.DayOfWeek,
-                    StartTime = sched.StartTime,
-                    EndTime = sched.EndTime
-                };
-            }
-            await OnGetAsync();
-            return Page();
+            EditScheduleId = scheduleId;
+            return RedirectToPage(new { EditScheduleId = scheduleId, PageInfo.CurrentPage, PageInfo.SearchTerm });
         }
 
-        public IActionResult OnPostCancelEdit()
+        // ======================
+        // Edit single entry
+        // ======================
+        public async Task<IActionResult> OnPostSaveEditAsync()
         {
-            EditScheduleId = null;
-            return RedirectToPage(new { CurrentPage, SearchTerm });
+            await _scheduleService.UpdateScheduleAsync(
+                Schedule.ScheduleId,
+                Schedule.SelectedCourseId,
+                Schedule.SelectedClassroomId,
+                Schedule.SelectedDays,
+                Schedule.StartTime,
+                Schedule.EndTime,
+                CurrentAccount.Id
+            );
+
+            return RedirectToPage(new { PageInfo.CurrentPage, PageInfo.SearchTerm });
         }
 
-        public async Task<IActionResult> OnPostSaveEditAsync(string id)
-        {
-            await _scheduleService.UpdateAsync(id, EditSchedule.CourseId, EditSchedule.ClassroomId, EditSchedule.DayOfWeek, EditSchedule.StartTime, EditSchedule.EndTime, CurrentAccount.Id);
-            return RedirectToPage(new { CurrentPage, SearchTerm });
-        }
-
+        // ======================
+        // Delete
+        // ======================
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await _scheduleService.DeleteAsync(id, CurrentAccount.Id);
-            return RedirectToPage(new { CurrentPage, SearchTerm });
+            await _scheduleService.DeleteScheduleAsync(Guid.Parse(id), CurrentAccount.Id);
+            return RedirectToPage(new { PageInfo.CurrentPage, PageInfo.SearchTerm });
+        }
+
+        // ======================
+        // Cancel Edit
+        // ======================
+        public IActionResult OnPostCancelEdit()
+        {
+            return RedirectToPage(new { PageInfo.CurrentPage, PageInfo.SearchTerm });
         }
     }
 }

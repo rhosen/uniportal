@@ -25,6 +25,7 @@ namespace UniPortal.Data
         public DbSet<Classroom> Classrooms { get; set; }
         public DbSet<ClassNote> ClassNotes { get; set; }
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
+        public DbSet<ClassScheduleEntry> ClassScheduleEntries { get; set; }
         public DbSet<Enrollment> Enrollments { get; set; }
 
         // Student-related entities

@@ -42,19 +42,30 @@ namespace UniPortal.Services.Dashboards
                 .CountAsync();
 
             // Upcoming class (next scheduled)
-            var nextClass = await _context.ClassSchedules
-                .Include(cs => cs.Course)
-                .ThenInclude(c => c.Subject)
-                .Where(cs => cs.Course.TeacherId == accountId && !cs.IsDeleted)
-                .OrderBy(cs => cs.StartTime)
-                .Select(cs => cs.StartTime.ToString(@"hh\:mm") + " - " + cs.Course.Subject.Name)
+            var now = DateTime.Now;
+            var currentDay = ((int)now.DayOfWeek == 0) ? 7 : (int)now.DayOfWeek; // Sunday = 0 → 7
+            var currentTime = TimeOnly.FromDateTime(now);
+
+            var nextClassEntry = await _context.ClassScheduleEntries
+                .Include(e => e.Schedule)
+                    .ThenInclude(s => s.Course)
+                        .ThenInclude(c => c.Subject)
+                .Where(e => !e.IsDeleted &&
+                            e.Schedule.Course.TeacherId == accountId)
+                .OrderBy(e => e.DayOfWeek)    // Optional: order by day
+                .ThenBy(e => e.StartTime)
                 .FirstOrDefaultAsync();
+
+            string nextClass = nextClassEntry != null
+                ? $"{nextClassEntry.StartTime:hh\\:mm} - {nextClassEntry.Schedule.Course.Subject.Name}"
+                : "N/A";
 
             return new FacultyMetricsViewModel
             {
                 TotalCourses = totalCourses,
-                UpcomingClass = nextClass ?? "N/A"
+                UpcomingClass = nextClass
             };
         }
+
     }
 }

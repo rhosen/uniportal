@@ -400,15 +400,12 @@ CREATE INDEX IX_Logs_Timestamp ON dbo.Logs(Timestamp);
 GO
 
 -- =========================
--- Drop existing RecipientTypes table
+-- RecipientTypes Table
 -- =========================
 IF OBJECT_ID('dbo.RecipientTypes', 'U') IS NOT NULL
     DROP TABLE dbo.RecipientTypes;
 GO
 
--- =========================
--- RecipientTypes Table
--- =========================
 CREATE TABLE dbo.RecipientTypes (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     Name NVARCHAR(50) NOT NULL UNIQUE,
@@ -448,8 +445,9 @@ CREATE TABLE dbo.Notices (
 );
 GO
 
+
 -- =========================
--- ClassSchedules Table
+-- Create Master Table: ClassSchedules
 -- =========================
 IF OBJECT_ID('dbo.ClassSchedules', 'U') IS NOT NULL
     DROP TABLE dbo.ClassSchedules;
@@ -459,7 +457,32 @@ CREATE TABLE dbo.ClassSchedules (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     CourseId UNIQUEIDENTIFIER NOT NULL,
     ClassroomId UNIQUEIDENTIFIER NOT NULL,
-    DayOfWeek INT NOT NULL,
+    CreatedById UNIQUEIDENTIFIER NULL,
+    IsDeleted BIT NOT NULL DEFAULT 0,
+    DeletedAt DATETIME2 NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UpdatedAt DATETIME2 NULL,
+
+    CONSTRAINT FK_ClassSchedules_Course FOREIGN KEY (CourseId)
+        REFERENCES dbo.Courses(Id),
+    CONSTRAINT FK_ClassSchedules_Classroom FOREIGN KEY (ClassroomId)
+        REFERENCES dbo.Classrooms(Id),
+    CONSTRAINT FK_ClassSchedules_CreatedBy FOREIGN KEY (CreatedById)
+        REFERENCES dbo.Accounts(Id)
+);
+GO
+
+-- =========================
+-- Create Detail Table: ClassScheduleEntries
+-- =========================
+IF OBJECT_ID('dbo.ClassScheduleEntries', 'U') IS NOT NULL
+    DROP TABLE dbo.ClassScheduleEntries;
+GO
+
+CREATE TABLE dbo.ClassScheduleEntries (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    ScheduleId UNIQUEIDENTIFIER NOT NULL, -- FK → ClassSchedules
+    DayOfWeek INT NOT NULL,               -- 1 = Monday, 7 = Sunday
     StartTime TIME NOT NULL,
     EndTime TIME NOT NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
@@ -467,12 +490,10 @@ CREATE TABLE dbo.ClassSchedules (
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
-    
-    CONSTRAINT FK_ClassSchedules_Course FOREIGN KEY (CourseId)
-        REFERENCES dbo.Courses(Id),
-    CONSTRAINT FK_ClassSchedules_Classroom FOREIGN KEY (ClassroomId)
-        REFERENCES dbo.Classrooms(Id),
-    CONSTRAINT FK_ClassSchedules_CreatedBy FOREIGN KEY (CreatedById)
+
+    CONSTRAINT FK_ClassScheduleEntries_Schedule FOREIGN KEY (ScheduleId)
+        REFERENCES dbo.ClassSchedules(Id),
+    CONSTRAINT FK_ClassScheduleEntries_CreatedBy FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
 );
 GO
@@ -486,17 +507,19 @@ GO
 
 CREATE TABLE dbo.CanceledClasses (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    ClassScheduleId UNIQUEIDENTIFIER NOT NULL,
+    ClassScheduleEntryId UNIQUEIDENTIFIER NOT NULL, -- changed FK to detail table
     Date DATE NOT NULL,
     Reason NVARCHAR(500) NULL,
     CreatedById UNIQUEIDENTIFIER NULL,
-    
-    CONSTRAINT FK_CanceledClasses_ClassSchedule FOREIGN KEY (ClassScheduleId)
-        REFERENCES dbo.ClassSchedules(Id),
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+
+    CONSTRAINT FK_CanceledClasses_ClassScheduleEntry FOREIGN KEY (ClassScheduleEntryId)
+        REFERENCES dbo.ClassScheduleEntries(Id),
     CONSTRAINT FK_CanceledClasses_CreatedById FOREIGN KEY (CreatedById)
         REFERENCES dbo.Accounts(Id)
 );
 GO
+
 
 -- =========================
 -- Attendances Table (FK -> Students.Id)

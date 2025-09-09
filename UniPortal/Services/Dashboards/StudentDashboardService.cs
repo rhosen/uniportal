@@ -54,10 +54,13 @@ namespace UniPortal.Services.Dashboards
                     .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId));
 
             // 3️⃣ Today's Classes
-            var todayClasses = await _context.ClassSchedules
-                .Where(c => !c.IsDeleted &&
-                            c.Course.Enrollments.Any(e => e.StudentId == studentId) &&
-                            c.DayOfWeek == (int)today.DayOfWeek)
+            var currentDay = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
+
+            var todayClasses = await _context.ClassScheduleEntries
+                .Where(e => !e.IsDeleted &&
+                            !e.Schedule.IsDeleted &&
+                            e.Schedule.Course.Enrollments.Any(en => en.StudentId == studentId) &&
+                            e.DayOfWeek == currentDay)
                 .CountAsync();
 
             // 4️⃣ Attendance %

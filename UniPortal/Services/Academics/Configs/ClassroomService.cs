@@ -79,7 +79,7 @@ namespace UniPortal.Services.Academics.Configs
         public async Task<List<ClassroomAvailabilityViewModel>> GetClassroomAvailabilityAsync()
         {
             var now = DateTime.Now;
-            var currentDay = ((int)now.DayOfWeek == 0) ? 7 : (int)now.DayOfWeek; // Sunday = 0 → 7
+            var currentDay = (int)now.DayOfWeek == 0 ? 7 : (int)now.DayOfWeek; // Sunday = 0 → 7
             var currentTime = TimeOnly.FromDateTime(now);
 
             // Get current semester
@@ -88,13 +88,22 @@ namespace UniPortal.Services.Academics.Configs
                 .Select(s => s.Id)
                 .FirstOrDefaultAsync();
 
-            // Fetch all schedules for today in one query
-            var schedulesToday = await _context.ClassSchedules
-                .Where(cs => cs.Course.SemesterId == semesterId &&
-                             cs.DayOfWeek == currentDay &&
-                             !cs.IsDeleted)
-                .Include(cs => cs.Course)
-                    .ThenInclude(c => c.Subject)
+            // Fetch all schedules with entries for today in one query
+            var schedulesToday = await _context.ClassScheduleEntries
+                .Where(e => !e.IsDeleted &&
+                            e.Schedule.Course.SemesterId == semesterId &&
+                            !e.Schedule.IsDeleted &&
+                            e.DayOfWeek == currentDay &&
+                            e.StartTime <= currentTime &&
+                            e.EndTime >= currentTime)
+                .Include(e => e.Schedule)
+                    .ThenInclude(cs => cs.Course)
+                        .ThenInclude(c => c.Subject)
+                .Include(e => e.Schedule)
+                    .ThenInclude(cs => cs.Course)
+                        .ThenInclude(c => c.Teacher)
+                .Include(e => e.Schedule)
+                    .ThenInclude(cs => cs.Classroom)
                 .ToListAsync();
 
             // Fetch all classrooms
@@ -106,15 +115,13 @@ namespace UniPortal.Services.Academics.Configs
             var result = classrooms.Select(c =>
             {
                 var currentSchedules = schedulesToday
-                    .Where(cs => cs.ClassroomId == c.Id &&
-                                 cs.StartTime <= currentTime &&
-                                 cs.EndTime >= currentTime)
-                    .Select(cs => new ScheduleInfo
+                    .Where(e => e.Schedule.ClassroomId == c.Id)
+                    .Select(e => new ScheduleInfo
                     {
-                        SubjectCode = cs.Course.Subject.Code,
-                        SubjectName = cs.Course.Subject.Name,
-                        StartTime = cs.StartTime,
-                        EndTime = cs.EndTime
+                        SubjectCode = e.Schedule.Course.Subject.Code,
+                        SubjectName = e.Schedule.Course.Subject.Name,
+                        StartTime = e.StartTime,
+                        EndTime = e.EndTime
                     })
                     .ToList();
 
@@ -131,6 +138,7 @@ namespace UniPortal.Services.Academics.Configs
 
             return result;
         }
+
 
 
     }
