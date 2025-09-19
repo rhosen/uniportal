@@ -44,7 +44,7 @@ namespace UniPortal.Pages.Portals
         {
             var grades = await _gradeService.GetGradesForStudentAsync(CurrentAccount.Id);
             var student = await _studentService.GetStudentAsync(CurrentAccount.Id);
-            var department = await _departmentService.GetByIdAsync(student.DepartmentId.ToString());
+            var department = await _departmentService.GetByIdAsync(student.ProgramId.ToString());
 
             StudentName = CurrentAccount.FirstName + " " + CurrentAccount.LastName;
             StudentId = student.StudentId;

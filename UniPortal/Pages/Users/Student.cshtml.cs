@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -14,17 +15,28 @@ namespace UniPortal.Pages.Users
     {
         private readonly StudentService _studentService;
         private readonly DepartmentService _departmentService;
+        private readonly ProgramService _programService;
+        private readonly SemesterService _semesterService;
         private readonly AccountService _accountService;
 
-        public StudentModel(StudentService studentService, DepartmentService departmentService, AccountService accountService)
+        public StudentModel(
+            StudentService studentService,
+            DepartmentService departmentService,
+            ProgramService programService,
+            SemesterService semesterService,
+            AccountService accountService)
         {
             _studentService = studentService;
             _departmentService = departmentService;
+            _programService = programService;
+            _semesterService = semesterService;
             _accountService = accountService;
         }
 
         public List<StudentViewModel> Students { get; set; } = new();
         public List<Department> Departments { get; set; } = new();
+        public List<Data.Entities.Program> Programs { get; set; } = new();
+        public List<Semester> Semesters { get; set; } = new();
 
         // Pagination & Search
         [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
@@ -41,10 +53,11 @@ namespace UniPortal.Pages.Users
 
         public async Task OnGetAsync()
         {
-            Departments = await _departmentService.GetAllAsync();
+            // Fetch fully populated students from service
             var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
 
-            if (!string.IsNullOrEmpty(SearchTerm))
+            // Optional: search by StudentId or Email
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
                 allStudents = allStudents
                     .Where(s => s.StudentId.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
@@ -52,12 +65,16 @@ namespace UniPortal.Pages.Users
                     .ToList();
             }
 
+            // Total pages for pagination
             TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
+
+            // Paginate students
             Students = allStudents
                 .Skip((CurrentPage - 1) * PageSize)
                 .Take(PageSize)
                 .ToList();
         }
+
 
         // Enter edit mode
         public async Task<IActionResult> OnPostEditAsync(string id)
@@ -65,8 +82,10 @@ namespace UniPortal.Pages.Users
             EditStudentId = id;
 
             Departments = await _departmentService.GetAllAsync();
-            var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
+            Programs = await _programService.GetAllAsync();
+            Semesters = await _semesterService.GetAllAsync();
 
+            var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
             TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
             Students = allStudents
                 .Skip((CurrentPage - 1) * PageSize)
@@ -82,8 +101,10 @@ namespace UniPortal.Pages.Users
                     StudentId = student.StudentId,
                     BatchNumber = student.BatchNumber,
                     Section = student.Section,
+                    ProgramId = student.ProgramId,
                     DepartmentId = student.DepartmentId,
-                    Email = student.Email,
+                    CurrentSemesterId = student.CurrentSemesterId,
+                    Email = student.Email
                 };
             }
 
@@ -100,27 +121,35 @@ namespace UniPortal.Pages.Users
         // Save changes
         public async Task<IActionResult> OnPostSaveAsync()
         {
-            if (EditStudent == null) return RedirectToPage(new { CurrentPage, SearchTerm });
+            if (EditStudent == null || EditStudent.Id == Guid.Empty)
+                return RedirectToPage(new { CurrentPage, SearchTerm });
 
+            // Fetch the student from DB
             var student = await _studentService.GetStudentAsync(studentId: EditStudent.Id);
-            if (student != null)
+            if (student == null)
+                return RedirectToPage(new { CurrentPage, SearchTerm });
+
+            // Update student properties
+            student.StudentId = EditStudent.StudentId?.Trim();
+            student.BatchNumber = EditStudent.BatchNumber?.Trim();
+            student.Section = EditStudent.Section?.Trim();
+            student.ProgramId = EditStudent.ProgramId;
+            student.CurrentSemesterId = EditStudent.CurrentSemesterId;
+
+            await _studentService.CreateOrUpdateStudentAsync(student);
+
+            // Update Email if changed
+            if (!string.IsNullOrWhiteSpace(EditStudent.Email))
             {
-                student.StudentId = EditStudent.StudentId;
-                student.BatchNumber = EditStudent.BatchNumber;
-                student.Section = EditStudent.Section;
-                student.DepartmentId = EditStudent.DepartmentId;
-
-                await _studentService.CreateOrUpdateStudentAsync(student);
-
-                // Update Email
-                if (!string.IsNullOrEmpty(EditStudent.Email))
-                {
-                    await _accountService.UpdateEmailAsync(student.AccountId, EditStudent.Email);
-                }
+                await _accountService.UpdateEmailAsync(student.AccountId, EditStudent.Email.Trim());
             }
+
+            // Exit edit mode
+            EditStudentId = null;
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
+
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {

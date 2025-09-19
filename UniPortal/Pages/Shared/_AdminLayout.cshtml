@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="~/lib/bootstrap/dist/icon/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/lib/select2/select2.min.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
 
@@ -34,9 +35,10 @@
             <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" asp-page="/academics/department">Departments</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/academics/program">Programs</a></li>
                     <li class="nav-item"><a class="nav-link" asp-page="/academics/subject">Subjects</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/academics/classroom">Classrooms</a></li>
                     <li class="nav-item"><a class="nav-link" asp-page="/academics/semester">Semesters</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/academics/courses">Courses</a></li>
 
                     @if (User.IsInRole(Roles.Root))
                     {
@@ -113,6 +115,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/select2/select2.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

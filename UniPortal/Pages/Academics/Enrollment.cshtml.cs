@@ -1,113 +1,79 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using UniPortal.Constants;
-using UniPortal.Data.Entities;
 using UniPortal.Dtos;
-using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
-
 namespace UniPortal.Pages.Academics
 {
     [Authorize(Roles = Roles.Faculty)]
     public class EnrollmentModel : BasePageModel
     {
-        private readonly EnrollmentService _enrollmentService;
-        private readonly CourseService _courseService;
         private readonly StudentService _studentService;
-        private readonly SemesterService _semesterService;
+        private readonly CourseService _courseService;
+        private readonly EnrollmentService _enrollmentService;
 
         public EnrollmentModel(
-            EnrollmentService enrollmentService,
-            CourseService courseService,
             StudentService studentService,
-            SemesterService semesterService,
-            AccountService accountService): base(accountService)
+            CourseService courseService,
+            EnrollmentService enrollmentService,
+            AccountService accountService) : base(accountService)
         {
-            _enrollmentService = enrollmentService;
-            _courseService = courseService;
             _studentService = studentService;
-            _semesterService = semesterService;
+            _courseService = courseService;
+            _enrollmentService = enrollmentService;
         }
 
-        // Grid & Add
-        public List<EnrollmentDto> Enrollments { get; set; } = new();
-        [BindProperty] public NewEnrollmentInput NewEnrollment { get; set; } = new();
+        // Students
+        public List<StudentDto> AllStudents { get; set; } = new();
+        [BindProperty] public StudentDto SelectedStudent { get; set; }
 
-        // Select lists
-        public List<SelectListItem> StudentSelectList { get; set; } = new();
-        public List<SelectListItem> CourseSelectList { get; set; } = new();
-        public List<CourseDto> CourseDetails { get; set; } = new();
+        // Current semester courses
+        public List<CourseDto> EligibleCourses { get; set; } = new();
 
-        // Semester info
-        public Semester CurrentSemester { get; set; }
+        // Past enrollments
+        public Dictionary<string, List<CourseDto>> PastEnrollmentsBySemester { get; set; } = new();
 
-        // Search & pagination
-        [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
-        [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
-        public int TotalPages { get; set; }
-
-        public async Task OnGetAsync()
+        // GET: load all students and optionally selected student
+        public async Task OnGetAsync(Guid? studentId)
         {
-            CurrentSemester = await _semesterService.GetCurrentSemesterAsync();
+            AllStudents = await _studentService.GetAllActiveStudentAsync();
 
-            // New: all courses in current semester
-            var courses = await _courseService.GetCoursesBySemesterAsync(CurrentSemester.Id);
-            CourseSelectList = courses.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.DepartmentCode + " - " + c.SubjectCode + " - " + c.SubjectName }).ToList();
-
-            CourseDetails = courses.Select(c => new CourseDto
+            if (studentId.HasValue)
             {
-                Id = c.Id,
-                DepartmentName = c.DepartmentName,
-                TeacherName = c.TeacherName,
-                Credits = c.Credits
-            }).ToList();
+                await LoadSelectedStudentAsync(studentId.Value);
+            }
+        }
 
-            var students = await _studentService.GetAllActiveStudentAsync();
-            StudentSelectList = students.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.StudentId + " - " + s.FullName }).ToList();
+        private async Task LoadSelectedStudentAsync(Guid studentId)
+        {
+            SelectedStudent = await _studentService.GetStudentByIdAsync(studentId);
+            if (SelectedStudent == null) return;
 
-            var allEnrollments = await _enrollmentService.GetEnrollmentsForSemesterAsync(CurrentSemester.Id);
+            // Current semester courses
+            EligibleCourses = await _courseService.GetCoursesForSemesterAsync(SelectedStudent.CurrentSemesterId.Value);
 
-            if (!string.IsNullOrEmpty(SearchTerm))
+            // Mark enrolled courses
+            var enrolledCourses = await _enrollmentService.GetEnrollmentsAsync(SelectedStudent.Id, SelectedStudent.CurrentSemesterId.Value);
+            foreach (var c in EligibleCourses)
             {
-                allEnrollments = allEnrollments
-                    .Where(e => e.StudentName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
-                             || e.StudentId.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                c.IsEnrolled = enrolledCourses.Any(e => e.CourseId == c.Id);
             }
 
-            TotalPages = (int)Math.Ceiling(allEnrollments.Count / (double)PageSize);
-            Enrollments = allEnrollments
-                .Skip((CurrentPage - 1) * PageSize)
-                .Take(PageSize)
-                .ToList();
+            // Past enrollments
+            PastEnrollmentsBySemester = await _enrollmentService.GetPastEnrollmentsGroupedBySemesterAsync(
+                SelectedStudent.Id, SelectedStudent.CurrentSemesterId.Value);
         }
 
-        public async Task<IActionResult> OnPostCreateAsync()
+        // POST: save toggled enrollments
+        public async Task<IActionResult> OnPostSaveAsync(Guid StudentId, List<Guid> EnrolledCourses)
         {
-            CurrentSemester = await _semesterService.GetCurrentSemesterAsync();
-            await _enrollmentService.EnrollStudentAsync(NewEnrollment.StudentId, NewEnrollment.CourseId, CurrentSemester.Id, CurrentAccount.Id);
-            return RedirectToPage(new { CurrentPage, SearchTerm });
-        }
+            SelectedStudent = await _studentService.GetStudentByIdAsync(StudentId);
 
-        public async Task<IActionResult> OnPostDeleteAsync(string id)
-        {
-            await _enrollmentService.DeleteEnrollmentAsync(id, CurrentAccount.Id);
-            return RedirectToPage(new { CurrentPage, SearchTerm });
-        }
+            await _enrollmentService.UpdateEnrollmentsAsync(StudentId, EnrolledCourses, SelectedStudent.CurrentSemesterId.Value, CurrentAccount.Id);
 
-        public async Task<IActionResult> OnPostActivateAsync(string id)
-        {
-            await _enrollmentService.ActivateEnrollmentAsync(id, CurrentAccount.Id);
-            return RedirectToPage(new { CurrentPage, SearchTerm });
-        }
-
-        public class NewEnrollmentInput
-        {
-            public Guid StudentId { get; set; }
-            public Guid CourseId { get; set; }
+            // Redirect to GET to refresh page with updated info
+            return RedirectToPage(new { studentId = StudentId });
         }
     }
 }

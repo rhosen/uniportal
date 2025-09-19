@@ -22,14 +22,16 @@
     }
     else
     {
-        <table class="table table-striped table-hover">
+        <table class="table table-striped">
             <thead class="table-dark">
                 <tr>
+                    <th>Email</th>
                     <th>Student ID</th>
                     <th>Batch</th>
                     <th>Section</th>
-                    <th>Department</th>
-                    <th>Email</th>
+                    <th>Program</th>
+                    @* <th>Department</th> *@
+                    <th>Current Semester</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -37,49 +39,66 @@
                 @foreach (var student in Model.Students)
                 {
                     <tr>
-                        <form method="post">
-                            @if (Model.EditStudentId == student.Id.ToString())
-                            {
-                                <!-- EDIT MODE -->
+                        @if (Model.EditStudentId == student.Id.ToString())
+                        {
+                            <form method="post">
                                 <input type="hidden" asp-for="EditStudent.Id" />
-
+                            <td><input asp-for="EditStudent.Email" class="form-control" /></td>
                             <td><input asp-for="EditStudent.StudentId" class="form-control" /></td>
                             <td><input asp-for="EditStudent.BatchNumber" class="form-control" /></td>
                             <td><input asp-for="EditStudent.Section" class="form-control" /></td>
                             <td>
-                                <select asp-for="EditStudent.DepartmentId" class="form-select">
-                                    <option value="">-- Select Department --</option>
-                                    @foreach (var dept in Model.Departments)
+                                <select asp-for="EditStudent.ProgramId" class="form-select">
+                                    <option value="">-- Select Program --</option>
+                                    @foreach (var prog in Model.Programs)
                                     {
-                                        <option value="@dept.Id">@dept.Code</option>
+                                        <option value="@prog.Id" selected="@(prog.Id == student.ProgramId ? "selected" : null)">
+                                            @prog.Name
+                                        </option>
                                     }
                                 </select>
                             </td>
-                            <td><input asp-for="EditStudent.Email" class="form-control" /></td>
+                            @* <td>@student.DepartmentCode</td> *@
+                            <td>
+                                <select asp-for="EditStudent.CurrentSemesterId" class="form-select">
+                                    <option value="">-- Select Semester --</option>
+                                    @foreach (var sem in Model.Semesters.Where(s => s.ProgramId == Model.EditStudent.ProgramId))
+                                    {
+                                        <option value="@sem.Id" selected="@(sem.Id == Model.EditStudent.CurrentSemesterId ? "selected" : null)">
+                                            @sem.Name
+                                        </option>
+                                    }
+                                </select>
+                            </td>
                             <td class="d-flex gap-2">
                                 <button type="submit" asp-page-handler="Save" class="btn btn-sm btn-primary">💾 Save</button>
                                 <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
                             </td>
+                            </form>
                         }
                         else
                         {
-                            <!-- READ MODE -->
+                            <td>@student.Email</td>
                             <td>@student.StudentId</td>
                             <td>@student.BatchNumber</td>
                             <td>@student.Section</td>
-                            <td>@Model.Departments.FirstOrDefault(d => d.Id == student.DepartmentId)?.Code</td>
-                            <td>@student.Email</td>
+                            <td>@student.ProgramName</td>
+                            @* <td>@student.DepartmentCode</td> *@
+                            <td>@student.CurrentSemesterName</td>
                             <td class="d-flex gap-2">
-                                <button type="submit" asp-page-handler="Edit" name="id" value="@student.Id" class="btn btn-sm btn-warning"> Edit</button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@student.AccountId', '@Url.Page("", "", new { handler = "Delete" }, null)')"> Delete </button>
-                                <a href="/accounts/profile?id=@student.AccountId" class="btn btn-sm btn-info"> Details</a>
+                                <form method="post">
+                                    <button type="submit" asp-page-handler="Edit" name="id" value="@student.Id" class="btn btn-sm btn-warning">✏️ Edit</button>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@student.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')">🗑️ Delete</button>
+                                </form>
+                                <a href="/accounts/profile?id=@student.AccountId" class="btn btn-sm btn-info">ℹ️ Details</a>
                             </td>
                         }
-                        </form>
                     </tr>
                 }
             </tbody>
         </table>
+
+
 
         <!-- Pagination -->
         <nav>

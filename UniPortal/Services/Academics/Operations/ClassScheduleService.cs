@@ -47,24 +47,36 @@ namespace UniPortal.Services.Academics.Operations
 
         public async Task<List<ScheduleViewModel>> GetSchedulesAsync(string searchTerm = "")
         {
-            var schedules = await _unitOfWork.Context.Schedules
-                .Include(cs => cs.Course)
-                    .ThenInclude(c => c.Subject)
-                .Include(cs => cs.Course)
-                    .ThenInclude(c => c.Department)
-                .Include(cs => cs.Course)
-                    .ThenInclude(c => c.Teacher)
-                .Include(cs => cs.Room)
-                .Where(cs => !cs.IsDeleted)
-                .ToListAsync();
+            var query =
+                from schedule in _unitOfWork.Context.Schedules
+                join course in _unitOfWork.Context.Courses on schedule.CourseId equals course.Id
+                join subject in _unitOfWork.Context.Subjects on course.SubjectId equals subject.Id
+                join teacher in _unitOfWork.Context.Accounts on course.TeacherId equals teacher.Id
+                join semester in _unitOfWork.Context.Semesters on course.SemesterId equals semester.Id
+                join program in _unitOfWork.Context.Programs on semester.ProgramId equals program.Id
+                join room in _unitOfWork.Context.Rooms on schedule.RoomId equals room.Id
+                where !schedule.IsDeleted
+                select new
+                {
+                    Schedule = schedule,
+                    Course = course,
+                    Subject = subject,
+                    Teacher = teacher,
+                    Semester = semester,
+                    Program = program,
+                    Room = room
+                };
+
+            var schedules = await query.ToListAsync();
 
             var result = schedules.Select(cs => new ScheduleViewModel
             {
-                ScheduleId = cs.Id,
-                CourseName = $"{cs.Course.Department.Code} · {cs.Course.Subject.Name} ({cs.Course.Subject.Code}) · {cs.Course.Teacher.FirstName} {cs.Course.Teacher.LastName}",
+                ScheduleId = cs.Schedule.Id,
+                CourseName =
+                    $"{cs.Program.Code} · {cs.Subject.Name} ({cs.Subject.Code}) · {cs.Teacher.FirstName} {cs.Teacher.LastName}",
                 ClassroomName = cs.Room.RoomName,
                 Sessions = _unitOfWork.Context.Sessions
-                    .Where(e => e.ScheduleId == cs.Id && !e.IsDeleted)
+                    .Where(e => e.ScheduleId == cs.Schedule.Id && !e.IsDeleted)
                     .Select(e => new SessionViewModel
                     {
                         EntryId = e.Id,
@@ -79,13 +91,15 @@ namespace UniPortal.Services.Academics.Operations
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 result = result
-                    .Where(s => s.CourseName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                s.ClassroomName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                    .Where(s =>
+                        s.CourseName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        s.ClassroomName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
             return result;
         }
+
 
         public async Task<List<SelectOption>> GetCoursesForDropdownAsync()
         {
@@ -93,14 +107,12 @@ namespace UniPortal.Services.Academics.Operations
 
             return await _unitOfWork.Context.Courses
                 .Include(c => c.Subject)
-                .Include(c => c.Department)
                 .Include(c => c.Teacher)
                 .Include(c => c.Semester)
-                .Where(c => c.Semester.StartDate <= today && today <= c.Semester.EndDate)
                 .Select(c => new SelectOption
                 {
                     Id = c.Id,
-                    Name = $"{c.Semester.Name} · {c.Department.Code} · {c.Subject.Name} ({c.Subject.Code}) · {c.Teacher.FirstName} {c.Teacher.LastName}"
+                    Name = $"{c.Semester.Name} · {c.Subject.Name} ({c.Subject.Code}) · {c.Teacher.FirstName} {c.Teacher.LastName}"
                 })
                 .ToListAsync();
         }

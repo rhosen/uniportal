@@ -21,22 +21,35 @@ namespace UniPortal.Services.Dashboards
 
         public async Task<StudentProfileViewModel> GetProfileAsync(Guid accountId)
         {
-            var student = await _studentService.GetStudentAsync(accountId);
+            if (accountId == Guid.Empty)
+                throw new ArgumentException("Invalid account ID.", nameof(accountId));
 
-            if (student == null || student.Account == null)
-                throw new Exception("Student not found.");
+            var query = from s in _context.Students
+                        join a in _context.Accounts on s.AccountId equals a.Id
+                        join p in _context.Programs on s.ProgramId equals p.Id
+                        join d in _context.Departments on p.DepartmentId equals d.Id
+                        where s.AccountId == accountId && !s.IsDeleted && !a.IsDeleted && a.IsActive
+                        select new StudentProfileViewModel
+                        {
+                            FullName = $"{a.FirstName} {a.LastName}".Trim(),
+                            StudentId = s.StudentId,
+                            Program = p.Name,
+                            Department = d.Name,
+                            Batch = s.BatchNumber,
+                            Section = s.Section,
+                            Email = a.Email,
+                            Phone = a.Phone
+                        };
 
-            return new StudentProfileViewModel
-            {
-                FullName = $"{student.Account.FirstName} {student.Account.LastName}".Trim(),
-                StudentId = student.StudentId, // human-readable
-                Department = student.Department?.Name ?? "",
-                Batch = student.BatchNumber ?? "",
-                Section = student.Section ?? "",
-                Email = student.Account.Email,
-                Phone = student.Account.Phone ?? ""
-            };
+            var profile = await query.AsNoTracking().FirstOrDefaultAsync();
+
+            if (profile == null)
+                throw new KeyNotFoundException("Student not found.");
+
+            return profile;
         }
+
+
 
         // Dashboard metrics
         public async Task<MetricsViewModel> GetDashboardMetricsAsync(Guid studentId)

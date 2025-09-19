@@ -19,6 +19,19 @@ namespace UniPortal.Data.Seeders
                     new Department { Id = Guid.NewGuid(), Code = "BBA", Name = "Business Administration", CreatedAt = DateTime.Now, IsDeleted = false }
                 };
                 dbContext.Departments.AddRange(departments);
+                await dbContext.SaveChangesAsync(); // save to get Department Ids
+            }
+
+            // --- Programs ---
+            if (!await dbContext.Programs.AnyAsync())
+            {
+                var cseDept = await dbContext.Departments.FirstAsync(d => d.Code == "CSE");
+                var programs = new List<Entities.Program>
+                {
+                    new Entities.Program { Id = Guid.NewGuid(), Code = "BSC-CSE", Name = "BSc in CSE", DepartmentId = cseDept.Id, CreatedAt = DateTime.Now, IsDeleted = false }
+                };
+                dbContext.Programs.AddRange(programs);
+                await dbContext.SaveChangesAsync(); // save to get Program Ids
             }
 
             // --- Subjects ---
@@ -31,6 +44,7 @@ namespace UniPortal.Data.Seeders
                     new Subject { Id = Guid.NewGuid(), Code = "CSE-101", Name = "Introduction to Programming", CreatedAt = DateTime.Now, IsDeleted = false }
                 };
                 dbContext.Subjects.AddRange(subjects);
+                await dbContext.SaveChangesAsync();
             }
 
             // --- Rooms ---
@@ -39,27 +53,46 @@ namespace UniPortal.Data.Seeders
                 var rooms = new List<Room>
                 {
                     new Room { Id = Guid.NewGuid(), RoomName = "215", Capacity = 40, Location = "2nd Floor", CreatedAt = DateTime.Now, IsDeleted = false },
-                    new Room { Id = Guid.NewGuid(), RoomName = "301", Capacity = 60, Location = "3rd Floor", CreatedAt = DateTime.Now, IsDeleted = false }
+                    new Room { Id = Guid.NewGuid(), RoomName = "301", Capacity = 60, Location = "3rd Floor", CreatedAt = DateTime.Now, IsDeleted = false },
+                    new Room { Id = Guid.NewGuid(), RoomName = "101", Capacity = 60, Location = "1st Floor", CreatedAt = DateTime.Now, IsDeleted = false }
                 };
                 dbContext.Rooms.AddRange(rooms);
+                await dbContext.SaveChangesAsync();
             }
 
-            // --- Semester ---
+            // --- Semesters per Program ---
             if (!await dbContext.Semesters.AnyAsync())
             {
-                var startDate = DateTime.Now.Date;
-                var endDate = startDate.AddMonths(6);
+                var startYear = DateTime.Now.Year;
 
-                var semester = new Semester
+                var programs = await dbContext.Programs.ToListAsync();
+
+                var semesters = new List<Semester>();
+
+                foreach (var program in programs)
                 {
-                    Id = Guid.NewGuid(),
-                    Name = $"Fall {DateTime.Now.Year}",
-                    StartDate = startDate,
-                    EndDate = endDate,
-                    CreatedAt = DateTime.Now,
-                    IsDeleted = false
-                };
-                dbContext.Semesters.Add(semester);
+                    for (int i = 1; i <= 8; i++) // assuming 8 semesters per program
+                    {
+                        int yearOffset = (i - 1) / 2; // 2 semesters per year
+                        int semesterMonthStart = ((i - 1) % 2) * 6 + 1;
+                        int semesterMonthEnd = semesterMonthStart + 5; // 6-month semester
+
+                        semesters.Add(new Semester
+                        {
+                            Id = Guid.NewGuid(),
+                            Name = $"{program.Code} – Semester {i}",
+                            ProgramId = program.Id,
+                            StartDate = new DateTime(startYear + yearOffset, semesterMonthStart, 1),
+                            EndDate = new DateTime(startYear + yearOffset, semesterMonthEnd,
+                                DateTime.DaysInMonth(startYear + yearOffset, semesterMonthEnd)),
+                            CreatedAt = DateTime.Now,
+                            IsDeleted = false
+                        });
+                    }
+                }
+
+                dbContext.Semesters.AddRange(semesters);
+                await dbContext.SaveChangesAsync();
             }
 
             await dbContext.SaveChangesAsync();

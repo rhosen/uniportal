@@ -52,7 +52,7 @@ namespace UniPortal.Pages.Academics
         {
             Departments = await _departmentService.GetAllAsync();
             Teachers = await _teacherService.GetAllAsync();
-            Semesters = await _semesterService.GetOnGoingSemestersAsync();
+            Semesters = await _semesterService.GetAllAsync();
             Subjects = await _subjectService.GetAllAsync();
 
             var allCourses = await _courseService.GetAllAsync();
@@ -79,7 +79,6 @@ namespace UniPortal.Pages.Academics
         {
             await _courseService.CreateAsync(
                 NewCourse.SubjectId,
-                NewCourse.DepartmentId,
                 NewCourse.TeacherId,
                 NewCourse.SemesterId,
                 NewCourse.Credits,
@@ -98,7 +97,6 @@ namespace UniPortal.Pages.Academics
                 {
                     Id = course.Id,
                     SubjectId = course.SubjectId,
-                    DepartmentId = course.DepartmentId,
                     TeacherId = course.TeacherId,
                     SemesterId = course.SemesterId,
                     Credits = course.Credits
@@ -119,7 +117,6 @@ namespace UniPortal.Pages.Academics
             await _courseService.UpdateAsync(
                 Guid.Parse(id),
                 EditCourse.SubjectId,
-                EditCourse.DepartmentId,
                 EditCourse.TeacherId,
                 EditCourse.SemesterId,
                 EditCourse.Credits,

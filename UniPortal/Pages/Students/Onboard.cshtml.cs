@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Data.Entities;
+using UniPortal.Dtos;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Accounts;
 
@@ -9,31 +10,28 @@ namespace UniPortal.Pages.Students
     public class OnboardModel : PageModel
     {
         private readonly StudentService _studentService;
-        private readonly DepartmentService _departmentService;
+        private readonly ProgramService _programService;
 
-        public OnboardModel(StudentService studentService,
-                             DepartmentService departmentService)
+        public OnboardModel(StudentService studentService, ProgramService programService)
         {
             _studentService = studentService;
-            _departmentService = departmentService;
+            _programService = programService;
         }
 
-        public List<Account> StudentsWithoutId { get; set; } = new();
-        public List<Department> Departments { get; set; } = new();
+        public List<StudentOnboardDto> Students { get; set; } = new();
+        public List<Data.Entities.Program> Programs { get; set; } = new();
 
-        // Search & Pagination
-        [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
-        [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
+        [BindProperty(SupportsGet = true)]
+        public string SearchTerm { get; set; } = string.Empty;
+
+        [BindProperty(SupportsGet = true)]
+        public int CurrentPage { get; set; } = 1;
+
         public int PageSize { get; set; } = 10;
         public int TotalPages { get; set; }
 
-        // Form properties
-        [BindProperty] public Guid AccountId { get; set; }
-        [BindProperty] public bool UseSystemId { get; set; } = true;
-        [BindProperty] public string ManualStudentId { get; set; } = string.Empty;
-        [BindProperty] public string BatchNumber { get; set; } = string.Empty;
-        [BindProperty] public string Section { get; set; } = string.Empty;
-        [BindProperty] public Guid? DepartmentId { get; set; }
+        [BindProperty]
+        public StudentOnboardDto Student { get; set; } = new();
 
         public async Task OnGetAsync()
         {
@@ -42,37 +40,46 @@ namespace UniPortal.Pages.Students
             if (!string.IsNullOrEmpty(SearchTerm))
             {
                 allStudents = allStudents
-                    .Where(s => (s.FirstName + " " + s.LastName)
-                                .Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
-                             || s.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                    .Where(s => s.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
             TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
-            StudentsWithoutId = allStudents
+            Students = allStudents
                 .Skip((CurrentPage - 1) * PageSize)
                 .Take(PageSize)
                 .ToList();
 
-            Departments = await _departmentService.GetAllAsync();
+            Programs = await _programService.GetAllAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (AccountId == Guid.Empty) return RedirectToPage();
-
-            string studentIdToAssign = UseSystemId
-                ? await _studentService.GetSystemGeneratedStudentId(AccountId)
-                : ManualStudentId;
-
-            // Save/Update student info via service
-            await _studentService.CreateOrUpdateStudentAsync(new Data.Entities.Student
+            if (Student.ProgramId == Guid.Empty || string.IsNullOrWhiteSpace(Student.ProgramId.ToString()))
             {
-                AccountId = AccountId,
+                ModelState.AddModelError("Student.ProgramId", "Program is required.");
+                await OnGetAsync();
+                return Page();
+            }
+
+            if (!Student.UseSystemId && string.IsNullOrWhiteSpace(Student.StudentId))
+            {
+                ModelState.AddModelError("Student.StudentId", "Student ID is required when using manual ID.");
+                await OnGetAsync();
+                return Page();
+            }
+
+            string studentIdToAssign = Student.UseSystemId
+                ? await _studentService.GetSystemGeneratedStudentId(Student.AccountId)
+                : Student.StudentId;
+
+            await _studentService.CreateOrUpdateStudentAsync(new Student
+            {
+                AccountId = Student.AccountId,
                 StudentId = studentIdToAssign,
-                BatchNumber = BatchNumber,
-                Section = Section,
-                DepartmentId = DepartmentId
+                BatchNumber = Student.BatchNumber,
+                Section = Student.Section,
+                ProgramId = Student.ProgramId
             });
 
             return RedirectToPage(new { CurrentPage, SearchTerm });

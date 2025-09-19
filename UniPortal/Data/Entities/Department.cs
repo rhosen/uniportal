@@ -7,7 +7,6 @@
         public Guid? HeadId { get; set; }
 
         public Account Head { get; set; }
-        public ICollection<Course> Courses { get; set; }
     }
 
 }

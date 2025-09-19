@@ -18,8 +18,22 @@ namespace UniPortal.Services
 
         protected async Task LogAsync(Guid? userId, ActionType actionType, string entity, Guid? entityId, object? details = null)
         {
-            await _logService.CreateAsync(userId, actionType, $"{actionType} {entity}", entity, entityId, details);
+            string? serializedDetails = null;
+
+            if (details != null)
+            {
+                serializedDetails = System.Text.Json.JsonSerializer.Serialize(
+                    details,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                        WriteIndented = true
+                    });
+            }
+
+            await _logService.CreateAsync(userId, actionType, $"{actionType} {entity}", entity, entityId, serializedDetails);
         }
+
     }
 
 }

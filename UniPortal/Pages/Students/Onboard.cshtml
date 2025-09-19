@@ -8,7 +8,17 @@
 <div class="container my-4">
     <h2 class="mb-4">🧑‍🎓 Onboard Student</h2>
 
-    <!-- Search Box -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div>@error.ErrorMessage</div>
+            }
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <form method="get" class="mb-3">
         <div class="input-group">
             <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by name or email..." />
@@ -16,7 +26,7 @@
         </div>
     </form>
 
-    @if (!Model.StudentsWithoutId.Any())
+    @if (!Model.Students.Any())
     {
         <p class="text-muted">No new students found for onboarding.</p>
     }
@@ -25,68 +35,63 @@
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
-                    @* <th>Name</th> *@
                     <th>Email</th>
                     <th>Registered</th>
                     <th>ID</th>
                     <th>Student ID</th>
                     <th>Batch Number</th>
                     <th>Section</th>
-                    <th>Department</th>
+                    <th>Program</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var student in Model.StudentsWithoutId)
+                @foreach (var student in Model.Students)
                 {
                     <tr>
                         <form method="post">
-                            <input type="hidden" name="AccountId" value="@student.Id" />
-
-                            @* <td>@student.FirstName @student.LastName</td> *@
+                            <input type="hidden" name="Student.AccountId" value="@student.AccountId" />
                         <td>@student.Email</td>
                         <td>@student.CreatedAt.ToString("yyyy-MM-dd")</td>
 
-                        <!-- Use System ID / Manual ID -->
                         <td>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input use-system-radio" type="radio" name="UseSystemId" value="true" checked>
+                                <input class="form-check-input use-system-radio" type="radio"
+                                       name="Student.UseSystemId" value="true" checked>
                                 <label class="form-check-label">System</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input use-system-radio" type="radio" name="UseSystemId" value="false">
+                                <input class="form-check-input use-system-radio" type="radio"
+                                       name="Student.UseSystemId" value="false">
                                 <label class="form-check-label">Manual</label>
                             </div>
                         </td>
 
-                        <!-- Student ID -->
                         <td>
-                            <input type="text" name="ManualStudentId" class="form-control student-id-input" placeholder="Enter ID..." readonly />
+                            <input type="text" name="Student.StudentId" class="form-control student-id-input"
+                                   placeholder="Enter ID..." readonly />
                         </td>
 
-                        <!-- Batch Number -->
                         <td>
-                            <input type="text" name="BatchNumber" class="form-control" placeholder="Batch Number" />
+                            <input type="text" name="Student.BatchNumber" class="form-control" placeholder="Batch Number" />
                         </td>
 
-                        <!-- Section -->
                         <td>
-                            <input type="text" name="Section" class="form-control" placeholder="Section" />
+                            <input type="text" name="Student.Section" class="form-control" placeholder="Section" />
                         </td>
 
-                        <!-- Department -->
                         <td>
-                            <select name="DepartmentId" class="form-select">
-                                <option value="">Select</option>
-                                @foreach (var dept in Model.Departments)
+                            <select name="Student.ProgramId" class="form-select">
+                                <option value="">Program</option>
+                                @foreach (var program in Model.Programs)
                                 {
-                                    <option value="@dept.Id">@dept.Code</option>
+                                    <option value="@program.Id">@program.Code</option>
                                 }
                             </select>
                         </td>
 
                         <td>
-                            <button type="submit" class="btn btn-sm btn-primary">Assign 🆔</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Onboard</button>
                         </td>
                         </form>
                     </tr>
@@ -94,7 +99,6 @@
             </tbody>
         </table>
 
-        <!-- Pagination -->
         <nav>
             <ul class="pagination">
                 <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
@@ -116,18 +120,12 @@
 
 @section Scripts {
     <script>
-        // Enable/disable Student ID input based on System/Manual selection
-               document.querySelectorAll('input.use-system-radio').forEach(radio => {
+        document.querySelectorAll('input.use-system-radio').forEach(radio => {
             radio.addEventListener('change', () => {
-                // Find the closest row
                 const row = radio.closest('tr');
                 if (!row) return;
-
-                // Find the student ID textbox in the same row
                 const studentIdInput = row.querySelector('.student-id-input');
                 if (!studentIdInput) return;
-
-                // Toggle readonly based on radio value
                 if (radio.value === 'true') {
                     studentIdInput.readOnly = true;
                     studentIdInput.value = '';
@@ -137,6 +135,5 @@
                 }
             });
         });
-
     </script>
 }

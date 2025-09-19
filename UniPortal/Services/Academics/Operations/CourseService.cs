@@ -18,7 +18,6 @@ namespace UniPortal.Services.Academics.Operations
         {
             return await _context.Courses
                 .Include(c => c.Subject)
-                .Include(c => c.Department)
                 .Include(c => c.Teacher)
                 .Include(c => c.Semester)
                 .Where(c => !c.IsDeleted)
@@ -26,57 +25,38 @@ namespace UniPortal.Services.Academics.Operations
                 .ToListAsync();
         }
 
-        // Get all courses for a semester
-        public async Task<List<CourseDto>> GetCoursesBySemesterAsync(Guid semesterId)
+        public async Task<List<CourseDto>> GetCoursesForSemesterAsync(Guid semesterId)
         {
-            return await _context.Courses
-                .Include(c => c.Subject)
-                .Include(c => c.Department)
-                .Include(c => c.Teacher)
-                .Where(c => !c.IsDeleted && c.SemesterId == semesterId)
-                .Select(c => new CourseDto
-                {
-                    Id = c.Id,
-                    SubjectCode = c.Subject.Code,
-                    SubjectName = c.Subject.Name,
-                    DepartmentCode = c.Department.Code,
-                    DepartmentName = c.Department.Name,
-                    TeacherName = c.Teacher.FirstName + " " + c.Teacher.LastName,
-                    Credits = c.Credits
-                })
-                .ToListAsync();
+            var query = from c in _context.Courses
+                        join s in _context.Subjects on c.SubjectId equals s.Id
+                        join t in _context.Accounts on c.TeacherId equals t.Id
+                        where c.SemesterId == semesterId
+                        select new CourseDto
+                        {
+                            Id = c.Id,
+                            CourseName = s.Code + " - " + s.Name,
+                            TeacherName = t.FirstName + " " + t.LastName,
+                            Credits = c.Credits
+                        };
+
+            return await query.ToListAsync();
         }
 
-        public async Task<List<Course>> GetOngoingCoursesAsync()
-        {
-            var currentDate = DateTime.Now;
-
-            return await _context.Courses
-                .Include(c => c.Subject)
-                .Include(c => c.Department)
-                .Include(c => c.Teacher)
-                .Include(c => c.Semester)
-                .Where(c => !c.IsDeleted && c.Semester.EndDate > currentDate)
-                .OrderBy(c => c.Subject.Name)
-                .ToListAsync();
-        }
 
         public async Task<Course> GetByIdAsync(Guid courseId)
         {
             return await _context.Courses
                 .Include(c => c.Subject)
-                .Include(c => c.Department)
                 .Include(c => c.Teacher)
                 .Include(c => c.Semester)
                 .FirstOrDefaultAsync(c => c.Id == courseId && !c.IsDeleted);
         }
 
-        public async Task<Course> CreateAsync(Guid subjectId, Guid departmentId, Guid teacherId, Guid semesterId, int credits = 3, Guid? createdById = null)
+        public async Task<Course> CreateAsync(Guid subjectId, Guid teacherId, Guid semesterId, int credits = 3, Guid? createdById = null)
         {
             var course = new Course
             {
                 SubjectId = subjectId,
-                DepartmentId = departmentId,
                 TeacherId = teacherId,
                 SemesterId = semesterId,
                 Credits = credits,
@@ -87,20 +67,19 @@ namespace UniPortal.Services.Academics.Operations
             await _context.SaveChangesAsync();
 
             await LogAsync(createdById, ActionType.Create, AppConstant.Academic.Course, course.Id,
-                new { SubjectId = subjectId, DepartmentId = departmentId, TeacherId = teacherId, SemesterId = semesterId, Credits = credits });
+                new { SubjectId = subjectId, TeacherId = teacherId, SemesterId = semesterId, Credits = credits });
 
             return course;
         }
 
-        public async Task UpdateAsync(Guid courseId, Guid subjectId, Guid departmentId, Guid teacherId, Guid semesterId, int credits = 3, Guid? updatedById = null)
+        public async Task UpdateAsync(Guid courseId, Guid subjectId, Guid teacherId, Guid semesterId, int credits = 3, Guid? updatedById = null)
         {
             var course = await _context.Courses.FindAsync(courseId);
             if (course == null) return;
 
-            var oldValues = new { course.SubjectId, course.DepartmentId, course.TeacherId, course.SemesterId, course.Credits };
+            var oldValues = new { course.SubjectId, course.TeacherId, course.SemesterId, course.Credits };
 
             course.SubjectId = subjectId;
-            course.DepartmentId = departmentId;
             course.TeacherId = teacherId;
             course.SemesterId = semesterId;
             course.Credits = credits;
@@ -109,7 +88,7 @@ namespace UniPortal.Services.Academics.Operations
             await _context.SaveChangesAsync();
 
             await LogAsync(updatedById, ActionType.Update, AppConstant.Academic.Course, course.Id,
-                new { Old = oldValues, New = new { SubjectId = subjectId, DepartmentId = departmentId, TeacherId = teacherId, SemesterId = semesterId, Credits = credits } });
+                new { Old = oldValues, New = new { SubjectId = subjectId, TeacherId = teacherId, SemesterId = semesterId, Credits = credits } });
         }
 
         public async Task DeleteAsync(Guid courseId, Guid? deletedById = null)

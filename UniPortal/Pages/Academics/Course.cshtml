@@ -23,7 +23,6 @@
                 <tr>
                     <th>#</th>
                     <th>Subject</th>
-                    <th>Department</th>
                     <th>Teacher</th>
                     <th>Semester</th>
                     <th>Credits</th>
@@ -39,15 +38,6 @@
                             @foreach (var subj in Model.Subjects)
                             {
                                 <option value="@subj.Id">@subj.Code - @subj.Name</option>
-                            }
-                        </select>
-                    </td>
-                    <td>
-                        <select asp-for="NewCourse.DepartmentId" class="form-select" required>
-                            <option value="">-- Select Department --</option>
-                            @foreach (var dept in Model.Departments)
-                            {
-                                <option value="@dept.Id">@dept.Code</option>
                             }
                         </select>
                     </td>
@@ -84,7 +74,6 @@
             <tr>
                 <th>Subject</th>
                 <th>Code</th>
-                <th>Department</th>
                 <th>Teacher</th>
                 <th>Semester</th>
                 <th>Credits</th>
@@ -112,17 +101,6 @@
                             </select>
                         </td>
                         <td>@Model.Subjects.FirstOrDefault(s => s.Id == Model.EditCourse.SubjectId)?.Code</td>
-                        <td>
-                            <select name="EditCourse.DepartmentId" class="form-select" required>
-                                <option value="">-- Select Department --</option>
-                                @foreach (var dept in Model.Departments)
-                                {
-                                    <option value="@dept.Id" selected="@(dept.Id == Model.EditCourse.DepartmentId ? "selected" : null)">
-                                        @dept.Code
-                                    </option>
-                                }
-                            </select>
-                        </td>
                         <td>
                             <select name="EditCourse.TeacherId" class="form-select" required>
                                 <option value="">-- Select Teacher --</option>
@@ -156,7 +134,6 @@
                         <!-- READ MODE -->
                         <td>@course.Subject?.Name</td>
                         <td>@course.Subject?.Code</td>
-                        <td>@course.Department?.Code</td>
                         <td>@course.Teacher?.FirstName @course.Teacher?.LastName</td>
                         <td>@course.Semester?.Name</td>
                         <td>@course.Credits</td>

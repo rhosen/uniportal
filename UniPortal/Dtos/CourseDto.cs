@@ -9,5 +9,7 @@
         public string DepartmentName { get; set; }
         public string TeacherName { get; set; }
         public int Credits { get; set; }
+        public string CourseName { get; set; }
+        public bool IsEnrolled { get; set; }
     }
 }
