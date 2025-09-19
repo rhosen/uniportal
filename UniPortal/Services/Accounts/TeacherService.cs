@@ -29,7 +29,7 @@ namespace UniPortal.Services.Accounts
                 .ToListAsync();
 
             var teachers = await _context.Accounts
-                .Where(a => !a.IsDeleted && a.IsActive && facultyUserIds.Contains(a.IdentityUserId))
+                .Where(a => !a.IsDeleted && a.IsActive && facultyUserIds.Contains(a.IdentityId))
                 .ToListAsync();
 
             return teachers;

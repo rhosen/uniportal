@@ -32,7 +32,7 @@ namespace UniPortal.Services.Accounts
 
                 var account = new Account
                 {
-                    IdentityUserId = identityUser.Id,
+                    IdentityId = identityUser.Id,
                     Email = email,
                     FirstName = firstName ?? "",
                     LastName = lastName ?? "",
@@ -66,7 +66,7 @@ namespace UniPortal.Services.Accounts
             if (!string.IsNullOrEmpty(identityUserId))
                 return await _unitOfWork.Context.Accounts
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(a => a.IdentityUserId == identityUserId && !a.IsDeleted);
+                    .FirstOrDefaultAsync(a => a.IdentityId == identityUserId && !a.IsDeleted);
 
             return null;
         }
@@ -135,7 +135,7 @@ namespace UniPortal.Services.Accounts
                 var account = await _unitOfWork.Context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
                 if (account == null) throw new Exception("Account not found");
 
-                var identityUser = await _userService.GetUserByIdAsync(account.IdentityUserId);
+                var identityUser = await _userService.GetUserByIdAsync(account.IdentityId);
                 if (identityUser != null && identityUser.Email != newEmail)
                 {
                     identityUser.Email = newEmail;
@@ -165,7 +165,7 @@ namespace UniPortal.Services.Accounts
             var account = await _unitOfWork.Context.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
             if (account == null) return IdentityResult.Failed(new IdentityError { Description = "Account not found" });
 
-            var identityUser = await _userService.GetUserByIdAsync(account.IdentityUserId);
+            var identityUser = await _userService.GetUserByIdAsync(account.IdentityId);
             if (identityUser == null) return IdentityResult.Failed(new IdentityError { Description = "User not found" });
 
             return await _userService.UpdatePasswordAsync(identityUser, newPassword);
@@ -176,7 +176,7 @@ namespace UniPortal.Services.Accounts
             var account = await _unitOfWork.Context.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
             if (account == null) return IdentityResult.Failed(new IdentityError { Description = "Account not found" });
 
-            var identityUser = await _userService.GetUserByIdAsync(account.IdentityUserId);
+            var identityUser = await _userService.GetUserByIdAsync(account.IdentityId);
             if (identityUser == null) return IdentityResult.Failed(new IdentityError { Description = "User not found" });
 
             return await _userService.ChangePasswordAsync(identityUser, currentPassword, newPassword);
@@ -188,7 +188,7 @@ namespace UniPortal.Services.Accounts
             var studentIds = (await _userService.GetUsersInRoleAsync("Student")).Select(u => u.Id).ToList();
             return await _unitOfWork.Context.Accounts
                 .AsNoTracking()
-                .Where(a => studentIds.Contains(a.IdentityUserId) && a.IsActive && !a.IsDeleted)
+                .Where(a => studentIds.Contains(a.IdentityId) && a.IsActive && !a.IsDeleted)
                 .ToListAsync();
         }
 
@@ -198,7 +198,7 @@ namespace UniPortal.Services.Accounts
             var studentIds = (await _userService.GetUsersInRoleAsync("Student")).Select(u => u.Id).ToList();
             return await _unitOfWork.Context.Accounts
                 .AsNoTracking()
-                .Where(a => studentIds.Contains(a.IdentityUserId) && !a.IsActive && !a.IsDeleted)
+                .Where(a => studentIds.Contains(a.IdentityId) && !a.IsActive && !a.IsDeleted)
                 .ToListAsync();
         }
     }

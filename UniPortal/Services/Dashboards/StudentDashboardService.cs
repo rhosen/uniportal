@@ -50,13 +50,13 @@ namespace UniPortal.Services.Dashboards
             // 2️⃣ Pending Assignments
             var pendingAssignments = await _context.Assignments
                 .Where(a => !a.IsDeleted && a.DueDate >= today)
-                .CountAsync(a => !_context.AssignmentSubmissions
+                .CountAsync(a => !_context.Submissions
                     .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId));
 
             // 3️⃣ Today's Classes
             var currentDay = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
 
-            var todayClasses = await _context.ClassScheduleEntries
+            var todayClasses = await _context.Sessions
                 .Where(e => !e.IsDeleted &&
                             !e.Schedule.IsDeleted &&
                             e.Schedule.Course.Enrollments.Any(en => en.StudentId == studentId) &&
@@ -78,8 +78,8 @@ namespace UniPortal.Services.Dashboards
 
             // 5️⃣ Overall GPA
             var grades = await _context.Grades
-                .Where(g => g.StudentId == studentId && !g.IsDeleted && g.Marks.HasValue)
-                .Select(g => g.Marks.Value)
+                .Where(g => g.StudentId == studentId && !g.IsDeleted)
+                .Select(g => g.Marks)
                 .ToListAsync();
 
             string overallGPA = grades.Any()
@@ -88,16 +88,16 @@ namespace UniPortal.Services.Dashboards
 
             // 6️⃣ Unread Notifications
             var unreadNotifications = await _context.Notices
-                .CountAsync(n => !n.IsDeleted && n.RecipientId == studentId.ToString());
+                .CountAsync(n => !n.IsDeleted && n.StudentId == studentId.ToString());
 
             // 7️⃣ Notes Count
-            var notesCount = await _context.ClassNotes
+            var notesCount = await _context.Notes
                 .CountAsync(n => !n.IsDeleted && n.Course.Enrollments.Any(e => e.StudentId == studentId));
 
             // 8️⃣ Classrooms count (optional: number of distinct classrooms student has today)
-            var classroomsCount = await _context.ClassSchedules
+            var classroomsCount = await _context.Schedules
                 .Where(c => !c.IsDeleted && c.Course.Enrollments.Any(e => e.StudentId == studentId))
-                .Select(c => c.ClassroomId)
+                .Select(c => c.RoomId)
                 .Distinct()
                 .CountAsync();
 

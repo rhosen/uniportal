@@ -18,7 +18,7 @@ namespace UniPortal.Pages.Notices
         }
 
         public List<Notice> Notices { get; set; } = new();
-        public List<RecipientType> RecipientTypes { get; set; } = new();
+        public List<Recipient> RecipientTypes { get; set; } = new();
 
         [BindProperty] public Notice NewNotice { get; set; } = new();
         [BindProperty] public Notice EditNotice { get; set; } = new();
@@ -55,8 +55,8 @@ namespace UniPortal.Pages.Notices
                 NewNotice.Title,
                 NewNotice.Message,
                 CurrentAccount.Id,
-                NewNotice.RecipientTypeId,
-                NewNotice.RecipientId
+                NewNotice.RecipientId,
+                NewNotice.StudentId
             );
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
@@ -72,8 +72,8 @@ namespace UniPortal.Pages.Notices
                     Id = notif.Id,
                     Title = notif.Title,
                     Message = notif.Message,
-                    RecipientTypeId = notif.RecipientTypeId,
                     RecipientId = notif.RecipientId,
+                    StudentId = notif.StudentId,
                     UpdatedAt = DateTime.Now,
                 };
             }
@@ -93,8 +93,8 @@ namespace UniPortal.Pages.Notices
                 Guid.Parse(id),
                 EditNotice.Title,
                 EditNotice.Message,
-                EditNotice.RecipientTypeId,
-                EditNotice.RecipientId
+                EditNotice.RecipientId,
+                EditNotice.StudentId
             );
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }

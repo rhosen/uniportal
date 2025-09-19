@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using UniPortal.Data;
 
 namespace UniPortal.Services.Accounts
 {
@@ -88,7 +87,5 @@ namespace UniPortal.Services.Accounts
             if (user == null) throw new ArgumentNullException(nameof(user));
             return await _userManager.GetRolesAsync(user);
         }
-
-     
     }
 }

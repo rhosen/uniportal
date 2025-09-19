@@ -8,7 +8,5 @@
 
         // Navigation
         public ICollection<Course> Courses { get; set; } = new List<Course>();
-        public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
-        public ICollection<Grade> Grades { get; set; } = new List<Grade>();
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace UniPortal.Data.Entities
 {
-    public class ClassNote : IEntity
+    public class Note : IEntity
     {
         public Guid CourseId { get; set; }
         public Guid TeacherId { get; set; }

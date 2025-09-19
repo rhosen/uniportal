@@ -98,10 +98,10 @@
                 <tr>
                     <td>@sched.CourseName</td>
                     <td>@sched.ClassroomName</td>
-                    <td>@string.Join(" ", sched.Entries.Select(e => e.DayName))</td>
+                    <td>@string.Join(" ", sched.Sessions.Select(e => e.DayName))</td>
                     <td>
-                        @sched.Entries.FirstOrDefault()?.StartTime.ToString("hh:mm tt") -
-                        @sched.Entries.FirstOrDefault()?.EndTime.ToString("hh:mm tt")
+                        @sched.Sessions.FirstOrDefault()?.StartTime.ToString("hh:mm tt") -
+                        @sched.Sessions.FirstOrDefault()?.EndTime.ToString("hh:mm tt")
                     </td>
                     <td>
                         <div class="d-flex gap-2">

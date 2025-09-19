@@ -1,6 +1,8 @@
-﻿namespace UniPortal.Data.Entities
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace UniPortal.Data.Entities
 {
-    public class AssignmentSubmission : IEntity
+    public class Submission : IEntity
     {
         public Guid AssignmentId { get; set; }
         public Guid StudentId { get; set; }

@@ -10,6 +10,6 @@
 
         // Navigation
         public Course Course { get; set; }
-        public ICollection<AssignmentSubmission> Submissions { get; set; }
+        public ICollection<Submission> Submissions { get; set; }
     }
 }

@@ -33,7 +33,7 @@ namespace UniPortal.Services.Academics.Configs
             {
                 Code = code,
                 Name = name,
-                CreatedById = createdById,
+                ModifiedById = createdById,
                 CreatedAt = DateTime.Now
             };
 

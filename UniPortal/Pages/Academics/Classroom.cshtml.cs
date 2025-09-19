@@ -17,10 +17,10 @@ namespace UniPortal.Pages.Academics
             _classroomService = classroomService;
         }
 
-        public List<Classroom> Classrooms { get; set; } = new();
+        public List<Room> Classrooms { get; set; } = new();
 
-        [BindProperty] public Classroom NewClassroom { get; set; } = new();
-        [BindProperty] public Classroom EditClassroom { get; set; } = new();
+        [BindProperty] public Room NewClassroom { get; set; } = new();
+        [BindProperty] public Room EditClassroom { get; set; } = new();
         [BindProperty(SupportsGet = true)] public string EditClassroomId { get; set; }
 
         // Search & Pagination
@@ -59,7 +59,7 @@ namespace UniPortal.Pages.Academics
             var classroom = await _classroomService.GetByIdAsync(id);
             if (classroom != null)
             {
-                EditClassroom = new Classroom
+                EditClassroom = new Room
                 {
                     Id = classroom.Id,
                     RoomName = classroom.RoomName,

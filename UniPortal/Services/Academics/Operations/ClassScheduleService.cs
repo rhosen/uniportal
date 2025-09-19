@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Dtos;
@@ -7,23 +8,25 @@ using UniPortal.ViewModels.Classes;
 
 namespace UniPortal.Services.Academics.Operations
 {
-    public class ClassScheduleService : BaseService<ClassSchedule>
+    public class ClassScheduleService : BaseService<Schedule>
     {
-        public ClassScheduleService(UniPortalContext context, LogService logService)
-            : base(context, logService)
-        {
-        }
+        private readonly IUnitOfWork _unitOfWork;
 
+        public ClassScheduleService(IUnitOfWork unitOfWork, LogService logService)
+            : base(unitOfWork.Context, logService)
+        {
+            _unitOfWork = unitOfWork;
+        }
 
         public async Task<ScheduleInputModel?> GetScheduleByIdAsync(Guid scheduleId)
         {
-            var schedule = await _context.ClassSchedules
+            var schedule = await _unitOfWork.Context.Schedules
                 .Where(cs => cs.Id == scheduleId && !cs.IsDeleted)
                 .Select(cs => new ScheduleInputModel
                 {
                     ScheduleId = cs.Id,
                     SelectedCourseId = cs.CourseId,
-                    SelectedClassroomId = cs.ClassroomId,
+                    SelectedClassroomId = cs.RoomId,
                     SelectedDays = cs.Entries
                         .Where(e => !e.IsDeleted)
                         .Select(e => e.DayOfWeek)
@@ -42,33 +45,27 @@ namespace UniPortal.Services.Academics.Operations
             return schedule;
         }
 
-
-
-        // ======================
-        // Get schedules (for display)
-        // ======================
         public async Task<List<ScheduleViewModel>> GetSchedulesAsync(string searchTerm = "")
         {
-            var schedules = await _context.ClassSchedules
+            var schedules = await _unitOfWork.Context.Schedules
                 .Include(cs => cs.Course)
                     .ThenInclude(c => c.Subject)
                 .Include(cs => cs.Course)
                     .ThenInclude(c => c.Department)
                 .Include(cs => cs.Course)
                     .ThenInclude(c => c.Teacher)
-                .Include(cs => cs.Classroom)
+                .Include(cs => cs.Room)
                 .Where(cs => !cs.IsDeleted)
                 .ToListAsync();
 
-            // Map to view model
             var result = schedules.Select(cs => new ScheduleViewModel
             {
                 ScheduleId = cs.Id,
                 CourseName = $"{cs.Course.Department.Code} · {cs.Course.Subject.Name} ({cs.Course.Subject.Code}) · {cs.Course.Teacher.FirstName} {cs.Course.Teacher.LastName}",
-                ClassroomName = cs.Classroom.RoomName,
-                Entries = _context.ClassScheduleEntries
+                ClassroomName = cs.Room.RoomName,
+                Sessions = _unitOfWork.Context.Sessions
                     .Where(e => e.ScheduleId == cs.Id && !e.IsDeleted)
-                    .Select(e => new ScheduleEntryViewModel
+                    .Select(e => new SessionViewModel
                     {
                         EntryId = e.Id,
                         DayOfWeek = e.DayOfWeek,
@@ -79,7 +76,6 @@ namespace UniPortal.Services.Academics.Operations
                     .ToList()
             }).ToList();
 
-            // Filter by search term
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 result = result
@@ -91,14 +87,11 @@ namespace UniPortal.Services.Academics.Operations
             return result;
         }
 
-        // ======================
-        // Get courses for dropdown
-        // ======================
         public async Task<List<SelectOption>> GetCoursesForDropdownAsync()
         {
             var today = DateTime.Today;
 
-            return await _context.Courses
+            return await _unitOfWork.Context.Courses
                 .Include(c => c.Subject)
                 .Include(c => c.Department)
                 .Include(c => c.Teacher)
@@ -112,14 +105,9 @@ namespace UniPortal.Services.Academics.Operations
                 .ToListAsync();
         }
 
-
-
-        // ======================
-        // Get classrooms for dropdown
-        // ======================
         public async Task<List<SelectOption>> GetClassroomsForDropdownAsync()
         {
-            return await _context.Classrooms
+            return await _unitOfWork.Context.Rooms
                 .Select(c => new SelectOption
                 {
                     Id = c.Id,
@@ -128,9 +116,6 @@ namespace UniPortal.Services.Academics.Operations
                 .ToListAsync();
         }
 
-        // ======================
-        // Create schedule (multiple entries)
-        // ======================
         public async Task CreateScheduleAsync(
             Guid courseId,
             Guid classroomId,
@@ -139,38 +124,34 @@ namespace UniPortal.Services.Academics.Operations
             TimeOnly endTime,
             Guid? createdById = null)
         {
-            var schedule = new ClassSchedule
+            var schedule = new Schedule
             {
                 CourseId = courseId,
-                ClassroomId = classroomId,
+                RoomId = classroomId,
                 CreatedAt = DateTime.Now,
-                CreatedById = createdById
+                ModifiedById = createdById
             };
-            _context.ClassSchedules.Add(schedule);
-            await _context.SaveChangesAsync();
+            _unitOfWork.Context.Schedules.Add(schedule);
 
             foreach (var day in days)
             {
-                var entry = new ClassScheduleEntry
+                var entry = new Session
                 {
                     ScheduleId = schedule.Id,
                     DayOfWeek = day,
                     StartTime = startTime,
                     EndTime = endTime,
                     CreatedAt = DateTime.Now,
-                    CreatedById = createdById
+                    ModifiedById = createdById
                 };
-                _context.ClassScheduleEntries.Add(entry);
+                _unitOfWork.Context.Sessions.Add(entry);
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.CommitAsync();
 
-            await LogAsync(createdById, Constants.ActionType.Create, "ClassSchedule", schedule.Id, new { courseId, classroomId, days, startTime, endTime });
+            await LogAsync(createdById, ActionType.Create, "ClassSchedule", schedule.Id, new { courseId, classroomId, days, startTime, endTime });
         }
 
-        // ======================
-        // Update schedule (multiple entries)
-        // ======================
         public async Task UpdateScheduleAsync(
             Guid scheduleId,
             Guid courseId,
@@ -180,19 +161,17 @@ namespace UniPortal.Services.Academics.Operations
             TimeOnly endTime,
             Guid? updatedById = null)
         {
-            var schedule = await _context.ClassSchedules.FindAsync(scheduleId);
+            var schedule = await _unitOfWork.Context.Schedules.FindAsync(scheduleId);
             if (schedule == null) return;
 
             schedule.CourseId = courseId;
-            schedule.ClassroomId = classroomId;
+            schedule.RoomId = classroomId;
             schedule.UpdatedAt = DateTime.Now;
 
-            // Get all existing entries for this schedule
-            var existingEntries = await _context.ClassScheduleEntries
+            var existingEntries = await _unitOfWork.Context.Sessions
                 .Where(e => e.ScheduleId == scheduleId && !e.IsDeleted)
                 .ToListAsync();
 
-            // Soft-delete entries that are no longer selected
             foreach (var entry in existingEntries)
             {
                 if (!days.Contains(entry.DayOfWeek))
@@ -202,51 +181,45 @@ namespace UniPortal.Services.Academics.Operations
                 }
             }
 
-            // Update existing or create new entries for selected days
             foreach (var day in days)
             {
                 var entry = existingEntries.FirstOrDefault(e => e.DayOfWeek == day && !e.IsDeleted);
                 if (entry != null)
                 {
-                    // Update existing entry
                     entry.StartTime = startTime;
                     entry.EndTime = endTime;
                     entry.UpdatedAt = DateTime.Now;
                 }
                 else
                 {
-                    // Create new entry
-                    var newEntry = new ClassScheduleEntry
+                    var newEntry = new Session
                     {
                         ScheduleId = scheduleId,
                         DayOfWeek = day,
                         StartTime = startTime,
                         EndTime = endTime,
                         CreatedAt = DateTime.Now,
-                        CreatedById = updatedById
+                        ModifiedById = updatedById
                     };
-                    _context.ClassScheduleEntries.Add(newEntry);
+                    _unitOfWork.Context.Sessions.Add(newEntry);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.CommitAsync();
 
-            await LogAsync(updatedById, Constants.ActionType.Update, "ClassSchedule", schedule.Id,
+            await LogAsync(updatedById, ActionType.Update, "ClassSchedule", schedule.Id,
                 new { courseId, classroomId, days, startTime, endTime });
         }
 
-        // ======================
-        // Delete schedule (soft delete)
-        // ======================
         public async Task DeleteScheduleAsync(Guid scheduleId, Guid? deletedById = null)
         {
-            var schedule = await _context.ClassSchedules.FindAsync(scheduleId);
+            var schedule = await _unitOfWork.Context.Schedules.FindAsync(scheduleId);
             if (schedule == null) return;
 
             schedule.IsDeleted = true;
             schedule.DeletedAt = DateTime.Now;
 
-            var entries = await _context.ClassScheduleEntries
+            var entries = await _unitOfWork.Context.Sessions
                 .Where(e => e.ScheduleId == scheduleId && !e.IsDeleted)
                 .ToListAsync();
 
@@ -256,9 +229,9 @@ namespace UniPortal.Services.Academics.Operations
                 entry.DeletedAt = DateTime.Now;
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.CommitAsync();
 
-            await LogAsync(deletedById, Constants.ActionType.Delete, "ClassSchedule", schedule.Id);
+            await LogAsync(deletedById, ActionType.Delete, "ClassSchedule", schedule.Id);
         }
     }
 }

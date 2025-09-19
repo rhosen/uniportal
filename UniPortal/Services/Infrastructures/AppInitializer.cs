@@ -112,7 +112,9 @@ namespace UniPortal.Services.Infrastructures
             await RoleSeeder.SeedRolesAsync(roleManager);
             await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
             await FacultySeeder.SeedFacultyAsync(scope.ServiceProvider);
-            await RecipientTypeSeeder.SeedRecipientTypesAsync(scope.ServiceProvider);
+            await RecipientSeeder.SeedRecipientTypesAsync(scope.ServiceProvider);
+            await AcademicSeeder.SeedAsync(scope.ServiceProvider);
+            await GradeScaleSeeder.SeedAsync(scope.ServiceProvider);
 
             _logger.LogInformation("Seeders executed successfully.");
         }

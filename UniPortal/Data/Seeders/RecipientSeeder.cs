@@ -3,19 +3,19 @@ using UniPortal.Data.Entities;
 
 namespace UniPortal.Data.Seeders
 {
-    public class RecipientTypeSeeder
+    public class RecipientSeeder
     {
         public static async Task SeedRecipientTypesAsync(IServiceProvider services)
         {
             var dbContext = services.GetRequiredService<UniPortalContext>();
 
             // Check if already seeded
-            if (await dbContext.RecipientTypes.AnyAsync())
+            if (await dbContext.Recipients.AnyAsync())
                 return;
 
-            var recipients = new List<RecipientType>
+            var recipients = new List<Recipient>
             {
-                new RecipientType
+                new Recipient
                 {
                     Id = Guid.NewGuid(),
                     Name = "Student",
@@ -23,7 +23,7 @@ namespace UniPortal.Data.Seeders
                     IsDeleted = false,
                     CreatedAt = DateTime.UtcNow
                 },
-                new RecipientType
+                new Recipient
                 {
                     Id = Guid.NewGuid(),
                     Name = "Faculty",
@@ -31,7 +31,7 @@ namespace UniPortal.Data.Seeders
                     IsDeleted = false,
                     CreatedAt = DateTime.UtcNow
                 },
-                new RecipientType
+                new Recipient
                 {
                     Id = Guid.NewGuid(),
                     Name = "Department",
@@ -39,7 +39,7 @@ namespace UniPortal.Data.Seeders
                     IsDeleted = false,
                     CreatedAt = DateTime.UtcNow
                 },
-                new RecipientType
+                new Recipient
                 {
                     Id = Guid.NewGuid(),
                     Name = "All",
@@ -49,7 +49,7 @@ namespace UniPortal.Data.Seeders
                 }
             };
 
-            dbContext.RecipientTypes.AddRange(recipients);
+            dbContext.Recipients.AddRange(recipients);
             await dbContext.SaveChangesAsync();
         }
     }

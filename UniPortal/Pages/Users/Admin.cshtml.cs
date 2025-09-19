@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Constants;
 using UniPortal.Services.Accounts;
 using UniPortal.ViewModels.Users;
+using static UniPortal.Constants.AppConstant;
 
 namespace UniPortal.Pages.Users
 {
@@ -65,7 +66,7 @@ namespace UniPortal.Pages.Users
             if (!ModelState.IsValid) return Page();
 
             // Default password for new admins
-            var password = "Admin@123!";
+            var password = Passwords.Admin;
 
             // Only allow super-admin to create new admins
             if (!User.IsInRole(Roles.Root))

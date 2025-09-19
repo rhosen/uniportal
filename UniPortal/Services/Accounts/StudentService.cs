@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Constants;
 using UniPortal.Data.Entities;
+using UniPortal.Dtos;
 using UniPortal.Helpers;
 using UniPortal.Services.Infrastructures;
 using UniPortal.ViewModels.Users;
@@ -32,7 +33,7 @@ namespace UniPortal.Services.Accounts
 
             var query = from account in _unitOfWork.Context.Accounts
                         join user in _unitOfWork.Context.Users
-                            on account.IdentityUserId equals user.Id
+                            on account.IdentityId equals user.Id
                         join userRole in _unitOfWork.Context.UserRoles
                             on user.Id equals userRole.UserId
                         join role in _unitOfWork.Context.Roles
@@ -105,6 +106,24 @@ namespace UniPortal.Services.Accounts
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+
+        public async Task<List<StudentDto>> GetAllActiveStudentAsync()
+        {
+            return await _context.Students
+                .Include(s => s.Account)
+                .Include(s => s.Department)
+                .Where(s => !s.IsDeleted && s.Account.IsActive)
+                .Select(s => new StudentDto
+                {
+                    Id = s.Id,
+                    StudentId = s.StudentId,
+                    FullName = s.Account.FirstName + " " + s.Account.LastName,
+                    DepartmentName = s.Department.Name
+                })
+                .ToListAsync();
+        }
+
 
         public async Task<Student> GetStudentAsync(
             Guid? accountId = null,

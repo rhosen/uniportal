@@ -46,7 +46,7 @@ namespace UniPortal.Services.Dashboards
             var currentDay = ((int)now.DayOfWeek == 0) ? 7 : (int)now.DayOfWeek; // Sunday = 0 → 7
             var currentTime = TimeOnly.FromDateTime(now);
 
-            var nextClassEntry = await _context.ClassScheduleEntries
+            var nextClassEntry = await _context.Sessions
                 .Include(e => e.Schedule)
                     .ThenInclude(s => s.Course)
                         .ThenInclude(c => c.Subject)

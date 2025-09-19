@@ -14,8 +14,8 @@
         public Department Department { get; set; }
         public Account Teacher { get; set; }
         public Semester Semester { get; set; }
-        public ICollection<ClassNote> ClassNotes { get; set; }
-        public ICollection<ClassSchedule> ClassSchedules { get; set; }
+        public ICollection<Note> Notes { get; set; }
+        public ICollection<Schedule> Schedules { get; set; }
         public ICollection<Assignment> Assignments { get; set; }
         public ICollection<Enrollment> Enrollments { get; set; }
         public ICollection<Grade> Grades { get; set; }

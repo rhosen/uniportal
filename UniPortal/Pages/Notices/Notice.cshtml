@@ -35,7 +35,7 @@
                     <td><input asp-for="NewNotice.Title" class="form-control" required /></td>
                     <td><input asp-for="NewNotice.Message" class="form-control" required /></td>
                     <td>
-                        <select asp-for="NewNotice.RecipientTypeId" class="form-select" required>
+                        <select asp-for="NewNotice.RecipientId" class="form-select" required>
                             <option value="">-- Select Type --</option>
                             @foreach (var type in Model.RecipientTypes)
                             {
@@ -43,7 +43,7 @@
                             }
                         </select>
                     </td>
-                    <td><input asp-for="NewNotice.RecipientId" class="form-control" placeholder="Optional Recipient ID" /></td>
+                    <td><input asp-for="NewNotice.StudentId" class="form-control" placeholder="Optional Recipient ID" /></td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
@@ -81,13 +81,13 @@
                                 <option value="">-- Select Type --</option>
                                 @foreach (var type in Model.RecipientTypes)
                                 {
-                                    <option value="@type.Id" selected="@(type.Id == Model.EditNotice.RecipientTypeId ? "selected" : null)">
+                                    <option value="@type.Id" selected="@(type.Id == Model.EditNotice.RecipientId ? "selected" : null)">
                                         @type.Name
                                     </option>
                                 }
                             </select>
                         </td>
-                        <td><input name="EditNotice.StudentId" value="@Model.EditNotice.RecipientId" class="form-control" placeholder="Optional target ID" /></td>
+                        <td><input name="EditNotice.StudentId" value="@Model.EditNotice.StudentId" class="form-control" placeholder="Optional target ID" /></td>
                         <td>@notice.Sender?.FirstName @notice.Sender?.LastName</td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
@@ -99,8 +99,8 @@
                         <!-- Normal Row -->
                         <td>@notice.Title</td>
                         <td>@notice.Message</td>
-                        <td>@notice.RecipientType?.Name</td>
-                        <td>@notice.RecipientId</td>
+                        <td>@notice.Recipient?.Name</td>
+                        <td>@notice.StudentId</td>
                         <td>@notice.Sender?.FirstName @notice.Sender?.LastName</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@notice.Id" class="btn btn-sm btn-warning">Edit</button>

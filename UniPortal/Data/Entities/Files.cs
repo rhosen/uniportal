@@ -1,6 +1,6 @@
 ﻿namespace UniPortal.Data.Entities
 {
-    public class Attachment : IEntity
+    public class File : IEntity
     {
         public string FileName { get; set; } = string.Empty;
         public string FilePath { get; set; } = string.Empty;

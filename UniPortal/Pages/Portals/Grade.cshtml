@@ -1,0 +1,132 @@
+﻿@page
+@model UniPortal.Pages.Portals.GradesModel
+@{
+    Layout = Model.LayoutForRole;
+    ViewData["Title"] = "My Grades";
+}
+
+<!-- Print & Export Buttons -->
+<div class="mb-3 no-print">
+    <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Grades</button>
+    <a asp-page-handler="ExportExcel" class="btn btn-secondary">⬇️ Export to Excel</a>
+    <a asp-page-handler="ExportPdf" class="btn btn-secondary">⬇️ Export to PDF</a>
+</div>
+
+<!-- Student Info & Cumulative CGPA -->
+<div class="mb-4 p-3 border rounded bg-light">
+    <h5>Student Information</h5>
+    <p><strong>Name:</strong> @Model.StudentName</p>
+    <p><strong>Student ID:</strong> @Model.StudentId</p>
+    <p><strong>Program:</strong> @Model.Program</p>
+    <p><strong>Cumulative CGPA:</strong> @Model.CumulativeCGPA</p>
+</div>
+
+<!-- Grades Section -->
+@if (Model.GradesBySemester == null || !Model.GradesBySemester.Any())
+{
+    <p>No grades available.</p>
+}
+else
+{
+    @foreach (var semester in Model.GradesBySemester)
+    {
+        <div class="semester-table mb-5">
+            <h5 class="mt-4">@semester.Key</h5>
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Subject Code</th>
+                        <th>Subject Name</th>
+                        <th>Teacher Name</th>
+                        <th>Grade</th>
+                        <th>Marks</th>
+                        <th>GPA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var grade in semester.Value)
+                    {
+                        <tr class="@(grade.IsFail ? "table-danger" : "")">
+                            <td>@grade.SubjectCode</td>
+                            <td>@grade.SubjectName</td>
+                            <td>@grade.TeacherName</td>
+                            <td>
+                                @if (grade.Grade == "A" || grade.Grade == "A-")
+                                {
+                                    <span class="badge bg-success">@grade.Grade</span>
+                                }
+                                else if (grade.Grade.StartsWith("B"))
+                                {
+                                    <span class="badge bg-warning text-dark">@grade.Grade</span>
+                                }
+                                else if (grade.Grade.StartsWith("C"))
+                                {
+                                    <span class="badge bg-orange text-dark">@grade.Grade</span>
+                                }
+                                else if (grade.Grade.StartsWith("D"))
+                                {
+                                    <span class="badge bg-primary text-white">@grade.Grade</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">@grade.Grade</span>
+                                }
+                            </td>
+                            <td>@grade.Marks.ToString("0.##")</td>
+                            <td>@grade.GPA.ToString("0.##")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="text-end"><strong>Semester GPA:</strong></td>
+                        <td><strong>@semester.Value.Average(g => g.GPA).ToString("0.##")</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+}
+
+<!-- Custom CSS -->
+<style>
+    .no-print {
+        display: inline-block;
+    }
+
+    .bg-orange {
+        background-color: orange;
+        color: black;
+    }
+
+    @@media print {
+        .no-print
+
+    {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+    }
+
+    .badge {
+        background-color: transparent !important;
+        color: black !important;
+        box-shadow: none;
+    }
+
+    .semester-table {
+        page-break-inside: avoid;
+        margin-bottom: 1.5rem;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    }
+</style>

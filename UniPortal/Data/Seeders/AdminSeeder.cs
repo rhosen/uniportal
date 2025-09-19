@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using UniPortal.Constants;
 using UniPortal.Data.Entities;
+using static UniPortal.Constants.AppConstant;
 
 namespace UniPortal.Data.Seeders
 {
@@ -26,18 +27,18 @@ namespace UniPortal.Data.Seeders
             if (adminUser == null)
             {
                 adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
-                await userManager.CreateAsync(adminUser, "Admin@123");
+                await userManager.CreateAsync(adminUser, Passwords.Admin);
                 await userManager.AddToRoleAsync(adminUser, Roles.Admin);
             }
 
-            if (!dbContext.Accounts.Any(a => a.IdentityUserId == adminUser.Id))
+            if (!dbContext.Accounts.Any(a => a.IdentityId == adminUser.Id))
             {
                 dbContext.Accounts.Add(new Account
                 {
                     FirstName = "System",
                     LastName = "Administrator",
                     Email = adminEmail,
-                    IdentityUserId = adminUser.Id,
+                    IdentityId = adminUser.Id,
                     IsActive = true,
                     CreatedAt = DateTime.Now
                 });
@@ -49,18 +50,18 @@ namespace UniPortal.Data.Seeders
             if (rootUser == null)
             {
                 rootUser = new IdentityUser { UserName = rootEmail, Email = rootEmail, EmailConfirmed = true };
-                await userManager.CreateAsync(rootUser, "Root@123");
+                await userManager.CreateAsync(rootUser, Passwords.Root);
                 await userManager.AddToRoleAsync(rootUser, Roles.Root);
             }
 
-            if (!dbContext.Accounts.Any(a => a.IdentityUserId == rootUser.Id))
+            if (!dbContext.Accounts.Any(a => a.IdentityId == rootUser.Id))
             {
                 dbContext.Accounts.Add(new Account
                 {
                     FirstName = "Root",
                     LastName = "",
                     Email = rootEmail,
-                    IdentityUserId = rootUser.Id,
+                    IdentityId = rootUser.Id,
                     IsActive = true,
                     CreatedAt = DateTime.Now
                 });

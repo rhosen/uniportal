@@ -6,14 +6,14 @@ namespace UniPortal.Data.Entities
     {
         public string Title { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
-        public Guid RecipientTypeId { get; set; }
-        public string RecipientId { get; set; }
+        public Guid RecipientId { get; set; }
+        public string StudentId { get; set; }
 
         // Navigation
 
-        [ForeignKey(nameof(CreatedById))]
+        [ForeignKey(nameof(ModifiedById))]
         public Account Sender { get; set; }
-        public RecipientType RecipientType { get; set; }
+        public Recipient Recipient { get; set; }
 
     }
 }

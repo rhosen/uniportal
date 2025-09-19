@@ -1,6 +1,6 @@
 ﻿namespace UniPortal.ViewModels.Classes
 {
-    public class ScheduleEntryViewModel
+    public class SessionViewModel
     {
         public Guid EntryId { get; set; }
         public int DayOfWeek { get; set; }

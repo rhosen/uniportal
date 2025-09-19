@@ -49,7 +49,7 @@ namespace UniPortal.Services.Dashboards
                              .ToList();
 
             var count = await _context.Accounts
-                .Where(a => studentIds.Contains(a.IdentityUserId)
+                .Where(a => studentIds.Contains(a.IdentityId)
                             && !a.IsDeleted
                             && !a.IsActive
                             && !_context.Students.Any(s => s.AccountId == a.Id))
@@ -64,7 +64,7 @@ namespace UniPortal.Services.Dashboards
                         where account.IsActive
                               && !account.IsDeleted
                               && !_context.Students.Any(s => s.AccountId == account.Id)
-                        join userRole in _context.UserRoles on account.IdentityUserId equals userRole.UserId
+                        join userRole in _context.UserRoles on account.IdentityId equals userRole.UserId
                         join role in _context.Roles on userRole.RoleId equals role.Id
                         where role.Name == Roles.Student
                         select account;
@@ -79,7 +79,7 @@ namespace UniPortal.Services.Dashboards
                 .ToList();
 
             var query = _context.Accounts
-                .Where(a => teacherIds.Contains(a.IdentityUserId) && !a.IsDeleted);
+                .Where(a => teacherIds.Contains(a.IdentityId) && !a.IsDeleted);
 
             if (isActive.HasValue)
                 query = query.Where(a => a.IsActive == isActive.Value);

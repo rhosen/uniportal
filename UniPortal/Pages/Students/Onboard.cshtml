@@ -77,16 +77,16 @@
                         <!-- Department -->
                         <td>
                             <select name="DepartmentId" class="form-select">
-                                <option value="">Select Department</option>
+                                <option value="">Select</option>
                                 @foreach (var dept in Model.Departments)
                                 {
-                                    <option value="@dept.Id">@dept.Name</option>
+                                    <option value="@dept.Id">@dept.Code</option>
                                 }
                             </select>
                         </td>
 
                         <td>
-                            <button type="submit" class="btn btn-sm btn-primary">🆔 Assign</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Assign 🆔</button>
                         </td>
                         </form>
                     </tr>

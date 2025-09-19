@@ -2,6 +2,7 @@
 using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
+using UniPortal.Dtos;
 using UniPortal.Services.Infrastructures;
 
 namespace UniPortal.Services.Academics.Operations
@@ -22,6 +23,27 @@ namespace UniPortal.Services.Academics.Operations
                 .Include(c => c.Semester)
                 .Where(c => !c.IsDeleted)
                 .OrderBy(c => c.Subject.Name)
+                .ToListAsync();
+        }
+
+        // Get all courses for a semester
+        public async Task<List<CourseDto>> GetCoursesBySemesterAsync(Guid semesterId)
+        {
+            return await _context.Courses
+                .Include(c => c.Subject)
+                .Include(c => c.Department)
+                .Include(c => c.Teacher)
+                .Where(c => !c.IsDeleted && c.SemesterId == semesterId)
+                .Select(c => new CourseDto
+                {
+                    Id = c.Id,
+                    SubjectCode = c.Subject.Code,
+                    SubjectName = c.Subject.Name,
+                    DepartmentCode = c.Department.Code,
+                    DepartmentName = c.Department.Name,
+                    TeacherName = c.Teacher.FirstName + " " + c.Teacher.LastName,
+                    Credits = c.Credits
+                })
                 .ToListAsync();
         }
 

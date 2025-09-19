@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Constants;
 using UniPortal.Services.Accounts;
 using UniPortal.ViewModels.Users;
+using static UniPortal.Constants.AppConstant;
 
 namespace UniPortal.Pages.Users
 {
@@ -54,7 +55,7 @@ namespace UniPortal.Pages.Users
         {
             if (!ModelState.IsValid) return Page();
 
-            var password = "Teacher@123!";
+            var password = Passwords.Teacher;
             await _teacherService.CreateAsync(NewTeacher.Email, password, NewTeacher.FirstName, NewTeacher.LastName);
 
             return RedirectToPage(new { CurrentPage, SearchTerm });

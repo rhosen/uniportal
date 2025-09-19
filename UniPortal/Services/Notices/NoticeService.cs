@@ -17,7 +17,7 @@ namespace UniPortal.Services.Notices
         {
             return await _context.Notices.Where(x=> !x.IsDeleted)
                 .Include(n => n.Sender)
-                .Include(n => n.RecipientType)
+                .Include(n => n.Recipient)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
@@ -26,7 +26,7 @@ namespace UniPortal.Services.Notices
         {
             return await _context.Notices
                 .Include(n => n.Sender)
-                .Include(n => n.RecipientType)
+                .Include(n => n.Recipient)
                 .FirstOrDefaultAsync(n => n.Id.ToString() == id);
         }
 
@@ -36,9 +36,9 @@ namespace UniPortal.Services.Notices
             {
                 Title = title,
                 Message = message,
-                CreatedById = createdBy,
-                RecipientTypeId = notificationTypeId,
-                RecipientId = receiverId
+                ModifiedById = createdBy,
+                RecipientId = notificationTypeId,
+                StudentId = receiverId
             };
 
             _context.Notices.Add(notification);
@@ -52,8 +52,8 @@ namespace UniPortal.Services.Notices
             {
                 notification.Title = title;
                 notification.Message = message;
-                notification.RecipientTypeId = notificationTypeId;
-                notification.RecipientId = receiverId;
+                notification.RecipientId = notificationTypeId;
+                notification.StudentId = receiverId;
                 notification.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
             }
@@ -81,9 +81,9 @@ namespace UniPortal.Services.Notices
             }
         }
 
-        public async Task<List<RecipientType>> GetNotificationTypesAsync()
+        public async Task<List<Recipient>> GetNotificationTypesAsync()
         {
-            return await _context.RecipientTypes
+            return await _context.Recipients
                 .Where(nt => !nt.IsDeleted)
                 .OrderBy(nt => nt.Name)
                 .ToListAsync();
@@ -92,7 +92,7 @@ namespace UniPortal.Services.Notices
         public async Task<List<Account>> GetAccountsByRoleAsync(string roleName)
         {
             return await (from account in _context.Accounts
-                          join userRole in _context.UserRoles on account.IdentityUserId equals userRole.UserId
+                          join userRole in _context.UserRoles on account.IdentityId equals userRole.UserId
                           join role in _context.Roles on userRole.RoleId equals role.Id
                           where role.Name == roleName && !account.IsDeleted && account.IsActive
                           select account)

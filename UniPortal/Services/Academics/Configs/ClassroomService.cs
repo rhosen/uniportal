@@ -15,34 +15,34 @@ namespace UniPortal.Services.Academics.Configs
             _context = context;
         }
 
-        public async Task<List<Classroom>> GetAllAsync()
+        public async Task<List<Room>> GetAllAsync()
         {
-            return await _context.Classrooms.Where(c => !c.IsDeleted)
+            return await _context.Rooms.Where(c => !c.IsDeleted)
                 .OrderBy(c => c.RoomName)
                 .ToListAsync();
         }
 
-        public async Task<Classroom> GetByIdAsync(string id)
+        public async Task<Room> GetByIdAsync(string id)
         {
-            return await _context.Classrooms
+            return await _context.Rooms
                 .FirstOrDefaultAsync(c => c.Id.ToString() == id);
         }
 
         public async Task CreateAsync(string roomName, int capacity, string location)
         {
-            var classroom = new Classroom
+            var classroom = new Room
             {
                 RoomName = roomName,
                 Capacity = capacity,
                 Location = location
             };
-            _context.Classrooms.Add(classroom);
+            _context.Rooms.Add(classroom);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(Guid id, string roomName, int capacity, string location)
         {
-            var classroom = await _context.Classrooms.FindAsync(id);
+            var classroom = await _context.Rooms.FindAsync(id);
             if (classroom != null)
             {
                 classroom.RoomName = roomName;
@@ -56,7 +56,7 @@ namespace UniPortal.Services.Academics.Configs
 
         public async Task DeleteAsync(string id)
         {
-            var classroom = await _context.Classrooms.FindAsync(Guid.Parse(id));
+            var classroom = await _context.Rooms.FindAsync(Guid.Parse(id));
             if (classroom != null)
             {
                 classroom.IsDeleted = true;
@@ -67,7 +67,7 @@ namespace UniPortal.Services.Academics.Configs
 
         public async Task ActivateAsync(string id)
         {
-            var classroom = await _context.Classrooms.FindAsync(Guid.Parse(id));
+            var classroom = await _context.Rooms.FindAsync(Guid.Parse(id));
             if (classroom != null)
             {
                 classroom.IsDeleted = false;
@@ -89,7 +89,7 @@ namespace UniPortal.Services.Academics.Configs
                 .FirstOrDefaultAsync();
 
             // Fetch schedules for today
-            var schedulesToday = await _context.ClassScheduleEntries
+            var schedulesToday = await _context.Sessions
                 .Where(e => !e.IsDeleted &&
                             !e.Schedule.IsDeleted &&
                             e.Schedule.Course.SemesterId == semesterId &&
@@ -101,7 +101,7 @@ namespace UniPortal.Services.Academics.Configs
                     .ThenInclude(cs => cs.Course)
                         .ThenInclude(c => c.Teacher)
                 .Include(e => e.Schedule)
-                    .ThenInclude(cs => cs.Classroom)
+                    .ThenInclude(cs => cs.Room)
                 .ToListAsync();
 
             // Filter schedules that are currently ongoing, covering overnight
@@ -111,7 +111,7 @@ namespace UniPortal.Services.Academics.Configs
             ).ToList();
 
             // Fetch all classrooms
-            var classrooms = await _context.Classrooms
+            var classrooms = await _context.Rooms
                 .Where(c => !c.IsDeleted)
                 .ToListAsync();
 
@@ -119,7 +119,7 @@ namespace UniPortal.Services.Academics.Configs
             var result = classrooms.Select(c =>
             {
                 var currentSchedules = ongoingSchedules
-                    .Where(e => e.Schedule.ClassroomId == c.Id)
+                    .Where(e => e.Schedule.RoomId == c.Id)
                     .Select(e => new ScheduleInfo
                     {
                         SubjectCode = e.Schedule.Course.Subject.Code,

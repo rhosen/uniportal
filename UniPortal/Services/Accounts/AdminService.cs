@@ -28,7 +28,7 @@ namespace UniPortal.Services.Accounts
                 .ToListAsync();
 
             var admins = await _context.Accounts
-                .Where(a => !a.IsDeleted && a.IsActive && adminUserIds.Contains(a.IdentityUserId))
+                .Where(a => !a.IsDeleted && a.IsActive && adminUserIds.Contains(a.IdentityId))
                 .ToListAsync();
 
             return admins;

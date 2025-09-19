@@ -1,12 +1,12 @@
 ﻿namespace UniPortal.Data.Entities
 {
-    public class CanceledClass : IEntity
+    public class Cancellation : IEntity
     {
-        public Guid ClassScheduleEntryId { get; set; } 
+        public Guid SessionId { get; set; } 
         public DateOnly Date { get; set; }
         public string Reason { get; set; }
 
         // Navigation property
-        public ClassScheduleEntry ClassScheduleEntry { get; set; }
+        public Session Session { get; set; }
     }
 }

@@ -38,7 +38,7 @@ namespace UniPortal.Services.Academics.Operations
                     Title = a.Title,
                     CourseName = a.Course.Subject.Name,
                     DueDate = a.DueDate,
-                    Status = _context.AssignmentSubmissions
+                    Status = _context.Submissions
                         .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId)
                         ? "Submitted"
                         : a.DueDate < DateTime.Now ? "Overdue" : "Pending"
@@ -105,25 +105,25 @@ namespace UniPortal.Services.Academics.Operations
             return filePath;
         }
 
-        private async Task<Data.Entities.AssignmentSubmission> SaveSubmissionRecordAsync(Guid assignmentId, Guid studentId, Guid accountId)
+        private async Task<Data.Entities.Submission> SaveSubmissionRecordAsync(Guid assignmentId, Guid studentId, Guid accountId)
         {
-            var submission = new Data.Entities.AssignmentSubmission
+            var submission = new Data.Entities.Submission
             {
                 AssignmentId = assignmentId,
                 StudentId = studentId,
                 SubmittedDate = DateTime.Now,
                 Status = "Submitted",
-                CreatedById = accountId
+                ModifiedById = accountId
             };
 
-            _context.AssignmentSubmissions.Add(submission);
+            _context.Submissions.Add(submission);
             await _context.SaveChangesAsync();
             return submission;
         }
 
         private async Task SaveAttachmentRecordAsync(IFormFile file, string filePath, Guid submissionId, Guid accountId)
         {
-            var attachment = new Data.Entities.Attachment
+            var attachment = new Data.Entities.File
             {
                 FileName = file.FileName,
                 FilePath = filePath,
@@ -132,10 +132,10 @@ namespace UniPortal.Services.Academics.Operations
                 RelatedEntity = "AssignmentSubmission",
                 RelatedEntityId = submissionId,
                 CreatedAt = DateTime.Now,
-                CreatedById = accountId
+                ModifiedById = accountId
             };
 
-            _context.Attachments.Add(attachment);
+            _context.Files.Add(attachment);
             await _context.SaveChangesAsync();
         }
     }

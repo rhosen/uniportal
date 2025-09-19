@@ -41,6 +41,8 @@ namespace UniPortal.Extensions
             services.AddScoped<CourseService>();
             services.AddScoped<ClassScheduleService>();
             services.AddScoped<AssignmentService>();
+            services.AddScoped<GradeService>();
+            services.AddScoped<EnrollmentService>();
 
             services.AddSingleton<FileLogService>();
             services.AddScoped<LogService>();

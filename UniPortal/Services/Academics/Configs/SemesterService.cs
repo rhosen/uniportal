@@ -16,8 +16,8 @@ namespace UniPortal.Services.Academics.Configs
 
         public async Task<List<Semester>> GetAllAsync()
         {
-            return await _context.Semesters.Where(x=> !x.IsDeleted)
-                .OrderBy(s => s.StartDate)
+            return await _context.Semesters.Where(x => !x.IsDeleted)
+                .OrderByDescending(s => s.StartDate)
                 .ToListAsync();
         }
 
@@ -27,10 +27,19 @@ namespace UniPortal.Services.Academics.Configs
 
             return await _context.Semesters
                 .Where(s => !s.IsDeleted && s.EndDate > currentDate)
-                .OrderBy(s => s.StartDate)
+                .OrderByDescending(s => s.StartDate)
                 .ToListAsync();
         }
 
+        public async Task<Semester> GetCurrentSemesterAsync()
+        {
+            var today = DateTime.Now.Date;
+
+            return await _context.Semesters
+                .Where(s => !s.IsDeleted && s.StartDate <= today && s.EndDate >= today)
+                .OrderByDescending(s => s.StartDate)
+                .FirstOrDefaultAsync();
+        }
 
         public async Task<Semester> GetByIdAsync(string id)
         {

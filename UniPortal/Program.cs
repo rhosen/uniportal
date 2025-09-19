@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Identity;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Serilog;
-using UniPortal.Data.Seeders;
 using UniPortal.Extensions;
+using UniPortal.Helpers;
 using UniPortal.Middlewares;
 using UniPortal.Services.Infrastructures;
 using static UniPortal.Constants.AppConstant;
@@ -11,6 +12,8 @@ internal class Program
     private static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        Passwords.LoadPasswords(builder.Configuration);
 
         // Add services to the container.
         builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
@@ -28,6 +31,10 @@ internal class Program
 
 
         builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
+        builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+
+        builder.Services.AddSingleton<RazorViewToStringRenderer>();
 
         builder.Services.AddAppServices();
 

@@ -22,20 +22,21 @@ namespace UniPortal.Data
         public DbSet<Semester> Semesters { get; set; }
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Course> Courses { get; set; }
-        public DbSet<Classroom> Classrooms { get; set; }
-        public DbSet<ClassNote> ClassNotes { get; set; }
-        public DbSet<ClassSchedule> ClassSchedules { get; set; }
-        public DbSet<ClassScheduleEntry> ClassScheduleEntries { get; set; }
+        public DbSet<Room> Rooms { get; set; }
+        public DbSet<Note> Notes { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
+        public DbSet<Session> Sessions { get; set; }
         public DbSet<Enrollment> Enrollments { get; set; }
 
         // Student-related entities
         public DbSet<Assignment> Assignments { get; set; }
-        public DbSet<AssignmentSubmission> AssignmentSubmissions { get; set; }
+        public DbSet<Submission> Submissions { get; set; }
         public DbSet<Grade> Grades { get; set; }
+        public DbSet<GradeScale> GradeScales { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
-        public DbSet<Attachment> Attachments { get; set; }
+        public DbSet<Entities.File> Files { get; set; }
         public DbSet<Notice> Notices { get; set; }
-        public DbSet<RecipientType> RecipientTypes { get; set; }
+        public DbSet<Recipient> Recipients { get; set; }
 
         // System entities
         public DbSet<Log> Logs { get; set; }
