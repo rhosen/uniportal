@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using UniPortal.Constants;
-using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Services.Infrastructures;
 using UniPortal.ViewModels.Users;
@@ -36,6 +35,7 @@ namespace UniPortal.Services.Accounts
                     Email = email,
                     FirstName = firstName ?? "",
                     LastName = lastName ?? "",
+                    Gender = Gender.Other.ToString(),
                     IsActive = !string.Equals(role, Roles.Student, StringComparison.OrdinalIgnoreCase), // activate if not Student
                     IsDeleted = false
                 };
@@ -85,6 +85,7 @@ namespace UniPortal.Services.Accounts
             account.Phone = profile.Phone;
             account.Address = profile.Address;
             account.DateOfBirth = profile.DateOfBirth;
+            account.Gender = profile.Gender;
             account.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Context.Accounts.Update(account);

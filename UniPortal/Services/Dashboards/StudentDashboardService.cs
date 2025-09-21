@@ -19,6 +19,9 @@ namespace UniPortal.Services.Dashboards
             _studentService = studentService;
         }
 
+        // -----------------------------
+        // Get student profile by account ID
+        // -----------------------------
         public async Task<StudentProfileViewModel> GetProfileAsync(Guid accountId)
         {
             if (accountId == Guid.Empty)
@@ -28,15 +31,17 @@ namespace UniPortal.Services.Dashboards
                         join a in _context.Accounts on s.AccountId equals a.Id
                         join p in _context.Programs on s.ProgramId equals p.Id
                         join d in _context.Departments on p.DepartmentId equals d.Id
+                        join b in _context.Batches on s.BatchId equals b.Id
+                        join sec in _context.Sections on s.SectionId equals sec.Id
                         where s.AccountId == accountId && !s.IsDeleted && !a.IsDeleted && a.IsActive
                         select new StudentProfileViewModel
                         {
                             FullName = $"{a.FirstName} {a.LastName}".Trim(),
-                            StudentId = s.StudentId,
+                            StudentId = s.StudentNumber,
                             Program = p.Name,
                             Department = d.Name,
-                            Batch = s.BatchNumber,
-                            Section = s.Section,
+                            Batch = b.Number,
+                            Section = sec.Name,
                             Email = a.Email,
                             Phone = a.Phone
                         };
@@ -49,32 +54,44 @@ namespace UniPortal.Services.Dashboards
             return profile;
         }
 
-
-
-        // Dashboard metrics
+        // -----------------------------
+        // Get dashboard metrics
+        // -----------------------------
         public async Task<MetricsViewModel> GetDashboardMetricsAsync(Guid studentId)
         {
             var today = DateTime.Today;
+            var currentDayOfWeek = today.DayOfWeek;
 
-            // 1️⃣ Courses
+            // 1️⃣ Total courses
             var courseCount = await _context.Enrollments
-                .CountAsync(e => e.StudentId == studentId && !e.IsDeleted);
-
-            // 2️⃣ Pending Assignments
-            var pendingAssignments = await _context.Assignments
-                .Where(a => !a.IsDeleted && a.DueDate >= today)
-                .CountAsync(a => !_context.Submissions
-                    .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId));
-
-            // 3️⃣ Today's Classes
-            var currentDay = today.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)today.DayOfWeek;
-
-            var todayClasses = await _context.Sessions
-                .Where(e => !e.IsDeleted &&
-                            !e.Schedule.IsDeleted &&
-                            e.Schedule.Course.Enrollments.Any(en => en.StudentId == studentId) &&
-                            e.DayOfWeek == currentDay)
+                .Where(e => e.StudentId == studentId && !e.IsDeleted)
                 .CountAsync();
+
+            // 2️⃣ Pending assignments
+            var pendingAssignments = await (from a in _context.Assignments
+                                            join co in _context.CourseOfferings on a.CourseOfferingId equals co.Id
+                                            join e in _context.Enrollments on co.Id equals e.CourseOfferingId
+                                            where e.StudentId == studentId
+                                                  && !a.IsDeleted && !co.IsDeleted && !e.IsDeleted
+                                                  && a.DueDate >= today
+                                            join s in _context.AssignmentSubmissions
+                                                on new { a.Id, StudentId = studentId } equals new { Id = s.AssignmentId, StudentId = s.StudentId } into sub
+                                            from submission in sub.DefaultIfEmpty()
+                                            where submission == null
+                                            select a.Id).CountAsync();
+
+            // 3️⃣ Today's classes (check weekday flags)
+            var todayClasses = await (from e in _context.Enrollments
+                                      join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                                      where e.StudentId == studentId && !e.IsDeleted && !co.IsDeleted
+                                      && ((currentDayOfWeek == DayOfWeek.Monday && co.Mon) ||
+                                          (currentDayOfWeek == DayOfWeek.Tuesday && co.Tue) ||
+                                          (currentDayOfWeek == DayOfWeek.Wednesday && co.Wed) ||
+                                          (currentDayOfWeek == DayOfWeek.Thursday && co.Thu) ||
+                                          (currentDayOfWeek == DayOfWeek.Friday && co.Fri) ||
+                                          (currentDayOfWeek == DayOfWeek.Saturday && co.Sat) ||
+                                          (currentDayOfWeek == DayOfWeek.Sunday && co.Sun))
+                                      select co.Id).CountAsync();
 
             // 4️⃣ Attendance %
             var totalClasses = await _context.Attendances
@@ -96,23 +113,26 @@ namespace UniPortal.Services.Dashboards
                 .ToListAsync();
 
             string overallGPA = grades.Any()
-                ? (grades.Average() / 25).ToString("0.00") // Example: convert marks to GPA (0-4 scale)
+                ? (grades.Average() / 25).ToString("0.00") // example conversion
                 : "N/A";
 
-            // 6️⃣ Unread Notifications
+            // 6️⃣ Unread notifications
             var unreadNotifications = await _context.Notices
-                .CountAsync(n => !n.IsDeleted && n.StudentId == studentId.ToString());
-
-            // 7️⃣ Notes Count
-            var notesCount = await _context.Notes
-                .CountAsync(n => !n.IsDeleted && n.Course.Enrollments.Any(e => e.StudentId == studentId));
-
-            // 8️⃣ Classrooms count (optional: number of distinct classrooms student has today)
-            var classroomsCount = await _context.Schedules
-                .Where(c => !c.IsDeleted && c.Course.Enrollments.Any(e => e.StudentId == studentId))
-                .Select(c => c.RoomId)
-                .Distinct()
+                .Where(n => !n.IsDeleted && n.TargetId == studentId.ToString())
                 .CountAsync();
+
+            // 7️⃣ Notes count
+            var notesCount = await (from cm in _context.CourseMaterials
+                                    join co in _context.CourseOfferings on cm.CourseOfferingId equals co.Id
+                                    join e in _context.Enrollments on co.Id equals e.CourseOfferingId
+                                    where e.StudentId == studentId && !cm.IsDeleted && !co.IsDeleted && !e.IsDeleted
+                                    select cm.Id).CountAsync();
+
+            // 8️⃣ Distinct classrooms
+            var classroomsCount = await (from co in _context.CourseOfferings
+                                         join e in _context.Enrollments on co.Id equals e.CourseOfferingId
+                                         where e.StudentId == studentId && !co.IsDeleted && !e.IsDeleted
+                                         select co.RoomId).Distinct().CountAsync();
 
             return new MetricsViewModel
             {

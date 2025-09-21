@@ -47,7 +47,7 @@ namespace UniPortal.Pages.Portals
             var department = await _departmentService.GetByIdAsync(student.ProgramId.ToString());
 
             StudentName = CurrentAccount.FirstName + " " + CurrentAccount.LastName;
-            StudentId = student.StudentId;
+            StudentId = student.StudentNumber;
             Program = department.Name;
             CumulativeCGPA = grades.Any() ? grades.Average(g => g.GPA) : 0;
 

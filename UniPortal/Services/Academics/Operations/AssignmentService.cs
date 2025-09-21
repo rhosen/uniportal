@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
+using UniPortal.Data.Entities;
 using UniPortal.Services.Accounts;
 using UniPortal.ViewModels.Operations;
 
@@ -8,11 +9,11 @@ namespace UniPortal.Services.Academics.Operations
     public class AssignmentService
     {
         private readonly UniPortalContext _context;
-
         private readonly StudentService _studentService;
         private readonly IWebHostEnvironment _env;
 
-        public AssignmentService(UniPortalContext context,
+        public AssignmentService(
+            UniPortalContext context,
             StudentService studentService,
             IWebHostEnvironment env)
         {
@@ -21,122 +22,145 @@ namespace UniPortal.Services.Academics.Operations
             _env = env;
         }
 
-        // Get upcoming assignments
+        // -----------------------------
+        // Get upcoming assignments for a student
+        // -----------------------------
         public async Task<List<AssignmentViewModel>> GetUpcomingAssignmentsAsync(Guid studentId, int limit = 5)
         {
             var today = DateTime.Today;
 
-            var assignments = await _context.Assignments
-                .Where(a => !a.IsDeleted && a.DueDate >= today)
-                .Include(a => a.Course)
-                .ThenInclude(c => c.Subject)
-                .OrderBy(a => a.DueDate)
-                .Take(limit)
-                .Select(a => new AssignmentViewModel
-                {
-                    Id = a.Id, // internal for submission
-                    Title = a.Title,
-                    CourseName = a.Course.Subject.Name,
-                    DueDate = a.DueDate,
-                    Status = _context.Submissions
-                        .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId)
-                        ? "Submitted"
-                        : a.DueDate < DateTime.Now ? "Overdue" : "Pending"
-                })
-                .ToListAsync();
+            var query = from a in _context.Assignments
+                        join co in _context.CourseOfferings on a.CourseOfferingId equals co.Id
+                        join crs in _context.Courses on co.CourseId equals crs.Id
+                        join e in _context.Enrollments on co.Id equals e.CourseOfferingId
+                        where !a.IsDeleted && !co.IsDeleted && !e.IsDeleted
+                              && e.StudentId == studentId
+                              && a.DueDate >= today
+                        orderby a.DueDate
+                        select new AssignmentViewModel
+                        {
+                            Id = a.Id,
+                            Title = a.Title,
+                            CourseName = crs.Title, // join used here
+                            DueDate = a.DueDate,
+                            Status = _context.AssignmentSubmissions
+                                .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId && !s.IsDeleted)
+                                ? "Submitted"
+                                : a.DueDate < DateTime.Now ? "Overdue" : "Pending"
+                        };
 
-            return assignments;
+            return await query.Take(limit).ToListAsync();
         }
 
-        // Main entry point
+
+        // -----------------------------
+        // Create a new assignment (optional file)
+        // -----------------------------
+        public async Task CreateAssignmentAsync(Guid courseOfferingId, string title, string description, IFormFile? file, Guid accountId)
+        {
+            string? filePath = null;
+
+            if (file != null && file.Length > 0)
+            {
+                var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "assignments", courseOfferingId.ToString());
+                if (!Directory.Exists(uploadFolder))
+                    Directory.CreateDirectory(uploadFolder);
+
+                filePath = Path.Combine(uploadFolder, Path.GetFileName(file.FileName));
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await file.CopyToAsync(stream);
+            }
+
+            var assignment = new Assignment
+            {
+                CourseOfferingId = courseOfferingId,
+                Title = title,
+                Description = description,
+                FilePath = filePath,
+                ModifiedById = accountId
+            };
+
+            _context.Assignments.Add(assignment);
+            await _context.SaveChangesAsync();
+        }
+
+        // -----------------------------
+        // Submit assignment for a student (file required)
+        // -----------------------------
         public async Task SubmitAssignmentAsync(Guid assignmentId, IFormFile file, Guid accountId)
         {
             if (file == null || file.Length == 0)
-                throw new Exception("File is required.");
+                throw new ArgumentException("File is required.");
 
             var student = await _studentService.GetStudentAsync(accountId);
-            var course = await GetCourseForAssignmentAsync(assignmentId);
-            var uploadFolder = BuildUploadFolderPath(course.Subject.Code, assignmentId, student.StudentId);
+            if (student == null)
+                throw new Exception("Student not found.");
 
-            EnsureDirectoryExists(uploadFolder);
+            // Build folder path: /wwwroot/uploads/assignments/{assignmentId}/{studentNumber}/
+            var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "assignments", assignmentId.ToString(), student.StudentNumber);
+            if (!Directory.Exists(uploadFolder))
+                Directory.CreateDirectory(uploadFolder);
 
-            var filePath = await SaveFileAsync(file, uploadFolder);
-            var submission = await SaveSubmissionRecordAsync(assignmentId, student.Id, accountId);
-            await SaveAttachmentRecordAsync(file, filePath, submission.Id, accountId);
+            var filePath = Path.Combine(uploadFolder, Path.GetFileName(file.FileName));
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Check if submission already exists
+            var existingSubmission = await _context.AssignmentSubmissions
+                .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == student.Id && !s.IsDeleted);
+
+            if (existingSubmission != null)
+            {
+                // Update existing submission
+                existingSubmission.FilePath = filePath;
+                existingSubmission.SubmittedDate = DateTime.Now;
+                existingSubmission.Status = "Submitted";
+                existingSubmission.ModifiedById = accountId;
+            }
+            else
+            {
+                // New submission
+                var submission = new AssignmentSubmission
+                {
+                    AssignmentId = assignmentId,
+                    StudentId = student.Id,
+                    FilePath = filePath,
+                    SubmittedDate = DateTime.Now,
+                    Status = "Submitted",
+                    ModifiedById = accountId
+                };
+                _context.AssignmentSubmissions.Add(submission);
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         // -----------------------------
-        // Helper Methods
+        // Get assignment details including submission status
         // -----------------------------
-
-      
-        private async Task<Data.Entities.Course> GetCourseForAssignmentAsync(Guid assignmentId)
+        public async Task<AssignmentViewModel?> GetAssignmentDetailsAsync(Guid assignmentId, Guid studentId)
         {
-            var course = await _context.Courses
-                .Include(c => c.Subject)
-                .FirstOrDefaultAsync(c => c.Id == _context.Assignments
-                    .Where(a => a.Id == assignmentId)
-                    .Select(a => a.CourseId)
-                    .FirstOrDefault());
+            var assignment = await (from a in _context.Assignments
+                                    join co in _context.CourseOfferings on a.CourseOfferingId equals co.Id
+                                    join crs in _context.Courses on co.CourseId equals crs.Id   // fetch the actual course title
+                                    where a.Id == assignmentId && !a.IsDeleted && !co.IsDeleted
+                                    select new AssignmentViewModel
+                                    {
+                                        Id = a.Id,
+                                        Title = a.Title,
+                                        Description = a.Description,
+                                        CourseName = crs.Title, // <- correctly get course title
+                                        DueDate = a.DueDate,
+                                        Status = _context.AssignmentSubmissions
+                                            .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId && !s.IsDeleted)
+                                            ? "Submitted"
+                                            : "Pending"
+                                    }).FirstOrDefaultAsync();
 
-            if (course == null)
-                throw new Exception("Course not found for this assignment.");
-
-            return course;
+            return assignment;
         }
 
-        private string BuildUploadFolderPath(string courseCode, Guid assignmentId, string studentId)
-        {
-            var root = Path.Combine(_env.WebRootPath, "uploads", "assignments");
-            return Path.Combine(root, courseCode, assignmentId.ToString(), studentId);
-        }
-
-        private void EnsureDirectoryExists(string folderPath)
-        {
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
-        }
-
-        private async Task<string> SaveFileAsync(IFormFile file, string folderPath)
-        {
-            var filePath = Path.Combine(folderPath, Path.GetFileName(file.FileName));
-            using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
-            return filePath;
-        }
-
-        private async Task<Data.Entities.Submission> SaveSubmissionRecordAsync(Guid assignmentId, Guid studentId, Guid accountId)
-        {
-            var submission = new Data.Entities.Submission
-            {
-                AssignmentId = assignmentId,
-                StudentId = studentId,
-                SubmittedDate = DateTime.Now,
-                Status = "Submitted",
-                ModifiedById = accountId
-            };
-
-            _context.Submissions.Add(submission);
-            await _context.SaveChangesAsync();
-            return submission;
-        }
-
-        private async Task SaveAttachmentRecordAsync(IFormFile file, string filePath, Guid submissionId, Guid accountId)
-        {
-            var attachment = new Data.Entities.File
-            {
-                FileName = file.FileName,
-                FilePath = filePath,
-                FileType = file.ContentType,
-                UploadedById = accountId,
-                RelatedEntity = "AssignmentSubmission",
-                RelatedEntityId = submissionId,
-                CreatedAt = DateTime.Now,
-                ModifiedById = accountId
-            };
-
-            _context.Files.Add(attachment);
-            await _context.SaveChangesAsync();
-        }
     }
 }

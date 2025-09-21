@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using UniPortal.Constants;
 using UniPortal.Data.Entities;
 using static UniPortal.Constants.AppConstant;
@@ -12,44 +13,60 @@ namespace UniPortal.Data.Seeders
             var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var dbContext = services.GetRequiredService<UniPortalContext>();
+            var now = DateTime.UtcNow;
 
-            // Ensure Faculty role exists
+            // --- Create Faculty role if it doesn't exist ---
             if (!await roleManager.RoleExistsAsync(Roles.Faculty))
-                await roleManager.CreateAsync(new IdentityRole(Roles.Faculty));
-
-            // List of default faculty
-            var faculties = new List<(string FirstName, string LastName, string Email)>
             {
-                ("John", "Doe", "john.doe@uniportal.com"),
-                ("Alice", "Smith", "alice.smith@uniportal.com"),
-                ("Robert", "Johnson", "robert.johnson@uniportal.com"),
-                ("Emma", "Williams", "emma.williams@uniportal.com")
+                await roleManager.CreateAsync(new IdentityRole(Roles.Faculty));
+            }
+
+            // Get a default department (first one in the database)
+            var defaultDept = await dbContext.Departments.FirstOrDefaultAsync();
+            if (defaultDept == null)
+                throw new Exception("No department exists. Please seed departments first.");
+
+            // --- List of default faculty ---
+            var faculties = new List<(string FirstName, string LastName, string Email, string FacultyNumber)>
+            {
+                ("John", "Doe", "john.doe@uniportal.com", "FAC001"),
+                ("Alice", "Smith", "alice.smith@uniportal.com", "FAC002"),
+                ("Robert", "Johnson", "robert.johnson@uniportal.com", "FAC003"),
+                ("Emma", "Williams", "emma.williams@uniportal.com", "FAC004")
             };
 
-            foreach (var (firstName, lastName, email) in faculties)
+            foreach (var (firstName, lastName, email, facultyNumber) in faculties)
             {
-                // Check if IdentityUser exists
-                var user = await userManager.FindByEmailAsync(email);
-                if (user == null)
-                {
-                    user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
-                    await userManager.CreateAsync(user, Passwords.Teacher); // default password
-                    await userManager.AddToRoleAsync(user, Roles.Faculty);
-                }
+                // Skip if account already exists
+                if (dbContext.Accounts.Any(a => a.Email == email)) continue;
 
-                // Check if corresponding Account exists
-                if (!dbContext.Accounts.Any(a => a.IdentityId == user.Id))
+                // Create IdentityUser
+                var user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
+                await userManager.CreateAsync(user, Passwords.Faculty);
+                await userManager.AddToRoleAsync(user, Roles.Faculty);
+
+                // Create corresponding Account
+                var account = new Account
                 {
-                    dbContext.Accounts.Add(new Account
-                    {
-                        FirstName = firstName,
-                        LastName = lastName,
-                        Email = email,
-                        IdentityId = user.Id,
-                        IsActive = true,
-                        CreatedAt = DateTime.Now
-                    });
-                }
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Email = email,
+                    IdentityId = user.Id,
+                    IsActive = true,
+                    Gender = "Other",
+                    CreatedAt = now
+                };
+                dbContext.Accounts.Add(account);
+
+                // Create corresponding Faculty
+                var faculty = new Faculty
+                {
+                    AccountId = account.Id,
+                    FacultyNumber = facultyNumber,
+                    DepartmentId = defaultDept.Id, // assign default department
+                    CreatedAt = now
+                };
+                dbContext.Faculties.Add(faculty);
             }
 
             await dbContext.SaveChangesAsync();

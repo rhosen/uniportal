@@ -56,14 +56,29 @@ namespace UniPortal.Services.Academics.Configs
 
         public async Task DeleteAsync(string id)
         {
-            var classroom = await _context.Rooms.FindAsync(Guid.Parse(id));
-            if (classroom != null)
+            if (!Guid.TryParse(id, out var roomId))
+                return;
+
+            var room = await _context.Rooms.FirstOrDefaultAsync(r => r.Id == roomId);
+            if (room == null) return;
+
+            // Check if room is used in any active course offerings
+            var isUsed = await _context.CourseOfferings
+                .AnyAsync(co => co.RoomId == roomId && !co.IsDeleted);
+
+            if (isUsed)
             {
-                classroom.IsDeleted = true;
-                classroom.DeletedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
+                throw new InvalidOperationException(
+                    "This room cannot be deleted because it is assigned to active course offerings."
+                );
             }
+
+            // Safe to soft delete
+            room.IsDeleted = true;
+            room.DeletedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
         }
+
 
         public async Task ActivateAsync(string id)
         {
@@ -79,62 +94,60 @@ namespace UniPortal.Services.Academics.Configs
         public async Task<List<ClassroomAvailabilityViewModel>> GetClassroomAvailabilityAsync()
         {
             var now = DateTime.Now;
-            var currentDay = (int)now.DayOfWeek; // 0 = Sunday … 6 = Saturday
+            var currentDayOfWeek = now.DayOfWeek;
             var currentTime = TimeOnly.FromDateTime(now);
-
-            // Get current semester
-            var semesterId = await _context.Semesters
-                .Where(s => s.StartDate <= now && s.EndDate >= now && !s.IsDeleted)
-                .Select(s => s.Id)
-                .FirstOrDefaultAsync();
-
-            // Fetch schedules for today
-            var schedulesToday = await _context.Sessions
-                .Where(e => !e.IsDeleted &&
-                            !e.Schedule.IsDeleted &&
-                            e.Schedule.Course.SemesterId == semesterId &&
-                            e.DayOfWeek == currentDay)
-                .Include(e => e.Schedule)
-                    .ThenInclude(cs => cs.Course)
-                        .ThenInclude(c => c.Subject)
-                .Include(e => e.Schedule)
-                    .ThenInclude(cs => cs.Course)
-                        .ThenInclude(c => c.Teacher)
-                .Include(e => e.Schedule)
-                    .ThenInclude(cs => cs.Room)
-                .ToListAsync();
-
-            // Filter schedules that are currently ongoing, covering overnight
-            var ongoingSchedules = schedulesToday.Where(e =>
-                (e.StartTime <= e.EndTime && e.StartTime <= currentTime && e.EndTime >= currentTime) || // normal
-                (e.StartTime > e.EndTime && (currentTime >= e.StartTime || currentTime <= e.EndTime))   // overnight
-            ).ToList();
 
             // Fetch all classrooms
             var classrooms = await _context.Rooms
-                .Where(c => !c.IsDeleted)
+                .Where(r => !r.IsDeleted)
                 .ToListAsync();
 
-            // Map classrooms with current schedules
-            var result = classrooms.Select(c =>
+            // Fetch ongoing offerings today (join CourseOfferings + Courses)
+            var offeringsTodayQuery =
+                from co in _context.CourseOfferings
+                join c in _context.Courses on co.CourseId equals c.Id
+                where !co.IsDeleted &&
+                      (
+                        (currentDayOfWeek == DayOfWeek.Monday && co.Mon) ||
+                        (currentDayOfWeek == DayOfWeek.Tuesday && co.Tue) ||
+                        (currentDayOfWeek == DayOfWeek.Wednesday && co.Wed) ||
+                        (currentDayOfWeek == DayOfWeek.Thursday && co.Thu) ||
+                        (currentDayOfWeek == DayOfWeek.Friday && co.Fri) ||
+                        (currentDayOfWeek == DayOfWeek.Saturday && co.Sat) ||
+                        (currentDayOfWeek == DayOfWeek.Sunday && co.Sun)
+                      ) &&
+                      co.StartTime <= currentTime && co.EndTime >= currentTime
+                select new
+                {
+                    co.RoomId,
+                    c.Code,
+                    c.Title,
+                    co.StartTime,
+                    co.EndTime
+                };
+
+            var offeringsToday = await offeringsTodayQuery.ToListAsync();
+
+            // Map classrooms with their ongoing schedules
+            var result = classrooms.Select(r =>
             {
-                var currentSchedules = ongoingSchedules
-                    .Where(e => e.Schedule.RoomId == c.Id)
-                    .Select(e => new ScheduleInfo
+                var currentSchedules = offeringsToday
+                    .Where(o => o.RoomId == r.Id)
+                    .Select(o => new ScheduleInfo
                     {
-                        SubjectCode = e.Schedule.Course.Subject.Code,
-                        SubjectName = e.Schedule.Course.Subject.Name,
-                        StartTime = e.StartTime,
-                        EndTime = e.EndTime
+                        SubjectCode = o.Code,
+                        SubjectName = o.Title,
+                        StartTime = o.StartTime,
+                        EndTime = o.EndTime
                     })
                     .ToList();
 
                 return new ClassroomAvailabilityViewModel
                 {
-                    Id = c.Id,
-                    RoomName = c.RoomName,
-                    Location = c.Location,
-                    Capacity = c.Capacity,
+                    Id = r.Id,
+                    RoomName = r.RoomName,
+                    Location = r.Location,
+                    Capacity = r.Capacity,
                     IsOccupied = currentSchedules.Any(),
                     CurrentSchedules = currentSchedules
                 };
@@ -142,5 +155,7 @@ namespace UniPortal.Services.Academics.Configs
 
             return result;
         }
+
+
     }
 }

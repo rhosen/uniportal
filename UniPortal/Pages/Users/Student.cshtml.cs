@@ -1,9 +1,8 @@
-using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Constants;
-using UniPortal.Data.Entities;
+using UniPortal.Dtos;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Accounts;
 using UniPortal.ViewModels.Users;
@@ -14,49 +13,56 @@ namespace UniPortal.Pages.Users
     public class StudentModel : PageModel
     {
         private readonly StudentService _studentService;
-        private readonly DepartmentService _departmentService;
         private readonly ProgramService _programService;
-        private readonly SemesterService _semesterService;
+        private readonly BatchService _batchService;
+        private readonly SectionService _sectionService;
         private readonly AccountService _accountService;
+        private readonly IConfiguration _configuration;
 
         public StudentModel(
             StudentService studentService,
-            DepartmentService departmentService,
             ProgramService programService,
-            SemesterService semesterService,
-            AccountService accountService)
+            BatchService batchService,
+            SectionService sectionService,
+            AccountService accountService,
+            IConfiguration configuration)
         {
             _studentService = studentService;
-            _departmentService = departmentService;
             _programService = programService;
-            _semesterService = semesterService;
+            _batchService = batchService;
+            _sectionService = sectionService;
             _accountService = accountService;
+            _configuration = configuration;
         }
 
         public List<StudentViewModel> Students { get; set; } = new();
-        public List<Department> Departments { get; set; } = new();
-        public List<Data.Entities.Program> Programs { get; set; } = new();
-        public List<Semester> Semesters { get; set; } = new();
+        public List<SelectOption> Programs { get; set; } = new();
+        public List<SelectOption> Batches { get; set; } = new();
+        public List<SelectOption> Sections { get; set; } = new();
+        public List<SelectOption> Semesters { get; set; } = new(); // Semester dropdown
 
-        // Pagination & Search
         [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
         [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public int TotalPages { get; set; }
 
-        // Track which row is in edit mode
-        [BindProperty(SupportsGet = true)]
-        public string EditStudentId { get; set; }
-
-        // Temp storage for edited student
+        [BindProperty(SupportsGet = true)] public string EditStudentId { get; set; }
         [BindProperty] public StudentViewModel EditStudent { get; set; } = new();
 
         public async Task OnGetAsync()
         {
-            // Fetch fully populated students from service
+            Programs = await _programService.GetProgramOptionsAsync();
+            Batches = await _batchService.GetBatchOptionsAsync();
+            Sections = await _sectionService.GetSectionOptionsAsync();
+
+            // Read total semesters from appsettings (default 8)
+            int totalSemesters = _configuration.GetValue<int>("TotalSemesters", 8);
+            Semesters = Enumerable.Range(1, totalSemesters)
+                                  .Select(n => new SelectOption { Id = Guid.Empty, Name = n.ToString() })
+                                  .ToList();
+
             var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
 
-            // Optional: search by StudentId or Email
             if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
                 allStudents = allStudents
@@ -65,10 +71,7 @@ namespace UniPortal.Pages.Users
                     .ToList();
             }
 
-            // Total pages for pagination
             TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
-
-            // Paginate students
             Students = allStudents
                 .Skip((CurrentPage - 1) * PageSize)
                 .Take(PageSize)
@@ -76,80 +79,61 @@ namespace UniPortal.Pages.Users
         }
 
 
-        // Enter edit mode
         public async Task<IActionResult> OnPostEditAsync(string id)
         {
             EditStudentId = id;
+            await OnGetAsync();
 
-            Departments = await _departmentService.GetAllAsync();
-            Programs = await _programService.GetAllAsync();
-            Semesters = await _semesterService.GetAllAsync();
-
-            var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
-            TotalPages = (int)Math.Ceiling(allStudents.Count / (double)PageSize);
-            Students = allStudents
-                .Skip((CurrentPage - 1) * PageSize)
-                .Take(PageSize)
-                .ToList();
-
-            var student = allStudents.FirstOrDefault(s => s.Id.ToString() == id);
+            var student = Students.FirstOrDefault(s => s.Id.ToString() == id);
             if (student != null)
             {
                 EditStudent = new StudentViewModel
                 {
                     Id = student.Id,
                     StudentId = student.StudentId,
-                    BatchNumber = student.BatchNumber,
-                    Section = student.Section,
-                    ProgramId = student.ProgramId,
-                    DepartmentId = student.DepartmentId,
-                    CurrentSemesterId = student.CurrentSemesterId,
-                    Email = student.Email
+                    Email = student.Email,
+                    BatchId = student.BatchId,       // Save ID
+                    SectionId = student.SectionId,   // Save ID
+                    ProgramId = student.ProgramId,   // Save ID
+                    CurrentSemester = student.CurrentSemester
                 };
             }
 
             return Page();
         }
 
-        // Cancel edit mode
         public IActionResult OnPostCancelEdit()
         {
             EditStudentId = null;
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
-        // Save changes
         public async Task<IActionResult> OnPostSaveAsync()
         {
             if (EditStudent == null || EditStudent.Id == Guid.Empty)
                 return RedirectToPage(new { CurrentPage, SearchTerm });
 
-            // Fetch the student from DB
             var student = await _studentService.GetStudentAsync(studentId: EditStudent.Id);
             if (student == null)
                 return RedirectToPage(new { CurrentPage, SearchTerm });
 
-            // Update student properties
-            student.StudentId = EditStudent.StudentId?.Trim();
-            student.BatchNumber = EditStudent.BatchNumber?.Trim();
-            student.Section = EditStudent.Section?.Trim();
+            // Map ViewModel -> Entity
+            student.StudentNumber = EditStudent.StudentId?.Trim();
+            student.BatchId = EditStudent.BatchId;
+            student.SectionId = EditStudent.SectionId;
             student.ProgramId = EditStudent.ProgramId;
-            student.CurrentSemesterId = EditStudent.CurrentSemesterId;
+            student.CurrentSemester = EditStudent.CurrentSemester;
 
             await _studentService.CreateOrUpdateStudentAsync(student);
 
-            // Update Email if changed
-            if (!string.IsNullOrWhiteSpace(EditStudent.Email))
+            if (!string.IsNullOrWhiteSpace(EditStudent.Email) && EditStudent.Email != student.Account.Email)
             {
                 await _accountService.UpdateEmailAsync(student.AccountId, EditStudent.Email.Trim());
             }
 
-            // Exit edit mode
             EditStudentId = null;
-
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
-
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {

@@ -5,21 +5,23 @@
         // Identifiers
         public Guid Id { get; set; }
         public Guid AccountId { get; set; }
-        public string StudentId { get; set; }
+        public string StudentId { get; set; } = string.Empty;
 
         // Academic Info
-        public string BatchNumber { get; set; }
-        public string Section { get; set; }
+        public Guid BatchId { get; set; }          // Use ID for dropdown binding
+        public Guid SectionId { get; set; }        // Use ID for dropdown binding
         public Guid ProgramId { get; set; }
         public Guid DepartmentId { get; set; }
-        public Guid? CurrentSemesterId { get; set; }
+        public int CurrentSemester { get; set; }
 
         // Contact Info
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         // Display Names (computed/mapped)
-        public string ProgramName { get; set; }
-        public string DepartmentCode { get; set; }
-        public string CurrentSemesterName { get; set; }
+        public string BatchNumber { get; set; } = string.Empty;  // for display only
+        public string Section { get; set; } = string.Empty;      // for display only
+        public string ProgramName { get; set; } = string.Empty;
+        public string DepartmentCode { get; set; } = string.Empty;
+        public string CurrentSemesterName { get; set; } = string.Empty;
     }
 }

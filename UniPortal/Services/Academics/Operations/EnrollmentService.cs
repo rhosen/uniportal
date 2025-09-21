@@ -14,116 +14,139 @@ namespace UniPortal.Services.Academics.Operations
             _context = context;
         }
 
-        public async Task<List<SelectOption>> GetStudentsBySemesterAndTeacherAsync(Guid semesterId, Guid teacherId)
+        // -----------------------------
+        // Get students for a teacher in a semester
+        // -----------------------------
+        public async Task<List<SelectOption>> GetStudentsBySemesterAndTeacherAsync(int semesterNumber, Guid facultyId)
         {
-            // Join Enrollment → Student → Account → Course in a single query
-            var students = await _context.Enrollments
-                .AsNoTracking()
-                .Where(e => e.Course.TeacherId == teacherId && e.Course.SemesterId == semesterId)
-                .Select(e => new
+            var students = await (
+                from e in _context.Enrollments
+                join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                join s in _context.Students on e.StudentId equals s.Id
+                join a in _context.Accounts on s.AccountId equals a.Id
+                where co.SemesterNumber == semesterNumber
+                      && co.FacultyId == facultyId
+                      && !e.IsDeleted
+                      && !s.IsDeleted
+                select new
                 {
-                    e.Student.Id,               // Student table PK
-                    e.Student.StudentId,        // Human-readable student ID
-                    e.Student.Account.FirstName,
-                    e.Student.Account.LastName
+                    s.Id,
+                    s.StudentNumber,
+                    a.FirstName,
+                    a.LastName
                 })
-                .Distinct() // Avoid duplicate students enrolled in multiple courses
-                .OrderBy(s => s.StudentId)
+                .Distinct()
+                .OrderBy(s => s.StudentNumber)
                 .Select(s => new SelectOption
                 {
                     Id = s.Id,
-                    Name = $"{s.StudentId} - {s.FirstName} {s.LastName}"
+                    Name = $"{s.StudentNumber} - {s.FirstName} {s.LastName}"
                 })
                 .ToListAsync();
 
             return students;
         }
 
-        public async Task<List<EnrollmentDto>> GetEnrollmentsAsync(Guid studentId, Guid semesterId)
+
+        // -----------------------------
+        // Get enrollments for a student in a semester
+        // -----------------------------
+        public async Task<List<EnrollmentDto>> GetEnrollmentsAsync(Guid studentId, int semesterNumber)
         {
             var query = from e in _context.Enrollments
-                        join c in _context.Courses on e.CourseId equals c.Id
-                        join s in _context.Subjects on c.SubjectId equals s.Id
-                        join t in _context.Accounts on c.TeacherId equals t.Id
-                        where e.StudentId == studentId && c.SemesterId == semesterId && !e.IsDeleted
+                        join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                        join c in _context.Courses on co.CourseId equals c.Id
+                        join t in _context.Accounts on co.FacultyId equals t.Id
+                        where e.StudentId == studentId
+                              && co.SemesterNumber == semesterNumber
+                              && !e.IsDeleted
                         select new EnrollmentDto
                         {
                             Id = e.Id,
-                            CourseId = c.Id,
-                            CourseName = s.Code + " - " + s.Name,
+                            CourseId = co.Id,
+                            CourseName = c.Code + " - " + c.Title,
                             TeacherName = t.FirstName + " " + t.LastName,
-                            Credits = c.Credits
+                            Credits = co.CreditHours
                         };
 
             return await query.ToListAsync();
         }
 
-        public async Task<Dictionary<string, List<CourseDto>>> GetPastEnrollmentsGroupedBySemesterAsync(Guid studentId, Guid currentSemesterId)
+
+        // -----------------------------
+        // Get past enrollments grouped by semester
+        // -----------------------------
+        public async Task<Dictionary<string, List<CourseDto>>> GetPastEnrollmentsGroupedBySemesterAsync(
+     Guid studentId, int currentSemesterNumber)
         {
             var query = from e in _context.Enrollments
-                        join c in _context.Courses on e.CourseId equals c.Id
-                        join s in _context.Subjects on c.SubjectId equals s.Id
-                        join t in _context.Accounts on c.TeacherId equals t.Id
-                        join sem in _context.Semesters on c.SemesterId equals sem.Id
+                        join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                        join c in _context.Courses on co.CourseId equals c.Id
+                        join t in _context.Accounts on co.FacultyId equals t.Id
+                        join sem in _context.Semesters on co.SemesterId equals sem.Id
                         where e.StudentId == studentId
-                              && c.SemesterId != currentSemesterId
+                              && co.SemesterNumber < currentSemesterNumber // use SemesterNumber
                               && !e.IsDeleted
-                        orderby sem.StartDate
+                        orderby co.SemesterNumber // order by semester number
                         select new
                         {
-                            SemesterName = sem.Name + " (" + sem.StartDate.ToString("MMM yyyy") + " - " + sem.EndDate.ToString("MMM yyyy") + ")",
+                            SemesterName = $"{sem.SemesterType} ({sem.StartDate:MMM yyyy} - {sem.EndDate:MMM yyyy}) - Semester {co.SemesterNumber}",
                             Course = new CourseDto
                             {
-                                Id = c.Id,
-                                CourseName = s.Code + " - " + s.Name,
+                                Id = co.Id,
+                                CourseName = c.Code + " - " + c.Title,
                                 TeacherName = t.FirstName + " " + t.LastName,
-                                Credits = c.Credits
+                                Credits = co.CreditHours
                             }
                         };
 
             var list = await query.ToListAsync();
 
-            // Group by semester name
-            var grouped = list
+            return list
                 .GroupBy(x => x.SemesterName)
                 .ToDictionary(
                     g => g.Key,
                     g => g.Select(x => x.Course).ToList()
                 );
-
-            return grouped;
         }
 
-        public async Task UpdateEnrollmentsAsync(Guid studentId, List<Guid> enrolledCourseIds, Guid currentSemesterId, Guid modifiedBy)
+
+        // -----------------------------
+        // Update enrollments for a student
+        // -----------------------------
+        public async Task UpdateEnrollmentsAsync(Guid studentId, List<Guid> enrolledCourseOfferingIds, int semesterNumber, Guid modifiedBy)
         {
-            // Fetch existing enrollments for this student and semester
+            // Fetch only the CourseOfferingIds for this student and semester
             var existingEnrollments = await _context.Enrollments
-                .Where(e => e.StudentId == studentId && e.Course.SemesterId == currentSemesterId && !e.IsDeleted)
+                .Where(e => e.StudentId == studentId && !e.IsDeleted)
+                .Where(e => _context.CourseOfferings
+                    .Where(co => co.SemesterNumber == semesterNumber)
+                    .Select(co => co.Id)
+                    .Contains(e.CourseOfferingId))
                 .ToListAsync();
 
-            var existingCourseIds = existingEnrollments.Select(e => e.CourseId).ToList();
+            var existingIds = existingEnrollments.Select(e => e.CourseOfferingId).ToList();
 
-            // Courses to add (newly toggled ON)
-            var coursesToAdd = enrolledCourseIds.Except(existingCourseIds).ToList();
-            foreach (var courseId in coursesToAdd)
+            // Courses to add
+            var toAdd = enrolledCourseOfferingIds.Except(existingIds);
+            foreach (var coId in toAdd)
             {
-                var enrollment = new Enrollment
+                _context.Enrollments.Add(new Enrollment
                 {
                     Id = Guid.NewGuid(),
                     StudentId = studentId,
-                    CourseId = courseId,
+                    CourseOfferingId = coId,
                     ModifiedById = modifiedBy,
                     CreatedAt = DateTime.Now,
                     IsDeleted = false
-                };
-                _context.Enrollments.Add(enrollment);
+                });
             }
 
-            // Courses to remove (toggled OFF)
-            var coursesToRemove = existingCourseIds.Except(enrolledCourseIds).ToList();
-            foreach (var courseId in coursesToRemove)
+            // Courses to remove
+            var toRemove = existingIds.Except(enrolledCourseOfferingIds);
+            foreach (var coId in toRemove)
             {
-                var enrollment = existingEnrollments.First(e => e.CourseId == courseId);
+                var enrollment = existingEnrollments.First(e => e.CourseOfferingId == coId);
                 enrollment.IsDeleted = true;
                 enrollment.ModifiedById = modifiedBy;
                 enrollment.UpdatedAt = DateTime.Now;
@@ -131,6 +154,7 @@ namespace UniPortal.Services.Academics.Operations
 
             await _context.SaveChangesAsync();
         }
+
 
     }
 }

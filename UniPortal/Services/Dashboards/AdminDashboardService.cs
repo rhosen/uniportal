@@ -89,7 +89,7 @@ namespace UniPortal.Services.Dashboards
 
         public async Task<int> GetTotalCoursesAsync()
         {
-            return await _context.Courses.CountAsync(c => !c.IsDeleted);
+            return await _context.CourseOfferings.CountAsync(c => !c.IsDeleted);
         }
     }
 }

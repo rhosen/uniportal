@@ -8,10 +8,7 @@ namespace UniPortal.Data.Seeders
         public static async Task SeedRecipientTypesAsync(IServiceProvider services)
         {
             var dbContext = services.GetRequiredService<UniPortalContext>();
-
-            // Check if already seeded
-            if (await dbContext.Recipients.AnyAsync())
-                return;
+            var now = DateTime.UtcNow;
 
             var recipients = new List<Recipient>
             {
@@ -21,7 +18,7 @@ namespace UniPortal.Data.Seeders
                     Name = "Student",
                     Description = "Notice for a single student",
                     IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = now
                 },
                 new Recipient
                 {
@@ -29,7 +26,7 @@ namespace UniPortal.Data.Seeders
                     Name = "Faculty",
                     Description = "Notice for all faculty members",
                     IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = now
                 },
                 new Recipient
                 {
@@ -37,7 +34,7 @@ namespace UniPortal.Data.Seeders
                     Name = "Department",
                     Description = "Notice for a whole department",
                     IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = now
                 },
                 new Recipient
                 {
@@ -45,7 +42,7 @@ namespace UniPortal.Data.Seeders
                     Name = "All",
                     Description = "Notice for everyone",
                     IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = now
                 }
             };
 

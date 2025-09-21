@@ -12,5 +12,7 @@
         public string TeacherName { get; set; }
         public string Grade { get; set; }
         public decimal? Marks { get; set; }
+        public Guid CourseOfferingId { get; set; }
+        public decimal? GPA { get; set; }
     }
 }

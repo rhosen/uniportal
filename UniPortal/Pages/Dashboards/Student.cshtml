@@ -183,7 +183,7 @@
 
                 <!-- Classrooms -->
                 <div class="col-md-3 col-sm-6">
-                    <div class="metric-card" onclick="location.href='@Url.Page("/classes/room")'">
+                    <div class="metric-card" onclick="location.href='@Url.Page("/portals/room")'">
                         <div class="metric-content">
                             <svg class="metric-icon" viewBox="0 0 64 48">
                                 <path d="M32 4L4 16l28 12 28-12L32 4z" fill="#007bff" />
@@ -193,47 +193,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Assignments Table -->
-            <div class="card shadow-sm rounded-4 mt-4 p-3">
-                <h5 class="fw-bold mb-3"><i class="bi bi-journal-text me-2"></i>My Assignments</h5>
-                @if (Model.Assignments.Any())
-                {
-                    <form method="post" enctype="multipart/form-data" asp-page-handler="SubmitAssignment">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Course</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>Submit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var a in Model.Assignments)
-                                {
-                                    <tr>
-                                        <td>@a.Title</td>
-                                        <td>@a.CourseName</td>
-                                        <td>@a.DueDate.ToString("dd MMM yyyy")</td>
-                                        <td>@a.Status</td>
-                                        <td>
-                                            <input type="file" name="file_@a.Id" class="form-control form-control-sm" />
-                                            <button type="submit" name="assignmentId" value="@a.Id" class="btn btn-sm btn-success mt-1">Upload</button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </form>
-                }
-                else
-                {
-                    <p class="text-muted">No upcoming assignments 🎉</p>
-                }
-                <a asp-page="/portals/Assignments" class="btn btn-sm btn-outline-secondary mt-2">View All</a>
             </div>
         </div>
     </div>

@@ -26,7 +26,7 @@ namespace UniPortal.Services.Accounts
             _accountService = accountService;
         }
 
-        // Get accounts of active students without StudentId
+        // Get accounts of active students without StudentNumber
         public async Task<List<StudentOnboardDto>> GetStudentsWithoutStudentIdAsync()
         {
             var studentRoleName = Roles.Student;
@@ -41,7 +41,7 @@ namespace UniPortal.Services.Accounts
                         where role.Name == studentRoleName
                               && account.IsActive && !account.IsDeleted
                               && !_unitOfWork.Context.Students
-                                  .Any(s => s.AccountId == account.Id && !string.IsNullOrEmpty(s.StudentId))
+                                  .Any(s => s.AccountId == account.Id && !string.IsNullOrEmpty(s.StudentNumber))
                         select new StudentOnboardDto
                         {
                             AccountId = account.Id,
@@ -52,7 +52,6 @@ namespace UniPortal.Services.Accounts
             return await query.AsNoTracking().ToListAsync();
         }
 
-
         // Create or update student record
         public async Task CreateOrUpdateStudentAsync(Student student)
         {
@@ -61,17 +60,16 @@ namespace UniPortal.Services.Accounts
 
             try
             {
-                // Check if student already exists
                 var existingStudent = await _unitOfWork.Context.Students
                     .FirstOrDefaultAsync(s => s.AccountId == student.AccountId);
 
                 if (existingStudent != null)
                 {
-                    existingStudent.StudentId = student.StudentId?.Trim();
-                    existingStudent.BatchNumber = student.BatchNumber?.Trim();
-                    existingStudent.Section = student.Section?.Trim();
+                    existingStudent.StudentNumber = student.StudentNumber?.Trim();
+                    existingStudent.BatchId = student.BatchId;
+                    existingStudent.SectionId = student.SectionId;
                     existingStudent.ProgramId = student.ProgramId;
-                    existingStudent.CurrentSemesterId = student.CurrentSemesterId;
+                    existingStudent.CurrentSemester = student.CurrentSemester;
                     existingStudent.UpdatedAt = DateTime.Now;
 
                     await LogAsync(existingStudent.AccountId, ActionType.Update, "Student", existingStudent.Id, student);
@@ -84,7 +82,6 @@ namespace UniPortal.Services.Accounts
                     await LogAsync(student.AccountId, ActionType.Create, "Student", student.Id, student);
                 }
 
-                // Commit changes
                 await _unitOfWork.CommitAsync();
             }
             catch
@@ -94,8 +91,6 @@ namespace UniPortal.Services.Accounts
             }
         }
 
-
-
         // Get all onboarded students
         public async Task<List<StudentViewModel>> GetAllOnboardedStudentsAsync()
         {
@@ -103,26 +98,27 @@ namespace UniPortal.Services.Accounts
                         join a in _unitOfWork.Context.Accounts on s.AccountId equals a.Id
                         join p in _unitOfWork.Context.Programs on s.ProgramId equals p.Id
                         join d in _unitOfWork.Context.Departments on p.DepartmentId equals d.Id
-                        join sem in _unitOfWork.Context.Semesters
-                            on s.CurrentSemesterId equals sem.Id into semJoin
-                        from sem in semJoin.DefaultIfEmpty() // LEFT JOIN
+                        join b in _unitOfWork.Context.Batches on s.BatchId equals b.Id
+                        join sec in _unitOfWork.Context.Sections on s.SectionId equals sec.Id
                         where !s.IsDeleted && a.IsActive && !a.IsDeleted
                         select new StudentViewModel
                         {
                             Id = s.Id,
                             AccountId = s.AccountId,
-                            StudentId = s.StudentId,
-                            BatchNumber = s.BatchNumber,
-                            Section = s.Section,
+                            StudentId = s.StudentNumber,
+                            BatchId = b.Id,
+                            BatchNumber = b.Number,
+                            SectionId = sec.Id,
+                            Section = sec.Name,
                             ProgramId = s.ProgramId,
                             DepartmentId = d.Id,
-                            CurrentSemesterId = s.CurrentSemesterId,
+                            CurrentSemester = s.CurrentSemester,
                             Email = a.Email,
                             ProgramName = p.Name,
-                            DepartmentCode = d.Code,
-                            CurrentSemesterName = sem != null ? sem.Name : null // Handle null
+                            DepartmentCode = d.Code
                         };
 
+            // Step 3: Return ordered list
             return await query
                 .OrderBy(s => s.StudentId)
                 .AsNoTracking()
@@ -130,41 +126,44 @@ namespace UniPortal.Services.Accounts
         }
 
 
+        // Get all active students (simpler DTO)
         public async Task<List<StudentDto>> GetAllActiveStudentAsync()
         {
             var query = from s in _context.Students
                         join a in _context.Accounts on s.AccountId equals a.Id
                         join p in _context.Programs on s.ProgramId equals p.Id
                         join d in _context.Departments on p.DepartmentId equals d.Id
+                        join b in _context.Batches on s.BatchId equals b.Id
+                        join sec in _context.Sections on s.SectionId equals sec.Id
                         where !s.IsDeleted && a.IsActive
                         select new StudentDto
                         {
-                            Id = s.Id, // <-- real ID for saving
-                            StudentId = s.StudentId, // numeric ID (can be human-readable if needed)
+                            Id = s.Id,
+                            StudentNumber = s.StudentNumber,
                             FullName = a.FirstName + " " + a.LastName,
                             DepartmentName = d.Name,
                             ProgramName = p.Name,
-                            CurrentSemesterId = s.CurrentSemesterId
+                            CurrentSemester = s.CurrentSemester
                         };
 
             return await query.ToListAsync();
         }
 
-
-
+        // Get single student
         public async Task<Student> GetStudentAsync(
-        Guid? accountId = null,
-        Guid? studentId = null,
-        string studentCode = null) // student.StudentId
+            Guid? accountId = null,
+            Guid? studentId = null,
+            string studentCode = null)
         {
             if (accountId == null && studentId == null && string.IsNullOrEmpty(studentCode))
                 throw new ArgumentException("At least one identifier must be provided.");
 
             var query = _context.Students
                 .AsNoTracking()
-                .Include(s => s.Account)       // for profile info
-                .Include(s => s.Program)       // include Program to get Department if needed
-                    .ThenInclude(p => p.Department)
+                .Include(s => s.Account)
+                .Include(s => s.Program).ThenInclude(p => p.Department)
+                .Include(s => s.Batch)
+                .Include(s => s.Section)
                 .AsQueryable();
 
             if (accountId.HasValue)
@@ -174,37 +173,42 @@ namespace UniPortal.Services.Accounts
                 query = query.Where(s => s.Id == studentId.Value);
 
             if (!string.IsNullOrEmpty(studentCode))
-                query = query.Where(s => s.StudentId == studentCode);
+                query = query.Where(s => s.StudentNumber == studentCode);
 
             query = query.Where(s => !s.IsDeleted && s.Account.IsActive);
 
             return await query.FirstOrDefaultAsync();
         }
 
+        // Get StudentDto by ID
         public async Task<StudentDto> GetStudentByIdAsync(Guid studentId)
         {
             var query = from s in _context.Students
                         join a in _context.Accounts on s.AccountId equals a.Id
                         join p in _context.Programs on s.ProgramId equals p.Id
                         join d in _context.Departments on p.DepartmentId equals d.Id
-                        join sem in _context.Semesters on s.CurrentSemesterId equals sem.Id into semJoin
-                        from sem in semJoin.DefaultIfEmpty() // in case CurrentSemesterId is null
+                        join b in _context.Batches on s.BatchId equals b.Id
+                        join sec in _context.Sections on s.SectionId equals sec.Id
+                        join c in _context.Curriculums
+                            on new { s.ProgramId, SemesterNumber = s.CurrentSemester }
+                            equals new { c.ProgramId, c.SemesterNumber } into curriculumJoin
+                        from c in curriculumJoin.DefaultIfEmpty()
+                        join sem in _context.Semesters on c.SemesterId equals sem.Id into semJoin
+                        from sem in semJoin.DefaultIfEmpty()
                         where !s.IsDeleted && a.IsActive && s.Id == studentId
                         select new StudentDto
                         {
                             Id = s.Id,
-                            StudentId = s.StudentId,
+                            StudentNumber = s.StudentNumber,
                             FullName = a.FirstName + " " + a.LastName,
                             ProgramName = p.Name,
                             DepartmentName = d.Name,
-                            CurrentSemesterId = s.CurrentSemesterId,
-                            CurrentSemesterName = sem != null ? sem.Name : null
+                            CurrentSemester = s.CurrentSemester,
+                            CurrentSemesterName = sem != null ? sem.SemesterType + " " + sem.AcademicYear : $"Semester {s.CurrentSemester}"
                         };
 
             return await query.FirstOrDefaultAsync();
         }
-
-
 
         // Generate a unique StudentId
         public async Task<string> GetSystemGeneratedStudentId(Guid accountId)
@@ -221,10 +225,9 @@ namespace UniPortal.Services.Accounts
 
             int admissionYear = account.CreatedAt.Year;
 
-            // Provide all existing IDs to generator
             var existingIds = await _unitOfWork.Context.Students
-                .Where(s => s.StudentId.StartsWith($"Y{admissionYear % 100:D2}"))
-                .Select(s => s.StudentId)
+                .Where(s => s.StudentNumber.StartsWith($"Y{admissionYear % 100:D2}"))
+                .Select(s => s.StudentNumber)
                 .ToListAsync();
 
             return _idGenerator.GenerateStudentId(admissionYear, existingIds);
@@ -232,10 +235,8 @@ namespace UniPortal.Services.Accounts
 
         public async Task<bool> DeleteAsync(Guid accountId)
         {
-            // Delegate soft delete to AccountService
             await _accountService.SoftDeleteAsync(accountId);
 
-            // Log deletion for student entity
             var student = await _unitOfWork.Context.Students
                 .FirstOrDefaultAsync(s => s.AccountId == accountId);
 

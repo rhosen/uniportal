@@ -2,21 +2,12 @@
 {
     public class Course : IEntity
     {
-        public Guid SubjectId { get; set; } 
-        public Guid TeacherId { get; set; }
-        public Guid SemesterId { get; set; }
-        public int Credits { get; set; } = 3;
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public int CreditHours { get; set; }
+        public Guid DepartmentId { get; set; }
 
-
-        // Navigation
-        public Subject Subject { get; set; }
-        public Account Teacher { get; set; }
-        public Semester Semester { get; set; }
-        public ICollection<Note> Notes { get; set; }
-        public ICollection<Schedule> Schedules { get; set; }
-        public ICollection<Assignment> Assignments { get; set; }
-        public ICollection<Enrollment> Enrollments { get; set; }
-        public ICollection<Grade> Grades { get; set; }
+        // Navigation property
+        public virtual Department Department { get; set; } = null!;
     }
-
 }

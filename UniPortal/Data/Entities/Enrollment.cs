@@ -1,18 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace UniPortal.Data.Entities
+﻿namespace UniPortal.Data.Entities
 {
     public class Enrollment : IEntity
     {
         public Guid StudentId { get; set; }
-        public Guid CourseId { get; set; }
+        public Guid CourseOfferingId { get; set; }   // FK
 
-        [NotMapped]
-        public new DateTime? UpdatedAt { get; set; }
-
-
-        // Navigation
-        public Student Student { get; set; }
-        public Course Course { get; set; }
+        // Navigation properties
+        public Student Student { get; set; } = null!;
+        public CourseOffering CourseOffering { get; set; } = null!;
     }
 }

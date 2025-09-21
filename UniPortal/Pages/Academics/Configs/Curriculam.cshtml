@@ -1,0 +1,193 @@
+﻿@page
+@model UniPortal.Pages.Academics.Configs.CurriculumModel
+@{
+    ViewData["Title"] = "Curriculum Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">📚 Curriculum Management</h2>
+
+    <!-- Search Box -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by program, semester, or course..." />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <!-- Add New Curriculum -->
+    <form method="post" class="mb-4">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Program</th>
+                    <th>Semester</th>
+                    <th>Semester No</th> <!-- Added -->
+                    <th>Course</th>
+                    <th>Course Type</th>
+                    <th>Sequence</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <select asp-for="NewCurriculum.ProgramId" class="form-select" required>
+                            <option value="">Select Program</option>
+                            @foreach (var p in Model.ProgramOptions)
+                            {
+                                <option value="@p.Id">@p.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <select asp-for="NewCurriculum.SemesterId" class="form-select" required>
+                            <option value="">Select Semester</option>
+                            @foreach (var s in Model.SemesterOptions)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <input asp-for="NewCurriculum.SemesterNumber" type="number" class="form-control" placeholder="Semester #" required />
+                    </td>
+                    <td>
+                        <select asp-for="NewCurriculum.CourseId" class="form-select" required>
+                            <option value="">Select Course</option>
+                            @foreach (var c in Model.CourseOptions)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <select asp-for="NewCurriculum.CourseTypeId" class="form-select" required>
+                            <option value="">Select Requirement Type</option>
+                            @foreach (var r in Model.CourseTypeOptions)
+                            {
+                                <option value="@r.Id">@r.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <input asp-for="NewCurriculum.SequenceOrder" type="number" class="form-control" required />
+                    </td>
+                    <td>
+                        <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <!-- Existing Curriculums -->
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Program</th>
+                <th>Semester</th>
+                <th>Semester No</th> <!-- Added -->
+                <th>Course</th>
+                <th>Requirement Type</th>
+                <th>Sequence</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Curriculums)
+            {
+                <tr>
+                    <form method="post">
+                        <input type="hidden" name="id" value="@item.Id" />
+
+                        @if (Model.EditCurriculumId == item.Id.ToString())
+                        {
+                        <td>
+                            <select asp-for="EditCurriculum.ProgramId" class="form-select" required>
+                                @foreach (var p in Model.ProgramOptions)
+                                {
+                                    <option value="@p.Id" selected="@(p.Id == item.ProgramId ? "selected" : null)">@p.Name</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select asp-for="EditCurriculum.SemesterId" class="form-select" required>
+                                @foreach (var s in Model.SemesterOptions)
+                                {
+                                    <option value="@s.Id" selected="@(s.Id == item.SemesterId ? "selected" : null)">@s.Name</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <input asp-for="EditCurriculum.SemesterNumber" type="number" class="form-control" value="@item.SemesterNumber" required />
+                        </td>
+                        <td>
+                            <select asp-for="EditCurriculum.CourseId" class="form-select" required>
+                                @foreach (var c in Model.CourseOptions)
+                                {
+                                    <option value="@c.Id" selected="@(c.Id == item.CourseId ? "selected" : null)">@c.Name</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select asp-for="EditCurriculum.CourseTypeId" class="form-select" required>
+                                @foreach (var r in Model.CourseTypeOptions)
+                                {
+                                    <option value="@r.Id" selected="@(r.Id == item.CourseTypeId ? "selected" : null)">@r.Name</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <input asp-for="EditCurriculum.SequenceOrder" type="number" class="form-control" value="@item.SequenceOrder" required />
+                        </td>
+                        <td>
+                            <button type="submit" asp-page-handler="SaveEdit" class="btn btn-primary btn-sm">💾 Save</button>
+                            <button type="submit" asp-page-handler="CancelEdit" class="btn btn-secondary btn-sm">❌ Cancel</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <td>@item.ProgramName</td>
+                        <td>@item.SemesterName</td>
+                        <td>@item.SemesterNumber</td>
+                        <td>@item.CourseTitle</td>
+                        <td>@item.CourseTypeName</td>
+                        <td>@item.SequenceOrder</td>
+                        <td>
+                            <button type="submit" asp-page-handler="Edit" name="id" value="@item.Id" class="btn btn-warning btn-sm">Edit</button>
+                            @if (!item.IsDeleted)
+                            {
+                                <button type="submit" asp-page-handler="Delete" name="id" value="@item.Id" class="btn btn-danger btn-sm">Delete</button>
+                            }
+                            else
+                            {
+                                <button type="submit" asp-page-handler="Activate" name="id" value="@item.Id" class="btn btn-success btn-sm">Activate</button>
+                            }
+                        </td>
+                    }
+                    </form>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage - 1)&SearchTerm=@Model.SearchTerm">Previous</a>
+            </li>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="?CurrentPage=@i&SearchTerm=@Model.SearchTerm">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage + 1)&SearchTerm=@Model.SearchTerm">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>

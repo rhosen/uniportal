@@ -14,13 +14,19 @@ namespace UniPortal.Services.Infrastructures
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<AppInitializer> _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IConfiguration _config;
 
-        public AppInitializer(UniPortalContext context, IWebHostEnvironment env, ILogger<AppInitializer> logger, IServiceProvider serviceProvider)
+        public AppInitializer(UniPortalContext context,
+            IWebHostEnvironment env,
+            ILogger<AppInitializer> logger,
+            IServiceProvider serviceProvider,
+             IConfiguration config)
         {
             _context = context;
             _env = env;
             _logger = logger;
             _serviceProvider = serviceProvider;
+            this._config = config;
         }
 
         public async Task InitializeAsync()
@@ -106,18 +112,37 @@ namespace UniPortal.Services.Infrastructures
             _logger.LogInformation("Running seeders...");
 
             using var scope = _serviceProvider.CreateScope();
-
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            await RoleSeeder.SeedRolesAsync(roleManager);
-            await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
-            await FacultySeeder.SeedFacultyAsync(scope.ServiceProvider);
-            await RecipientSeeder.SeedRecipientTypesAsync(scope.ServiceProvider);
-            await AcademicSeeder.SeedAsync(scope.ServiceProvider);
-            await GradeScaleSeeder.SeedAsync(scope.ServiceProvider);
+            var seedMode = _config.GetValue<string>("Seed:Mode")?.ToLowerInvariant() ?? "full";
+
+            switch (seedMode)
+            {
+                case "minimal":
+                    _logger.LogInformation("Seeding in Minimal mode (roles + admin only)...");
+                    await RoleSeeder.SeedRolesAsync(roleManager);
+                    await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
+                    break;
+
+                case "none":
+                    _logger.LogInformation("Seeding disabled (Seed:Mode=None).");
+                    break;
+
+                default: // "full"
+                    _logger.LogInformation("Seeding in Full mode (all seeders)...");
+                    await AcademicSeeder.SeedAsync(scope.ServiceProvider);
+                    await RoleSeeder.SeedRolesAsync(roleManager);
+                    await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
+                    await FacultySeeder.SeedFacultyAsync(scope.ServiceProvider);
+                    await StudentSeeder.SeedStudentsAsync(scope.ServiceProvider);
+                    await RecipientSeeder.SeedRecipientTypesAsync(scope.ServiceProvider);
+                    await GradeScaleSeeder.SeedGradeScaleAsync(scope.ServiceProvider);
+                    break;
+            }
 
             _logger.LogInformation("Seeders executed successfully.");
         }
+
     }
 
 }

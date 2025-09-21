@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
@@ -9,6 +10,13 @@ namespace UniPortal.Pages
     public class BasePageModel : PageModel
     {
         private readonly AccountService _accountService;
+
+        [TempData]
+        public string? StatusMessage { get; set; }
+
+        [TempData]
+        public string? StatusMessageType { get; set; } // "success", "warning", "danger", "info"
+
 
         public BasePageModel(AccountService accountService)
         {
@@ -50,6 +58,24 @@ namespace UniPortal.Pages
                     Roles.Student => "_StudentLayout",
                     _ => "_Layout"
                 };
+            }
+        }
+
+        // BasePageModel
+        protected Task D(Func<Task> action, string msg) => RunWithMessageAsync(action, msg);
+
+        public async Task RunWithMessageAsync(Func<Task> action, string successMessage = "Action completed successfully.")
+        {
+            try
+            {
+                await action.Invoke();
+                StatusMessage = successMessage;
+                StatusMessageType = "success";
+            }
+            catch (InvalidOperationException ex)
+            {
+                StatusMessage = ex.Message;
+                StatusMessageType = "warning";
             }
         }
     }

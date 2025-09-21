@@ -1,0 +1,136 @@
+﻿@page
+@model UniPortal.Pages.Users.FacultyModel
+@{
+    ViewData["Title"] = "Faculty Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">👩‍🏫 Faculty Management</h2>
+
+    <!-- Search Box -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by name, email, or faculty number..." />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <!-- Add New Faculty Form -->
+    <form method="post">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Faculty Number</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>New</td>
+                    <td>Auto</td>
+                    <td><input asp-for="NewFaculty.FirstName" class="form-control" required /></td>
+                    <td><input asp-for="NewFaculty.LastName" class="form-control" required /></td>
+                    <td><input asp-for="NewFaculty.Email" class="form-control" required /></td>
+                    <td>
+                        <select asp-for="NewFaculty.DepartmentId" class="form-control" required>
+                            <option value="">Select Department</option>
+                            @foreach (var dept in Model.Departments)
+                            {
+                                <option value="@dept.Id">@dept.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <!-- Existing Faculties Table -->
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Faculty Number</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var faculty in Model.Faculties)
+            {
+                <tr>
+                    <form method="post">
+                        <input type="hidden" name="id" value="@faculty.AccountId" />
+
+                        @if (Model.EditFacultyId == faculty.AccountId.ToString())
+                        {
+                            <!-- Editing Row -->
+                            <td>@faculty.FacultyNumber</td>
+                            <td><input name="EditFaculty.FirstName" value="@Model.EditFaculty.FirstName" class="form-control" /></td>
+                            <td><input name="EditFaculty.LastName" value="@Model.EditFaculty.LastName" class="form-control" /></td>
+                            <td><input name="EditFaculty.Email" value="@Model.EditFaculty.Email" class="form-control" /></td>
+                            <td>
+                            <select name="EditFaculty.DepartmentId" class="form-control">
+                                @foreach (var dept in Model.Departments)
+                                {
+                                    <option value="@dept.Id" selected="@(dept.Id == Model.EditFaculty.DepartmentId ? "selected" : null)">
+                                        @dept.Name
+                                    </option>
+                                }
+                            </select>
+
+                            </td>
+                            <td>
+                                <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
+                                <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                            </td>
+                        }
+                        else
+                        {
+                            <!-- Normal Row -->
+                            <td>@faculty.FacultyNumber</td>
+                            <td>@faculty.FirstName</td>
+                            <td>@faculty.LastName</td>
+                            <td>@faculty.Email</td>
+                            <td>@faculty.DepartmentName</td>
+                            <td>
+                                <button type="submit" asp-page-handler="Edit" name="id" value="@faculty.AccountId" class="btn btn-sm btn-warning">Edit</button>
+                                <button type="submit" asp-page-handler="Delete" name="id" value="@faculty.AccountId" class="btn btn-sm btn-danger">Delete</button>
+                                <a href="/accounts/profile?id=@faculty.AccountId" class="btn btn-sm btn-info">Details</a>
+                            </td>
+                        }
+                    </form>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage - 1)&SearchTerm=@Model.SearchTerm">Previous</a>
+            </li>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="?CurrentPage=@i&SearchTerm=@Model.SearchTerm">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage + 1)&SearchTerm=@Model.SearchTerm">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>

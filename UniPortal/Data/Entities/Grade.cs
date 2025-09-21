@@ -3,14 +3,14 @@
     public class Grade : IEntity
     {
         public Guid StudentId { get; set; }
-        public Guid CourseId { get; set; }
-        public string GradeValue { get; set; }
+        public Guid CourseOfferingId { get; set; }  // corrected FK
+
+        public string GradeValue { get; set; } = string.Empty;
         public decimal Marks { get; set; }
         public decimal GPA { get; set; }
 
-
-        // Navigation
-        public Student Student { get; set; }
-        public Course Course { get; set; }
+        // Navigation properties
+        public Student Student { get; set; } = null!;
+        public CourseOffering CourseOffering { get; set; } = null!;
     }
 }

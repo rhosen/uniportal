@@ -1,7 +1,7 @@
 ﻿@page
 @model UniPortal.Pages.Students.OnboardModel
 @{
-    ViewData["Title"] = "Assign ID";
+    ViewData["Title"] = "Onboard Student";
     Layout = "_AdminLayout";
 }
 
@@ -32,14 +32,14 @@
     }
     else
     {
-        <table class="table table-striped table-hover">
+        <table class="table table-striped table-hover table-sm">
             <thead class="table-dark">
                 <tr>
                     <th>Email</th>
                     <th>Registered</th>
-                    <th>ID</th>
+                    <th>ID Type</th>
                     <th>Student ID</th>
-                    <th>Batch Number</th>
+                    <th>Batch</th>
                     <th>Section</th>
                     <th>Program</th>
                     <th>Action</th>
@@ -50,7 +50,9 @@
                 {
                     <tr>
                         <form method="post">
-                            <input type="hidden" name="Student.AccountId" value="@student.AccountId" />
+
+                            <input type="hidden" asp-for="Student.AccountId" value="@student.AccountId" />
+
                         <td>@student.Email</td>
                         <td>@student.CreatedAt.ToString("yyyy-MM-dd")</td>
 
@@ -68,25 +70,28 @@
                         </td>
 
                         <td>
-                            <input type="text" name="Student.StudentId" class="form-control student-id-input"
+                            <input asp-for="Student.StudentNumber" class="form-control student-id-input"
                                    placeholder="Enter ID..." readonly />
                         </td>
 
                         <td>
-                            <input type="text" name="Student.BatchNumber" class="form-control" placeholder="Batch Number" />
+                            <select asp-for="Student.BatchId" class="form-select"
+                                    asp-items="@(new SelectList(Model.Batches, "Id", "Name"))">
+                                <option value="">Select Batch</option>
+                            </select>
                         </td>
 
                         <td>
-                            <input type="text" name="Student.Section" class="form-control" placeholder="Section" />
+                            <select asp-for="Student.SectionId" class="form-select"
+                                    asp-items="@(new SelectList(Model.Sections, "Id", "Name"))">
+                                <option value="">Select Section</option>
+                            </select>
                         </td>
 
                         <td>
-                            <select name="Student.ProgramId" class="form-select">
+                            <select asp-for="Student.ProgramId" class="form-select"
+                                    asp-items="@(new SelectList(Model.Programs, "Id", "Code"))">
                                 <option value="">Program</option>
-                                @foreach (var program in Model.Programs)
-                                {
-                                    <option value="@program.Id">@program.Code</option>
-                                }
                             </select>
                         </td>
 
@@ -122,9 +127,9 @@
     <script>
         document.querySelectorAll('input.use-system-radio').forEach(radio => {
             radio.addEventListener('change', () => {
-                const row = radio.closest('tr');
-                if (!row) return;
-                const studentIdInput = row.querySelector('.student-id-input');
+                const form = radio.closest('form');
+                if (!form) return;
+                const studentIdInput = form.querySelector('.student-id-input');
                 if (!studentIdInput) return;
                 if (radio.value === 'true') {
                     studentIdInput.readOnly = true;

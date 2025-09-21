@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
-using UniPortal.Data.Entities;
 using UniPortal.ViewModels.Grades;
 
 namespace UniPortal.Services.Academics.Operations
@@ -19,68 +18,75 @@ namespace UniPortal.Services.Academics.Operations
         // -------------------------
         public async Task<List<GradeViewModel>> GetGradesForStudentAsync(Guid accountId)
         {
-            var student = await _context.Students
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.AccountId == accountId);
+            var studentId = await _context.Students
+                .Where(s => s.AccountId == accountId)
+                .Select(s => s.Id)
+                .FirstOrDefaultAsync();
 
-            if (student == null)
+            if (studentId == Guid.Empty)
                 return new List<GradeViewModel>();
 
-            return await _context.Grades
-                .Where(g => g.StudentId == student.Id && !g.IsDeleted)
-                .Include(g => g.Course)
-                    .ThenInclude(c => c.Subject)
-                .Include(g => g.Course)
-                    .ThenInclude(c => c.Teacher)
-                .Include(g => g.Course)
-                    .ThenInclude(c => c.Semester)  // Include Semester
-                .Select(g => new GradeViewModel
-                {
-                    SemesterName = g.Course.Semester != null
-                        ? g.Course.Semester.Name
-                        : "Unknown Semester",          // Avoid null keys
-                    SubjectCode = g.Course.Subject.Code,
-                    SubjectName = g.Course.Subject.Name,
-                    TeacherName = g.Course.Teacher.FirstName + " " + g.Course.Teacher.LastName,
-                    Grade = g.GradeValue,
-                    Marks = g.Marks,
-                    GPA = g.GPA,                 // Add GPA if available
-                    IsFail = g.GradeValue.Trim().ToUpper() == "F"
-                })
-                .ToListAsync();
-        }
+            // Only include courses where student is enrolled
+            var query = from g in _context.Grades
+                        join co in _context.CourseOfferings on g.CourseOfferingId equals co.Id
+                        join e in _context.Enrollments on new { g.StudentId, g.CourseOfferingId }
+                                                          equals new { e.StudentId, e.CourseOfferingId }
+                        join c in _context.Courses on co.CourseId equals c.Id
+                        join t in _context.Accounts on co.FacultyId equals t.Id
+                        where g.StudentId == studentId
+                              && !g.IsDeleted
+                              && !co.IsDeleted
+                              && !c.IsDeleted
+                              && !e.IsDeleted
+                        orderby co.SemesterNumber
+                        select new GradeViewModel
+                        {
+                            SemesterName = "Semester " + co.SemesterNumber,
+                            SubjectCode = c.Code,
+                            SubjectName = c.Title,
+                            TeacherName = t.FirstName + " " + t.LastName,
+                            Grade = g.GradeValue,
+                            Marks = g.Marks,
+                            GPA = g.GPA,
+                            IsFail = g.GradeValue.Trim().ToUpper() == "F"
+                        };
 
+            return await query.ToListAsync();
+        }
 
         // -------------------------
         // Teacher perspective
         // -------------------------
-        public async Task<List<TeacherGradeViewModel>> GetGradesForTeacherAsync(Guid teacherAccountId, Guid semesterId, Guid studentId)
+        public async Task<List<TeacherGradeViewModel>> GetGradesForTeacherAsync(
+            Guid facultyId, int semesterNumber, Guid studentId)
         {
-            var query = from e in _context.Enrollments.AsNoTracking()
+            var query = from e in _context.Enrollments
+                        join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                        join c in _context.Courses on co.CourseId equals c.Id
                         join s in _context.Students on e.StudentId equals s.Id
                         join a in _context.Accounts on s.AccountId equals a.Id
-                        join c in _context.Courses on e.CourseId equals c.Id
-                        join sub in _context.Subjects on c.SubjectId equals sub.Id
-                        join t in _context.Accounts on c.TeacherId equals t.Id
+                        join t in _context.Accounts on co.FacultyId equals t.Id
                         join g in _context.Grades
-                            on new { e.StudentId, e.CourseId } equals new { g.StudentId, g.CourseId } into gj
-                        from grade in gj.DefaultIfEmpty() // left join to get null if no grade
-                        where c.TeacherId == teacherAccountId
-                              && c.SemesterId == semesterId
-                              && s.Id == studentId
-                              && !s.IsDeleted
+                            on new { e.StudentId, e.CourseOfferingId } equals new { g.StudentId, g.CourseOfferingId } into gj
+                        from grade in gj.DefaultIfEmpty()
+                        where co.FacultyId == facultyId
+                              && co.SemesterNumber == semesterNumber
+                              && e.StudentId == studentId
+                              && !e.IsDeleted
+                              && !co.IsDeleted
                               && !c.IsDeleted
+                              && !s.IsDeleted
                         select new TeacherGradeViewModel
                         {
                             StudentId = s.Id,
                             StudentName = a.FirstName + " " + a.LastName,
-                            CourseId = c.Id,
-                            SubjectId = sub.Id,
-                            SubjectCode = sub.Code,
-                            SubjectName = sub.Name,
+                            CourseOfferingId = co.Id,
+                            SubjectCode = c.Code,
+                            SubjectName = c.Title,
                             TeacherName = t.FirstName + " " + t.LastName,
                             Grade = grade != null ? grade.GradeValue : null,
-                            Marks = grade != null ? grade.Marks : (decimal?)null
+                            Marks = grade != null ? grade.Marks : (decimal?)null,
+                            GPA = grade != null ? grade.GPA : (decimal?)null
                         };
 
             return await query
@@ -89,18 +95,28 @@ namespace UniPortal.Services.Academics.Operations
                 .ToListAsync();
         }
 
-        public async Task UpsertGradeAsync(Guid studentId, Guid courseId, decimal marks, Guid modifiedBy)
+        // -------------------------
+        // Upsert grade
+        // -------------------------
+        public async Task UpsertGradeAsync(Guid studentId, Guid courseOfferingId, decimal marks, Guid modifiedBy)
         {
-            // 1. Get the appropriate grade from GradeScale based on marks
+            // Ensure student is enrolled
+            var enrolled = await _context.Enrollments
+                .AnyAsync(e => e.StudentId == studentId && e.CourseOfferingId == courseOfferingId && !e.IsDeleted);
+
+            if (!enrolled)
+                throw new InvalidOperationException("Student is not enrolled in this course offering.");
+
+            // 1️⃣ Get grade from GradeScale
             var gradeScale = await _context.GradeScales
                 .FirstOrDefaultAsync(g => marks >= g.MinMarks && marks <= g.MaxMarks);
 
             if (gradeScale == null)
-                throw new InvalidOperationException("No grade scale configured for the given marks.");
+                throw new InvalidOperationException("No grade scale configured for these marks.");
 
-            // 2. Check if a grade already exists
+            // 2️⃣ Upsert grade
             var existing = await _context.Grades
-                .FirstOrDefaultAsync(g => g.StudentId == studentId && g.CourseId == courseId);
+                .FirstOrDefaultAsync(g => g.StudentId == studentId && g.CourseOfferingId == courseOfferingId);
 
             if (existing != null)
             {
@@ -112,19 +128,17 @@ namespace UniPortal.Services.Academics.Operations
             }
             else
             {
-                var grade = new Grade
+                _context.Grades.Add(new Data.Entities.Grade
                 {
                     StudentId = studentId,
-                    CourseId = courseId,
+                    CourseOfferingId = courseOfferingId,
                     GradeValue = gradeScale.Grade,
                     GPA = gradeScale.GPA,
                     Marks = marks,
                     ModifiedById = modifiedBy,
                     IsDeleted = false,
                     CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Grades.Add(grade);
+                });
             }
 
             await _context.SaveChangesAsync();

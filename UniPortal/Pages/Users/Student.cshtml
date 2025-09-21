@@ -30,8 +30,7 @@
                     <th>Batch</th>
                     <th>Section</th>
                     <th>Program</th>
-                    @* <th>Department</th> *@
-                    <th>Current Semester</th>
+                    <th>Semester Number</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -45,34 +44,39 @@
                                 <input type="hidden" asp-for="EditStudent.Id" />
                             <td><input asp-for="EditStudent.Email" class="form-control" /></td>
                             <td><input asp-for="EditStudent.StudentId" class="form-control" /></td>
-                            <td><input asp-for="EditStudent.BatchNumber" class="form-control" /></td>
-                            <td><input asp-for="EditStudent.Section" class="form-control" /></td>
+
                             <td>
-                                <select asp-for="EditStudent.ProgramId" class="form-select">
+                                <select asp-for="EditStudent.BatchId" class="form-select"
+                                        asp-items="@(new SelectList(Model.Batches, "Id", "Name", Model.EditStudent.BatchId))">
+                                    <option value="">-- Select Batch --</option>
+                                </select>
+                            </td>
+
+                            <td>
+                                <select asp-for="EditStudent.SectionId" class="form-select"
+                                        asp-items="@(new SelectList(Model.Sections, "Id", "Name", Model.EditStudent.SectionId))">
+                                    <option value="">-- Select Section --</option>
+                                </select>
+                            </td>
+
+                            <td>
+                                <select asp-for="EditStudent.ProgramId" class="form-select"
+                                        asp-items="@(new SelectList(Model.Programs, "Id", "Name", Model.EditStudent.ProgramId))">
                                     <option value="">-- Select Program --</option>
-                                    @foreach (var prog in Model.Programs)
-                                    {
-                                        <option value="@prog.Id" selected="@(prog.Id == student.ProgramId ? "selected" : null)">
-                                            @prog.Name
-                                        </option>
-                                    }
                                 </select>
                             </td>
-                            @* <td>@student.DepartmentCode</td> *@
+
                             <td>
-                                <select asp-for="EditStudent.CurrentSemesterId" class="form-select">
+                                <select asp-for="EditStudent.CurrentSemester" class="form-select"
+                                        asp-items="@(new SelectList(Model.Semesters, "Id", "Name", Model.EditStudent.CurrentSemester))">
                                     <option value="">-- Select Semester --</option>
-                                    @foreach (var sem in Model.Semesters.Where(s => s.ProgramId == Model.EditStudent.ProgramId))
-                                    {
-                                        <option value="@sem.Id" selected="@(sem.Id == Model.EditStudent.CurrentSemesterId ? "selected" : null)">
-                                            @sem.Name
-                                        </option>
-                                    }
                                 </select>
                             </td>
+
+
                             <td class="d-flex gap-2">
-                                <button type="submit" asp-page-handler="Save" class="btn btn-sm btn-primary">💾 Save</button>
-                                <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                                <button type="submit" asp-page-handler="Save" class="btn btn-sm btn-primary">Save</button>
+                                <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">Cancel</button>
                             </td>
                             </form>
                         }
@@ -83,22 +87,22 @@
                             <td>@student.BatchNumber</td>
                             <td>@student.Section</td>
                             <td>@student.ProgramName</td>
-                            @* <td>@student.DepartmentCode</td> *@
-                            <td>@student.CurrentSemesterName</td>
+                            <td>@student.CurrentSemester</td>
                             <td class="d-flex gap-2">
                                 <form method="post">
-                                    <button type="submit" asp-page-handler="Edit" name="id" value="@student.Id" class="btn btn-sm btn-warning">✏️ Edit</button>
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@student.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')">🗑️ Delete</button>
+                                    <button type="submit" asp-page-handler="Edit" name="id" value="@student.Id" class="btn btn-sm btn-warning">Edit</button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="showDeleteModal('@student.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')">
+                                        Delete
+                                    </button>
                                 </form>
-                                <a href="/accounts/profile?id=@student.AccountId" class="btn btn-sm btn-info">ℹ️ Details</a>
+                                <a href="/accounts/profile?id=@student.AccountId" class="btn btn-sm btn-info">Details</a>
                             </td>
                         }
                     </tr>
                 }
             </tbody>
         </table>
-
-
 
         <!-- Pagination -->
         <nav>

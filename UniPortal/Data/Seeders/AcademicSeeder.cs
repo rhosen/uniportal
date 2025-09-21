@@ -8,93 +8,141 @@ namespace UniPortal.Data.Seeders
         public static async Task SeedAsync(IServiceProvider services)
         {
             var dbContext = services.GetRequiredService<UniPortalContext>();
+            var now = DateTime.UtcNow;
 
             // --- Departments ---
-            if (!await dbContext.Departments.AnyAsync())
-            {
-                var departments = new List<Department>
-                {
-                    new Department { Id = Guid.NewGuid(), Code = "CSE", Name = "Computer Science & Engineering", CreatedAt = DateTime.Now, IsDeleted = false },
-                    new Department { Id = Guid.NewGuid(), Code = "EEE", Name = "Electrical & Electronic Engineering", CreatedAt = DateTime.Now, IsDeleted = false },
-                    new Department { Id = Guid.NewGuid(), Code = "BBA", Name = "Business Administration", CreatedAt = DateTime.Now, IsDeleted = false }
-                };
-                dbContext.Departments.AddRange(departments);
-                await dbContext.SaveChangesAsync(); // save to get Department Ids
-            }
+            var cseDept = new Department { Id = Guid.NewGuid(), Code = "CSE", Name = "Computer Science & Engineering", CreatedAt = now, IsDeleted = false };
+            var eeeDept = new Department { Id = Guid.NewGuid(), Code = "EEE", Name = "Electrical & Electronic Engineering", CreatedAt = now, IsDeleted = false };
+            var bbaDept = new Department { Id = Guid.NewGuid(), Code = "BBA", Name = "Business Administration", CreatedAt = now, IsDeleted = false };
+            dbContext.Departments.AddRange(cseDept, eeeDept, bbaDept);
 
-            // --- Programs ---
-            if (!await dbContext.Programs.AnyAsync())
-            {
-                var cseDept = await dbContext.Departments.FirstAsync(d => d.Code == "CSE");
-                var programs = new List<Entities.Program>
-                {
-                    new Entities.Program { Id = Guid.NewGuid(), Code = "BSC-CSE", Name = "BSc in CSE", DepartmentId = cseDept.Id, CreatedAt = DateTime.Now, IsDeleted = false }
-                };
-                dbContext.Programs.AddRange(programs);
-                await dbContext.SaveChangesAsync(); // save to get Program Ids
-            }
-
-            // --- Subjects ---
-            if (!await dbContext.Subjects.AnyAsync())
-            {
-                var subjects = new List<Subject>
-                {
-                    new Subject { Id = Guid.NewGuid(), Code = "MATH-101", Name = "Mathematics I", CreatedAt = DateTime.Now, IsDeleted = false },
-                    new Subject { Id = Guid.NewGuid(), Code = "ENG-101", Name = "English Composition", CreatedAt = DateTime.Now, IsDeleted = false },
-                    new Subject { Id = Guid.NewGuid(), Code = "CSE-101", Name = "Introduction to Programming", CreatedAt = DateTime.Now, IsDeleted = false }
-                };
-                dbContext.Subjects.AddRange(subjects);
-                await dbContext.SaveChangesAsync();
-            }
 
             // --- Rooms ---
-            if (!await dbContext.Rooms.AnyAsync())
+            var rooms = new[]
             {
-                var rooms = new List<Room>
-                {
-                    new Room { Id = Guid.NewGuid(), RoomName = "215", Capacity = 40, Location = "2nd Floor", CreatedAt = DateTime.Now, IsDeleted = false },
-                    new Room { Id = Guid.NewGuid(), RoomName = "301", Capacity = 60, Location = "3rd Floor", CreatedAt = DateTime.Now, IsDeleted = false },
-                    new Room { Id = Guid.NewGuid(), RoomName = "101", Capacity = 60, Location = "1st Floor", CreatedAt = DateTime.Now, IsDeleted = false }
-                };
-                dbContext.Rooms.AddRange(rooms);
-                await dbContext.SaveChangesAsync();
-            }
+                new Room { Id = Guid.NewGuid(), RoomName = "Room 101", Capacity = 40, Location = "Main Building - 1st Floor", CreatedAt = now, IsDeleted = false },
+                new Room { Id = Guid.NewGuid(), RoomName = "Room 102", Capacity = 35, Location = "Main Building - 1st Floor", CreatedAt = now, IsDeleted = false },
+                new Room { Id = Guid.NewGuid(), RoomName = "Lab 201",  Capacity = 25, Location = "Lab Building - 2nd Floor",  CreatedAt = now, IsDeleted = false },
+                new Room { Id = Guid.NewGuid(), RoomName = "Conference Hall", Capacity = 60, Location = "Admin Block - Ground Floor", CreatedAt = now, IsDeleted = false }
+            };
+            dbContext.Rooms.AddRange(rooms);
+            await dbContext.SaveChangesAsync();
 
-            // --- Semesters per Program ---
-            if (!await dbContext.Semesters.AnyAsync())
+
+            // --- Degrees ---
+            var bachelorDegree = new Degree { Id = Guid.NewGuid(), Name = "Bachelor", CreatedAt = now, IsDeleted = false };
+            var masterDegree = new Degree { Id = Guid.NewGuid(), Name = "Master", CreatedAt = now, IsDeleted = false };
+            dbContext.Degrees.AddRange(bachelorDegree, masterDegree);
+
+            await dbContext.SaveChangesAsync();
+
+            // --- Programs ---
+            var bscCse = new Data.Entities.Program
             {
-                var startYear = DateTime.Now.Year;
+                Id = Guid.NewGuid(),
+                Code = "BSC-CSE",
+                Name = "BSc in CSE",
+                DepartmentId = cseDept.Id,
+                DegreeId = bachelorDegree.Id,
+                TotalSemesters = 8,
+                Duration = 4,
+                TotalCreditsRequired = 132,
+                CreatedAt = now,
+                IsDeleted = false
+            };
+            var mscCse = new Data.Entities.Program
+            {
+                Id = Guid.NewGuid(),
+                Code = "MSC-CSE",
+                Name = "MSc in CSE",
+                DepartmentId = cseDept.Id,
+                DegreeId = masterDegree.Id,
+                TotalSemesters = 4,
+                Duration = 2,
+                TotalCreditsRequired = 36,
+                CreatedAt = now,
+                IsDeleted = false
+            };
+            var bbaGen = new Data.Entities.Program
+            {
+                Id = Guid.NewGuid(),
+                Code = "BBA-GEN",
+                Name = "BBA in General",
+                DepartmentId = bbaDept.Id,
+                DegreeId = bachelorDegree.Id,
+                TotalSemesters = 8,
+                Duration = 4,
+                TotalCreditsRequired = 128,
+                CreatedAt = now,
+                IsDeleted = false
+            };
+            dbContext.Programs.AddRange(bscCse, mscCse, bbaGen);
+            await dbContext.SaveChangesAsync();
 
-                var programs = await dbContext.Programs.ToListAsync();
+            // --- Courses ---
+            var math101 = new Course { Id = Guid.NewGuid(), Code = "MATH-101", Title = "Mathematics I", CreditHours = 3, DepartmentId = cseDept.Id, CreatedAt = now, IsDeleted = false };
+            var eng101 = new Course { Id = Guid.NewGuid(), Code = "ENG-101", Title = "English Composition", CreditHours = 3, DepartmentId = cseDept.Id, CreatedAt = now, IsDeleted = false };
+            var cse101 = new Course { Id = Guid.NewGuid(), Code = "CSE-101", Title = "Introduction to Programming", CreditHours = 4, DepartmentId = cseDept.Id, CreatedAt = now, IsDeleted = false };
+            dbContext.Courses.AddRange(math101, eng101, cse101);
+            await dbContext.SaveChangesAsync();
 
-                var semesters = new List<Semester>();
+            // --- Course Types ---
+            var coreType = new CourseType { Id = Guid.NewGuid(), Name = "Core", CreatedAt = now, IsDeleted = false };
+            var generalType = new CourseType { Id = Guid.NewGuid(), Name = "General", CreatedAt = now, IsDeleted = false };
+            dbContext.CourseTypes.AddRange(coreType, generalType);
+            await dbContext.SaveChangesAsync();
 
-                foreach (var program in programs)
+            // --- Semesters ---
+            var fall2025 = new Semester { Id = Guid.NewGuid(), SemesterType = "Fall", AcademicYear = "2025-2026", StartDate = new DateTime(2025, 8, 1), EndDate = new DateTime(2025, 12, 31), IsCurrent = false, CreatedAt = now, IsDeleted = false };
+            var spring2025 = new Semester { Id = Guid.NewGuid(), SemesterType = "Spring", AcademicYear = "2025-2026", StartDate = new DateTime(2025, 1, 1), EndDate = new DateTime(2025, 5, 31), IsCurrent = false, CreatedAt = now, IsDeleted = false };
+            dbContext.Semesters.AddRange(fall2025, spring2025);
+            await dbContext.SaveChangesAsync();
+
+            // --- Batches ---
+            var batch1 = new Batch { Id = Guid.NewGuid(), Number = "1", CreatedAt = now, IsDeleted = false };
+            var batch2 = new Batch { Id = Guid.NewGuid(), Number = "2", CreatedAt = now, IsDeleted = false };
+            var batch3 = new Batch { Id = Guid.NewGuid(), Number = "3", CreatedAt = now, IsDeleted = false };
+            dbContext.Batches.AddRange(batch1, batch2, batch3);
+            await dbContext.SaveChangesAsync();
+
+            // --- Sections ---
+            var sectionA = new Section { Id = Guid.NewGuid(), Name = "A", CreatedAt = now, IsDeleted = false };
+            var sectionB = new Section { Id = Guid.NewGuid(), Name = "B", CreatedAt = now, IsDeleted = false };
+            var sectionC = new Section { Id = Guid.NewGuid(), Name = "C", CreatedAt = now, IsDeleted = false };
+            dbContext.Sections.AddRange(sectionA, sectionB, sectionC);
+            await dbContext.SaveChangesAsync();
+
+            // --- Curriculums ---
+            var programs = new[] { bscCse, mscCse, bbaGen };
+            var coursesList = new[] { math101, eng101, cse101 };
+            var semestersList = new[] { fall2025, spring2025 };
+
+            var curriculum = new List<Curriculum>();
+            foreach (var program in programs)
+            {
+                foreach (var semester in semestersList)
                 {
-                    for (int i = 1; i <= 8; i++) // assuming 8 semesters per program
+                    int semesterNumber = 1;
+                    foreach (var course in coursesList)
                     {
-                        int yearOffset = (i - 1) / 2; // 2 semesters per year
-                        int semesterMonthStart = ((i - 1) % 2) * 6 + 1;
-                        int semesterMonthEnd = semesterMonthStart + 5; // 6-month semester
-
-                        semesters.Add(new Semester
+                        var courseTypeToUse = course.DepartmentId == program.DepartmentId ? coreType : generalType;
+                        curriculum.Add(new Curriculum
                         {
                             Id = Guid.NewGuid(),
-                            Name = $"{program.Code} – Semester {i}",
                             ProgramId = program.Id,
-                            StartDate = new DateTime(startYear + yearOffset, semesterMonthStart, 1),
-                            EndDate = new DateTime(startYear + yearOffset, semesterMonthEnd,
-                                DateTime.DaysInMonth(startYear + yearOffset, semesterMonthEnd)),
-                            CreatedAt = DateTime.Now,
+                            SemesterId = semester.Id,
+                            SemesterNumber = semesterNumber,
+                            CourseId = course.Id,
+                            CreditHours = course.CreditHours,
+                            CourseTypeId = courseTypeToUse.Id,
+                            SequenceOrder = 1,
+                            CreatedAt = now,
                             IsDeleted = false
                         });
                     }
                 }
-
-                dbContext.Semesters.AddRange(semesters);
-                await dbContext.SaveChangesAsync();
             }
-
+            dbContext.Curriculums.AddRange(curriculum);
             await dbContext.SaveChangesAsync();
         }
     }

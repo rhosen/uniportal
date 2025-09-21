@@ -21,16 +21,18 @@ namespace UniPortal.Constants
 
         public static class Passwords
         {
-            public static string Teacher { get; private set; }
+            public static string Faculty { get; private set; }
             public static string Admin { get; private set; }
             public static string Root { get; private set; }
+            public static string Student { get; private set; }
 
             // Method to bind passwords at startup
             public static void LoadPasswords(IConfiguration configuration)
             {
-                Teacher = configuration["DefaultPasswords:Teacher"];
-                Admin = configuration["DefaultPasswords:Admin"];
                 Root = configuration["DefaultPasswords:Root"];
+                Admin = configuration["DefaultPasswords:Admin"];
+                Faculty = configuration["DefaultPasswords:Faculty"];
+                Student = configuration["DefaultPasswords:Student"];
             }
         }
     }

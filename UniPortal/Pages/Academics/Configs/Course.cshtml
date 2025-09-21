@@ -1,0 +1,136 @@
+﻿@page
+@model UniPortal.Pages.Academics.Configs.CourseModel
+@{
+    ViewData["Title"] = "Course Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">📚 Course Management</h2>
+
+    <!-- Search Box -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by course code or title..." />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <!-- Add New Course -->
+    <form method="post">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Code</th>
+                    <th>Title</th>
+                    <th>Credit Hours</th>
+                    <th>Department</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>New</td>
+                    <td><input asp-for="NewCourse.Code" class="form-control" required /></td>
+                    <td><input asp-for="NewCourse.Title" class="form-control" required /></td>
+                    <td><input asp-for="NewCourse.CreditHours" type="number" class="form-control" min="1" required /></td>
+                    <td>
+                        <select asp-for="NewCourse.DepartmentId" class="form-control" required>
+                            <option value="">-- Select Department --</option>
+                            @foreach (var dept in Model.Departments)
+                            {
+                                <option value="@dept.Id">@dept.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <!-- Existing Courses Table -->
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Code</th>
+                <th>Title</th>
+                <th>Credit Hours</th>
+                <th>Department</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var course in Model.Courses)
+            {
+                <tr>
+                    <form method="post">
+                        <input type="hidden" name="id" value="@course.Id" />
+
+                        @if (Model.EditCourseId == course.Id.ToString())
+                        {
+                            <!-- Editing Row -->
+                        <td><input name="EditCourse.Code" value="@Model.EditCourse.Code" class="form-control" /></td>
+                        <td><input name="EditCourse.Title" value="@Model.EditCourse.Title" class="form-control" /></td>
+                        <td><input name="EditCourse.CreditHours" type="number" value="@Model.EditCourse.CreditHours" class="form-control" min="1" /></td>
+                        <td>
+                            <select name="EditCourse.DepartmentId" class="form-control">
+                                @foreach (var dept in Model.Departments)
+                                {
+                                    <option value="@dept.Id" selected="@(Model.EditCourse.DepartmentId == dept.Id ? "selected" : null)">
+                                        @dept.Name
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
+                            <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <!-- Normal Row -->
+                        <td>@course.Code</td>
+                        <td>@course.Title</td>
+                        <td>@course.CreditHours</td>
+                        <td>@course.Department.Name</td>
+                        <td>
+                            <button type="submit" asp-page-handler="Edit" name="id" value="@course.Id" class="btn btn-sm btn-warning">Edit</button>
+                            @if (!course.IsDeleted)
+                            {
+                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@course.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')"> Delete </button>
+                            }
+                            else
+                            {
+                                <button type="submit" asp-page-handler="Activate" name="id" value="@course.Id" class="btn btn-sm btn-success">Activate</button>
+                            }
+                        </td>
+                    }
+                    </form>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage - 1)&SearchTerm=@Model.SearchTerm">Previous</a>
+            </li>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="?CurrentPage=@i&SearchTerm=@Model.SearchTerm">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="?CurrentPage=@(Model.CurrentPage + 1)&SearchTerm=@Model.SearchTerm">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>

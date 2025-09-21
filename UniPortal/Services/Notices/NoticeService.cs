@@ -38,7 +38,7 @@ namespace UniPortal.Services.Notices
                 Message = message,
                 ModifiedById = createdBy,
                 RecipientId = notificationTypeId,
-                StudentId = receiverId
+                TargetId = receiverId
             };
 
             _context.Notices.Add(notification);
@@ -53,7 +53,7 @@ namespace UniPortal.Services.Notices
                 notification.Title = title;
                 notification.Message = message;
                 notification.RecipientId = notificationTypeId;
-                notification.StudentId = receiverId;
+                notification.TargetId = receiverId;
                 notification.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
             }

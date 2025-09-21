@@ -1,0 +1,181 @@
+﻿@page
+@model UniPortal.Pages.Academics.Operations.CourseOfferingsModel
+@{
+    ViewData["Title"] = "Course Offerings";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">📚 Course Offerings Management</h2>
+
+    <!-- Filters -->
+    <form method="post" asp-page-handler="LoadCourses" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label>Program</label>
+            <select asp-for="Form.ProgramId" asp-items="@(new SelectList(Model.Programs, "Id", "Name"))" class="form-select"></select>
+        </div>
+        <div class="col-md-3">
+            <label>Semester</label>
+            <select asp-for="Form.SemesterNumber" asp-items="@(new SelectList(Model.Semesters, "Name", "Name"))" class="form-select"></select>
+        </div>
+        <div class="col-md-2">
+            <label>Batch</label>
+            <select asp-for="Form.BatchId" asp-items="@(new SelectList(Model.Batches, "Id", "Name"))" class="form-select"></select>
+        </div>
+        <div class="col-md-2">
+            <label>Section</label>
+            <select asp-for="Form.SectionId" asp-items="@(new SelectList(Model.Sections, "Id", "Name"))" class="form-select"></select>
+        </div>
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Load Courses</button>
+        </div>
+    </form>
+
+    <!-- 1️⃣ Curriculum Courses (available to add) -->
+    @if (Model.CurriculumCourses.Any())
+    {
+        <h4>Available Courses to Add</h4>
+        <form method="post" asp-page-handler="SaveOfferings">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Faculty</th>
+                        <th>Max Enrollment</th>
+                        <th>Days</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.CurriculumCourses.Count; i++)
+                    {
+                        var course = Model.CurriculumCourses[i];
+                        <tr>
+                            <td>@course.CourseTitle</td>
+                            <td>@course.CourseType</td>
+                            <td>
+                                <select asp-for="Form.Courses[@i].FacultyId" asp-items="@(new SelectList(Model.Faculties, "Id", "Name"))" class="form-select"></select>
+                            </td>
+                            <td><input asp-for="Form.Courses[@i].MaxEnrollment" class="form-control" type="number" /></td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Mon" /> Mon
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Tue" /> Tue
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Wed" /> Wed
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Thu" /> Thu
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Fri" /> Fri
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Sat" /> Sat
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Sun" /> Sun
+                                </div>
+                            </td>
+                            <td><input asp-for="Form.Courses[@i].StartTime" class="form-control" type="time" /></td>
+                            <td><input asp-for="Form.Courses[@i].EndTime" class="form-control" type="time" /></td>
+                            <td>
+                                <input type="hidden" asp-for="Form.Courses[@i].CourseId" />
+                                <input type="hidden" asp-for="Form.Courses[@i].CurriculumId" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-success">Save New Courses</button>
+        </form>
+    }
+
+    <!-- 2️⃣ Existing Offerings -->
+    @if (Model.ExistingOfferings.Any())
+    {
+        <h4 class="mt-5">Existing Course Offerings</h4>
+        <form method="post" asp-page-handler="SaveOfferings">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Faculty</th>
+                        <th>Max Enrollment</th>
+                        <th>Days</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.ExistingOfferings.Count; i++)
+                    {
+                        var course = Model.ExistingOfferings[i];
+                        <tr>
+                            <td>@course.CourseTitle</td>
+                            <td>@course.CourseType</td>
+                            <td>
+                                <select asp-for="Form.Courses[@i].FacultyId" asp-items="@(new SelectList(Model.Faculties, "Id", "Name"))" class="form-select" value="@course.FacultyId"></select>
+                            </td>
+                            <td><input asp-for="Form.Courses[@i].MaxEnrollment" class="form-control" type="number" value="@course.MaxEnrollment" /></td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Mon" checked="@course.Mon" /> Mon
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Tue" checked="@course.Tue" /> Tue
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Wed" checked="@course.Wed" /> Wed
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Thu" checked="@course.Thu" /> Thu
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Fri" checked="@course.Fri" /> Fri
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Sat" checked="@course.Sat" /> Sat
+                                    <input type="checkbox" asp-for="Form.Courses[@i].Sun" checked="@course.Sun" /> Sun
+                                </div>
+                            </td>
+                            <td><input asp-for="Form.Courses[@i].StartTime" class="form-control" type="time" value="@course.StartTime?.ToString(@"hh\:mm")" /></td>
+                            <td><input asp-for="Form.Courses[@i].EndTime" class="form-control" type="time" value="@course.EndTime?.ToString(@"hh\:mm")" /></td>
+                            <td>
+                                <button formaction="?handler=DeleteOffering&id=@course.Id" class="btn btn-danger btn-sm">Delete</button>
+                                <input type="hidden" asp-for="Form.Courses[@i].Id" value="@course.Id" />
+                                <input type="hidden" asp-for="Form.Courses[@i].CourseId" value="@course.CourseId" />
+                                <input type="hidden" asp-for="Form.Courses[@i].CurriculumId" value="@course.CurriculumId" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary">Update Existing Courses</button>
+        </form>
+    }
+
+    <!-- 3️⃣ Course Offering History (grouped by semester if needed) -->
+    @if (Model.ExistingOfferings.Any())
+    {
+        <h4 class="mt-5">Course Offering History</h4>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Semester</th>
+                    <th>Course</th>
+                    <th>Faculty</th>
+                    <th>Batch</th>
+                    <th>Section</th>
+                    <th>Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var course in Model.ExistingOfferings)
+                {
+                    <tr>
+                        <td>@course.SemesterNumber</td>
+                        <td>@course.CourseTitle</td>
+                        <td>@course.FacultyName</td>
+                        <td>@Model.Batches.FirstOrDefault(b => b.Id == course.BatchId)?.Name</td>
+                        <td>@Model.Sections.FirstOrDefault(s => s.Id == course.SectionId)?.Name</td>
+                        <td>
+                            @(course.Mon ? "Mon " : "")
+                            @(course.Tue ? "Tue " : "")
+                            @(course.Wed ? "Wed " : "")
+                            @(course.Thu ? "Thu " : "")
+                            @(course.Fri ? "Fri " : "")
+                            @(course.Sat ? "Sat " : "")
+                            @(course.Sun ? "Sun " : "")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

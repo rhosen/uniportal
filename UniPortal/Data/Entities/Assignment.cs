@@ -4,12 +4,13 @@
     {
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public Guid CourseId { get; set; }
+        public Guid CourseOfferingId { get; set; }
         public DateTime AssignedDate { get; set; } = DateTime.Now;
         public DateTime DueDate { get; set; }
+        public string? FilePath { get; set; }
 
         // Navigation
-        public Course Course { get; set; }
-        public ICollection<Submission> Submissions { get; set; }
+        public CourseOffering CourseOffering { get; set; }
+        public ICollection<AssignmentSubmission> Submissions { get; set; } = new List<AssignmentSubmission>();
     }
 }

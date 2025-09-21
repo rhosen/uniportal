@@ -18,30 +18,38 @@ namespace UniPortal.Data
 
         // Academic structure
         public DbSet<Department> Departments { get; set; }
+        public DbSet<Degree> Degrees { get; set; }
         public DbSet<Entities.Program> Programs { get; set; }
         public DbSet<Semester> Semesters { get; set; }
-        public DbSet<Subject> Subjects { get; set; }
         public DbSet<Course> Courses { get; set; }
+        public DbSet<CourseOffering> CourseOfferings { get; set; }
         public DbSet<Room> Rooms { get; set; }
 
+        // Curriculum / Requirements
+        public DbSet<CourseType> CourseTypes { get; set; }
+        public DbSet<Curriculum> Curriculums { get; set; }
+
         // Students
+        public DbSet<Batch> Batches { get; set; }
+        public DbSet<Section> Sections { get; set; }
         public DbSet<Student> Students { get; set; }
+
+        // Faculties / Staff
+        public DbSet<Faculty> Faculties { get; set; }
 
         // Student-related entities
         public DbSet<Enrollment> Enrollments { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
-        public DbSet<Submission> Submissions { get; set; }
+        public DbSet<AssignmentSubmission> AssignmentSubmissions { get; set; }
         public DbSet<Grade> Grades { get; set; }
         public DbSet<GradeScale> GradeScales { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
-        public DbSet<Note> Notes { get; set; }
-        public DbSet<Entities.File> Files { get; set; }
+        public DbSet<CourseMaterial> CourseMaterials { get; set; }  // Teacher uploads
         public DbSet<Notice> Notices { get; set; }
         public DbSet<Recipient> Recipients { get; set; }
+        public DbSet<ClassCancellation> ClassCancellations { get; set; }
 
-        // Scheduling / system
-        public DbSet<Schedule> Schedules { get; set; }
-        public DbSet<Session> Sessions { get; set; }
+        // System / logging
         public DbSet<Log> Logs { get; set; }
     }
 }

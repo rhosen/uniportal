@@ -2,13 +2,10 @@
 {
     public class Semester : IEntity
     {
-        public string Name { get; set; }
+        public string SemesterType { get; set; } = null!;   // 'Fall', 'Spring', 'Summer'
+        public string AcademicYear { get; set; } = null!;   // e.g., "2025-2026"
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public Guid ProgramId { get; set; }
-
-        // Navigation
-        public virtual Program Program { get; set; }
-        public ICollection<Course> Courses { get; set; } = new List<Course>();
+        public bool IsCurrent { get; set; } = false;
     }
 }

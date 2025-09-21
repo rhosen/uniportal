@@ -49,6 +49,7 @@ namespace UniPortal.Pages.Accounts
                 Email = Profile.Email,
                 DateOfBirth = Profile.DateOfBirth,
                 Address = Profile.Address,
+                Gender = Profile.Gender,
                 AccountId = Profile.Id
             };
             await _accountService.UpdateProfileAsync(model);

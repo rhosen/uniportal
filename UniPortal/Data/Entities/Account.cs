@@ -10,5 +10,6 @@
         public string Address { get; set; } = string.Empty;
         public string IdentityId { get; set; } = string.Empty; // Link to AspNetUsers
         public bool IsActive { get; set; } = true;
+        public string Gender { get; set; } = string.Empty; // New field
     }
 }

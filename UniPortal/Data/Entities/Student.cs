@@ -1,22 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace UniPortal.Data.Entities
+﻿namespace UniPortal.Data.Entities
 {
     public class Student : IEntity
     {
         public Guid AccountId { get; set; }
-        public string StudentId { get; set; } 
-        public string BatchNumber { get; set; } 
+        public string StudentNumber { get; set; } = null!;
+        public Guid BatchId { get; set; }
+        public Guid SectionId { get; set; }
         public Guid ProgramId { get; set; }
-        public string Section { get; set; }
-        public Guid? CurrentSemesterId { get; set; }
+        public int CurrentSemester { get; set; } = 1;
+        public DateTime? GraduationDate { get; set; }   // Added
 
-        // Navigation
-        public Account Account { get; set; }
-        public Program Program { get; set; }
-
-        [ForeignKey(nameof(CurrentSemesterId))] 
-        public Semester Semester { get; set; }
-
+        // Navigation properties
+        public Account Account { get; set; } = null!;
+        public Program Program { get; set; } = null!;
+        public Batch Batch { get; set; } = null!;
+        public Section Section { get; set; } = null!;
     }
 }

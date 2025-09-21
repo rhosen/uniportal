@@ -12,60 +12,48 @@ namespace UniPortal.Data.Seeders
             var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var dbContext = services.GetRequiredService<UniPortalContext>();
+            var now = DateTime.UtcNow;
 
-            // 1️⃣ Ensure roles exist
-            string[] roles = { Roles.Admin, Roles.Root };
+            // --- Roles ---
+            var roles = new[] { Roles.Admin, Roles.Root };
             foreach (var role in roles)
             {
-                if (!await roleManager.RoleExistsAsync(role))
-                    await roleManager.CreateAsync(new IdentityRole(role));
+                await roleManager.CreateAsync(new IdentityRole(role));
             }
 
-            // 2️⃣ Create default admin
+            // --- Admin User ---
             var adminEmail = "admin@uniportal.com";
-            var adminUser = await userManager.FindByEmailAsync(adminEmail);
-            if (adminUser == null)
-            {
-                adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
-                await userManager.CreateAsync(adminUser, Passwords.Admin);
-                await userManager.AddToRoleAsync(adminUser, Roles.Admin);
-            }
+            var adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
+            await userManager.CreateAsync(adminUser, Passwords.Admin);
+            await userManager.AddToRoleAsync(adminUser, Roles.Admin);
 
-            if (!dbContext.Accounts.Any(a => a.IdentityId == adminUser.Id))
+            dbContext.Accounts.Add(new Account
             {
-                dbContext.Accounts.Add(new Account
-                {
-                    FirstName = "System",
-                    LastName = "Administrator",
-                    Email = adminEmail,
-                    IdentityId = adminUser.Id,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                });
-            }
+                FirstName = "System",
+                LastName = "Administrator",
+                Email = adminEmail,
+                IdentityId = adminUser.Id,
+                IsActive = true,
+                Gender = "Other",
+                CreatedAt = now
+            });
 
-            // 3️⃣ Create default root user
+            // --- Root User ---
             var rootEmail = "root@uniportal.com";
-            var rootUser = await userManager.FindByEmailAsync(rootEmail);
-            if (rootUser == null)
-            {
-                rootUser = new IdentityUser { UserName = rootEmail, Email = rootEmail, EmailConfirmed = true };
-                await userManager.CreateAsync(rootUser, Passwords.Root);
-                await userManager.AddToRoleAsync(rootUser, Roles.Root);
-            }
+            var rootUser = new IdentityUser { UserName = rootEmail, Email = rootEmail, EmailConfirmed = true };
+            await userManager.CreateAsync(rootUser, Passwords.Root);
+            await userManager.AddToRoleAsync(rootUser, Roles.Root);
 
-            if (!dbContext.Accounts.Any(a => a.IdentityId == rootUser.Id))
+            dbContext.Accounts.Add(new Account
             {
-                dbContext.Accounts.Add(new Account
-                {
-                    FirstName = "Root",
-                    LastName = "",
-                    Email = rootEmail,
-                    IdentityId = rootUser.Id,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                });
-            }
+                FirstName = "Root",
+                LastName = "",
+                Email = rootEmail,
+                IdentityId = rootUser.Id,
+                IsActive = true,
+                Gender = "Other",
+                CreatedAt = now
+            });
 
             await dbContext.SaveChangesAsync();
         }

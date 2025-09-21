@@ -60,25 +60,41 @@
                         <input asp-for="Profile.LastName" class="form-control form-control-sm rounded-3" placeholder="Last name" />
                     </div>
 
-                    <!-- Phone + Email -->
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Phone</label>
-                        <input asp-for="Profile.Phone" class="form-control form-control-sm rounded-3" placeholder="Phone number" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Email</label>
-                        <input asp-for="Profile.Email" type="email" class="form-control form-control-sm rounded-3" placeholder="Email address" />
-                    </div>
-
                     <!-- DOB + Address -->
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Date of Birth</label>
                         <input asp-for="Profile.DateOfBirth" type="date" class="form-control form-control-sm rounded-3" />
                     </div>
+
+                    <!-- Gender -->
                     <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Gender</label>
+                        <select asp-for="Profile.Gender" class="form-select form-select-sm rounded-3">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Phone + Email -->
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Email</label>
+                        <input asp-for="Profile.Email" type="email" class="form-control form-control-sm rounded-3" placeholder="Email address" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Phone</label>
+                        <input asp-for="Profile.Phone" class="form-control form-control-sm rounded-3" placeholder="Phone number" />
+                    </div>
+                    
+
+                    <div class="col-md-12">
                         <label class="form-label small fw-semibold">Address</label>
                         <input asp-for="Profile.Address" class="form-control form-control-sm rounded-3" placeholder="User address" />
                     </div>
+
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm mt-4"> Save Changes</button>
