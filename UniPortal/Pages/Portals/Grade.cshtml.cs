@@ -2,11 +2,11 @@ using ClosedXML.Excel;
 using DinkToPdf;
 using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using UniPortal.Dtos;
 using UniPortal.Helpers;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
-using UniPortal.ViewModels.Grades;
 
 namespace UniPortal.Pages.Portals
 {
@@ -38,7 +38,7 @@ namespace UniPortal.Pages.Portals
         public string StudentId { get; set; }
         public string Program { get; set; }
         public decimal CumulativeCGPA { get; set; }
-        public Dictionary<string, List<GradeViewModel>> GradesBySemester { get; set; }
+        public Dictionary<string, List<StudenGradeDto>> GradesBySemester { get; set; }
 
         public async Task OnGetAsync()
         {

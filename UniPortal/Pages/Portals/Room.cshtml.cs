@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
+using UniPortal.Dtos;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Accounts;
-using UniPortal.ViewModels.Academics;
 
 namespace UniPortal.Pages.Portals
 {
@@ -10,7 +10,7 @@ namespace UniPortal.Pages.Portals
     {
         private readonly RoomService _classroomService;
 
-        public List<ClassroomAvailabilityViewModel> Classrooms { get; set; } = new();
+        public List<ClassroomStatusDto> Classrooms { get; set; } = new();
 
         public RoomModel(RoomService classroomService, AccountService accountService) : base(accountService)
         {
@@ -19,7 +19,7 @@ namespace UniPortal.Pages.Portals
 
         public async Task OnGetAsync()
         {
-            Classrooms = await _classroomService.GetClassroomAvailabilityAsync();
+            Classrooms = await _classroomService.GetClassroomStatusAsync();
         }
     }
 }

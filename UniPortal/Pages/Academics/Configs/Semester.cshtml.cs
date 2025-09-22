@@ -10,14 +10,11 @@ namespace UniPortal.Pages.Academics.Configs
     public class SemesterModel : BasePageModel
     {
         private readonly SemesterService _semesterService;
-        private readonly IConfiguration _configuration;
 
         public SemesterModel(SemesterService semesterService,
-            IConfiguration configuration,
             AccountService accountService) : base(accountService)
         {
             _semesterService = semesterService;
-            _configuration = configuration;
         }
 
         public List<Data.Entities.Semester> Semesters { get; set; } = new();
@@ -34,11 +31,8 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task OnGetAsync()
         {
-            // Read default semester duration from appsettings
-            int defaultDurationMonths = _configuration.GetValue("SemesterDurationMonths", 6);
-
             // Get the next semester window from the service
-            var (startDate, endDate) = await _semesterService.GetNextSemesterWindowAsync(defaultDurationMonths);
+            var (startDate, endDate) = await _semesterService.GetNextSemesterWindowAsync();
             NewSemester.StartDate = startDate;
             NewSemester.EndDate = endDate;
 

@@ -8,41 +8,42 @@ using UniPortal.Services.Accounts;
 namespace UniPortal.Pages.Academics.Configs
 {
     [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
-    public class ClassroomModel : BasePageModel
+    public class RoomModel : BasePageModel
     {
-        private readonly RoomService _classroomService;
+        private readonly RoomService _roomService;
 
-        public ClassroomModel(RoomService classroomService,
+        public RoomModel(RoomService roomService,
             AccountService accountService) : base(accountService)
         {
-            _classroomService = classroomService;
+            _roomService = roomService;
         }
 
         public List<Room> Classrooms { get; set; } = new();
 
         [BindProperty] public Room NewClassroom { get; set; } = new();
         [BindProperty] public Room EditClassroom { get; set; } = new();
-        [BindProperty(SupportsGet = true)] public string EditClassroomId { get; set; }
+        [BindProperty(SupportsGet = true)] public string? EditClassroomId { get; set; }
 
         // Search & Pagination
-        [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
+        [BindProperty(SupportsGet = true)] public string? SearchTerm { get; set; }
         [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public int TotalPages { get; set; }
 
         public async Task OnGetAsync()
         {
-            var allClassrooms = await _classroomService.GetAllAsync();
+            // Fetch all non-deleted rooms
+            var allRooms = await _roomService.GetAllAsync();
 
             if (!string.IsNullOrEmpty(SearchTerm))
             {
-                allClassrooms = allClassrooms
-                    .Where(c => c.RoomName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                allRooms = allRooms
+                    .Where(r => r.RoomName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
-            TotalPages = (int)Math.Ceiling(allClassrooms.Count / (double)PageSize);
-            Classrooms = allClassrooms
+            TotalPages = (int)Math.Ceiling(allRooms.Count / (double)PageSize);
+            Classrooms = allRooms
                 .Skip((CurrentPage - 1) * PageSize)
                 .Take(PageSize)
                 .ToList();
@@ -50,14 +51,20 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            await _classroomService.CreateAsync(NewClassroom.RoomName, NewClassroom.Capacity, NewClassroom.Location);
+            if (!string.IsNullOrWhiteSpace(NewClassroom.RoomName))
+            {
+                await _roomService.CreateAsync(NewClassroom.RoomName, NewClassroom.Capacity, NewClassroom.Location, isClassroom: true);
+            }
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
         public async Task<IActionResult> OnPostEditAsync(string id)
         {
             EditClassroomId = id;
-            var classroom = await _classroomService.GetByIdAsync(id);
+            if (!Guid.TryParse(id, out var classroomId))
+                return RedirectToPage();
+
+            var classroom = await _roomService.GetByIdAsync(classroomId);
             if (classroom != null)
             {
                 EditClassroom = new Room
@@ -66,8 +73,10 @@ namespace UniPortal.Pages.Academics.Configs
                     RoomName = classroom.RoomName,
                     Capacity = classroom.Capacity,
                     Location = classroom.Location,
+                    IsClassroom = classroom.IsClassroom
                 };
             }
+
             await OnGetAsync();
             return Page();
         }
@@ -80,19 +89,35 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostSaveEditAsync(string id)
         {
-            await _classroomService.UpdateAsync(Guid.Parse(id), EditClassroom.RoomName, EditClassroom.Capacity, EditClassroom.Location);
+            if (!Guid.TryParse(id, out var classroomId))
+                return RedirectToPage(new { CurrentPage, SearchTerm });
+
+            await _roomService.UpdateAsync(
+                classroomId,
+                EditClassroom.RoomName,
+                EditClassroom.Capacity,
+                EditClassroom.Location,
+                EditClassroom.IsClassroom // keep the classroom flag consistent
+            );
+
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await R(() => _classroomService.DeleteAsync(id), "Room deleted successfully.");
-            return RedirectToPage();
+            if (Guid.TryParse(id, out var classroomId))
+            {
+                await R(() => _roomService.DeleteAsync(classroomId), "Room deleted successfully.");
+            }
+            return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
         public async Task<IActionResult> OnPostActivateAsync(string id)
         {
-            await _classroomService.ActivateAsync(id);
+            if (Guid.TryParse(id, out var classroomId))
+            {
+                await _roomService.ActivateAsync(classroomId);
+            }
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
     }

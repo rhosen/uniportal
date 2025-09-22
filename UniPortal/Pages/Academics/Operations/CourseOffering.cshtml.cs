@@ -14,7 +14,6 @@ namespace UniPortal.Pages.Academics.Operations
         private readonly FacultyService _facultyService;
         private readonly RoomService _roomService;
         private readonly CourseOfferingService _courseOfferingService;
-        private readonly IConfiguration _configuration;
         private readonly SemesterService _semesterService;
 
         public CourseOfferingsModel(
@@ -25,7 +24,6 @@ namespace UniPortal.Pages.Academics.Operations
             RoomService roomService,
             CourseOfferingService courseOfferingService,
             AccountService accountService,
-            IConfiguration configuration,
             SemesterService semesterService) : base(accountService)
         {
             _programService = programService;
@@ -34,7 +32,6 @@ namespace UniPortal.Pages.Academics.Operations
             _facultyService = facultyService;
             _roomService = roomService;
             _courseOfferingService = courseOfferingService;
-            _configuration = configuration;
             _semesterService = semesterService;
         }
 
@@ -64,19 +61,7 @@ namespace UniPortal.Pages.Academics.Operations
 
         public async Task<IActionResult> OnPostLoadAsync()
         {
-            if (ProgramId == Guid.Empty || SemesterNumber == 0)
-            {
-                await LoadDropdownsAsync();
-                return Page();
-            }
-
             await LoadDropdownsAsync();
-
-            Offerings = await _courseOfferingService.GetOfferingsForSemesterAsync(
-                ProgramId, BatchId, SectionId, SemesterNumber);
-
-            IsCurrentSemester = await IsCurrentSemesterAsync(Offerings);
-
             return Page();
         }
 
@@ -89,6 +74,14 @@ namespace UniPortal.Pages.Academics.Operations
             Sections = await _sectionService.GetSectionOptionsAsync();
             Faculties = await _facultyService.GetFacultiesAsync(ProgramId);
             Rooms = await _roomService.GetOptionsAsync();
+
+            if (ProgramId != Guid.Empty && SemesterNumber != 0)
+            {
+                Offerings = await _courseOfferingService.GetOfferingsForSemesterAsync(
+                    ProgramId, BatchId, SectionId, SemesterNumber);
+
+                IsCurrentSemester = await IsCurrentSemesterAsync(Offerings);
+            }
         }
 
 
@@ -116,9 +109,14 @@ namespace UniPortal.Pages.Academics.Operations
             await R(() => _courseOfferingService.SaveOfferingsAsync(
                     Offerings, ProgramId, BatchId, SectionId, SelectedSemesterId, SemesterNumber), "Offerings saved successfully");
 
-           await LoadDropdownsAsync();
-
-            return RedirectToPage(new { ProgramId, BatchId, SectionId, SemesterNumber, SelectedSemesterId });
+            return RedirectToPage(new
+            {
+                ProgramId,
+                BatchId,
+                SectionId,
+                SemesterNumber,
+                SelectedSemesterId
+            });
         }
     }
 }

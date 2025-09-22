@@ -14,25 +14,22 @@ namespace UniPortal.Pages.Academics.Configs
         private readonly ProgramService _programService;
         private readonly SemesterService _semesterService;
         private readonly CourseService _courseService;
-        private readonly CourseTypeService _requirementTypeService;
-        private readonly IConfiguration _configuration;
+        private readonly CourseTypeService _courseTypeService;
 
         public CurriculumModel(
             CurriculumService curriculumService,
             ProgramService programService,
             SemesterService semesterService,
             CourseService courseService,
-            CourseTypeService requirementTypeService,
-            AccountService accountService,
-            IConfiguration configuration)
+            CourseTypeService courseTypeService,
+            AccountService accountService)
             : base(accountService)
         {
             _curriculumService = curriculumService;
             _programService = programService;
             _semesterService = semesterService;
             _courseService = courseService;
-            _requirementTypeService = requirementTypeService;
-            _configuration = configuration;
+            _courseTypeService = courseTypeService;
         }
 
         // DTO list for page display
@@ -60,7 +57,7 @@ namespace UniPortal.Pages.Academics.Configs
             ProgramOptions = await _programService.GetSelectOptionsAsync();
             SemesterOptions = await _semesterService.GetSelectOptionsAsync();
             CourseOptions = await _courseService.GetSelectOptionsAsync();
-            CourseTypeOptions = await _requirementTypeService.GetSelectOptionsAsync();
+            CourseTypeOptions = await _courseTypeService.GetSelectOptionsAsync();
 
             // Get all curriculums
             var allCurriculums = await _curriculumService.GetAllAsync();

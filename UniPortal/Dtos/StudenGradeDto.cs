@@ -1,6 +1,6 @@
-﻿namespace UniPortal.ViewModels.Grades
+﻿namespace UniPortal.Dtos
 {
-    public class GradeViewModel
+    public class StudenGradeDto
     {
         public string SemesterName { get; set; }   
         public string SubjectName { get; set; }

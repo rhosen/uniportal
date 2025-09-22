@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
+using UniPortal.Dtos;
 using UniPortal.ViewModels.Grades;
 
 namespace UniPortal.Services.Academics.Operations
@@ -16,7 +17,7 @@ namespace UniPortal.Services.Academics.Operations
         // -------------------------
         // Student perspective
         // -------------------------
-        public async Task<List<GradeViewModel>> GetGradesForStudentAsync(Guid accountId)
+        public async Task<List<StudenGradeDto>> GetGradesForStudentAsync(Guid accountId)
         {
             var studentId = await _context.Students
                 .Where(s => s.AccountId == accountId)
@@ -24,7 +25,7 @@ namespace UniPortal.Services.Academics.Operations
                 .FirstOrDefaultAsync();
 
             if (studentId == Guid.Empty)
-                return new List<GradeViewModel>();
+                return new List<StudenGradeDto>();
 
             // Only include courses where student is enrolled
             var query = from g in _context.Grades
@@ -39,7 +40,7 @@ namespace UniPortal.Services.Academics.Operations
                               && !c.IsDeleted
                               && !e.IsDeleted
                         orderby co.SemesterNumber
-                        select new GradeViewModel
+                        select new StudenGradeDto
                         {
                             SemesterName = "Semester " + co.SemesterNumber,
                             SubjectCode = c.Code,

@@ -1,6 +1,6 @@
-﻿namespace UniPortal.ViewModels.Dashboards
+﻿namespace UniPortal.Dtos
 {
-    public class MetricsViewModel
+    public class StudentMetricDto
     {
         public int Courses { get; set; }
         public int PendingAssignments { get; set; }

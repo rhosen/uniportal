@@ -13,7 +13,7 @@
         <div class="input-group w-50">
             <!-- Semester -->
             <select asp-for="SelectedSemesterNumber" class="form-select"
-                    asp-items="@(new SelectList(Model.Semesters, "Id", "Name", Model.SelectedSemesterNumber))"
+                    asp-items="@(new SelectList(Model.SemesterNumberOptions, "Id", "Name", Model.SelectedSemesterNumber))"
                     required onchange="this.form.submit()">
                 <option value="">-- Select Semester --</option>
             </select>

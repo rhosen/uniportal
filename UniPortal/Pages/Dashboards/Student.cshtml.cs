@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UniPortal.Constants;
+using UniPortal.Dtos;
 using UniPortal.Services.Accounts;
 using UniPortal.Services.Dashboards;
-using UniPortal.ViewModels.Dashboards;
 using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Pages.Dashboards
@@ -27,7 +27,7 @@ namespace UniPortal.Pages.Dashboards
         // Properties bound to the view
         // -----------------------------
         public StudentProfileViewModel Profile { get; set; } = new();
-        public MetricsViewModel Metrics { get; set; } = new();
+        public StudentMetricDto Metrics { get; set; } = new();
 
         [BindProperty]
         public IFormFile AssignmentFile { get; set; } = null!;
@@ -53,7 +53,7 @@ namespace UniPortal.Pages.Dashboards
             Metrics = await _studentDashboardService.GetDashboardMetricsAsync(student.Id);
 
             // Make sure all metrics are populated to avoid nulls in Razor
-            Metrics ??= new MetricsViewModel
+            Metrics ??= new StudentMetricDto
             {
                 Courses = 0,
                 PendingAssignments = 0,

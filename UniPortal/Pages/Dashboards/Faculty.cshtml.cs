@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UniPortal.Constants;
+using UniPortal.Dtos;
 using UniPortal.Services.Accounts;
 using UniPortal.Services.Dashboards;
-using UniPortal.ViewModels.Dashboards;
 using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Pages.Dashboards
@@ -24,7 +24,7 @@ namespace UniPortal.Pages.Dashboards
         // Properties bound to the view
         // -----------------------------
         public FacultyProfileViewModel Profile { get; set; } = new();
-        public FacultyMetricsViewModel Metrics { get; set; } = new();
+        public FacultyMetricDto Metrics { get; set; } = new();
 
         // -----------------------------
         // Page Load
@@ -45,7 +45,7 @@ namespace UniPortal.Pages.Dashboards
             Metrics = await _facultyDashboardService.GetDashboardMetricsAsync(CurrentAccount.Id);
 
             // Ensure metrics are populated
-            Metrics ??= new FacultyMetricsViewModel
+            Metrics ??= new FacultyMetricDto
             {
                 TotalCourses = 0,
                 UpcomingClass = "N/A"

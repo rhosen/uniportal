@@ -328,6 +328,7 @@ CREATE TABLE dbo.Rooms (
     RoomName NVARCHAR(50) NOT NULL,
     Capacity INT NOT NULL DEFAULT 30,
     Location NVARCHAR(100) NULL,
+    IsClassroom BIT NOT NULL DEFAULT 1,
     ModifiedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
@@ -338,6 +339,7 @@ CREATE TABLE dbo.Rooms (
         REFERENCES dbo.Accounts(Id)
 );
 GO
+
 
 -- =========================
 -- 14. CourseOfferings Table (FK naming convention fixed)

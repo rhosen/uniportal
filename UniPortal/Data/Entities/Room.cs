@@ -4,6 +4,7 @@
     {
         public string RoomName { get; set; } = string.Empty;
         public int Capacity { get; set; } = 30;
-        public string? Location { get; set; }       // nullable
+        public string? Location { get; set; }      
+        public bool IsClassroom { get; set; }
     }
 }

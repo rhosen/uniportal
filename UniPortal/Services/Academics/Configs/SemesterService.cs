@@ -66,8 +66,10 @@ namespace UniPortal.Services.Academics.Configs
             return await _context.Semesters.FirstOrDefaultAsync(s => s.IsCurrent && !s.IsDeleted);
         }
 
-        public async Task<(DateTime StartDate, DateTime EndDate)> GetNextSemesterWindowAsync(int defaultDurationMonths)
+        public async Task<(DateTime StartDate, DateTime EndDate)> GetNextSemesterWindowAsync()
         {
+            int defaultDurationMonths = _configuration.GetValue("SemesterDurationMonths", 6);
+
             // Fetch all semesters once
             var allSemesters = await GetAllAsync();
 

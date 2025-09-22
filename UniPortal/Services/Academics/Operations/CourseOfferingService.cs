@@ -115,6 +115,19 @@ namespace UniPortal.Services.Academics.Operations
             return curriculumCourses;
         }
 
+        private async Task<List<CourseOffering>> GetExistingOfferingsAsync(
+            Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
+        {
+            return await _context.CourseOfferings
+                .Where(o => o.ProgramId == programId &&
+                            o.BatchId == batchId &&
+                            o.SectionId == sectionId &&
+                            o.SemesterNumber == semesterNumber &&
+                            !o.IsDeleted)
+                .ToListAsync();
+        }
+
+
         // -----------------------------
         // Save offerings (add/update/delete) with validation and conflict checks
         // -----------------------------
@@ -151,14 +164,21 @@ namespace UniPortal.Services.Academics.Operations
         // Validation + conflict checks
         // -----------------------------
         private async Task ValidateAllOfferingsAsync(List<CourseOfferingDto> offerings, Guid semesterId,
-            Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
+             Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
         {
+            var existingOfferings = await GetExistingOfferingsAsync(programId, batchId, sectionId, semesterNumber);
+            var offeredCourseCount = offerings.Count(x => x.IsOffered);
+
+            if (offeredCourseCount == 0 && existingOfferings.Count == 0)
+                throw new InvalidOperationException("No courses selected to save or remove.");
+
+            // Build a HashSet for faster lookup
+            var existingCourseIds = existingOfferings.Select(x => x.CourseId).ToHashSet();
+
             foreach (var course in offerings)
             {
-                // TODO: Previously offered courses (OfferingId.HasValue) that are now not offered (IsOffered = false) 
-                // will skip validation. Remember to handle this if editing unoffered courses becomes allowed in the future.
-
-                if (course.IsOffered)
+                // Validate courses that are newly offered or were previously offered
+                if (course.IsOffered || existingCourseIds.Contains(course.CourseId))
                 {
                     ValidateOffering(course);
                     await CheckRoomConflictAsync(course, semesterId);
@@ -168,21 +188,33 @@ namespace UniPortal.Services.Academics.Operations
             }
         }
 
-        private void ValidateOffering(CourseOfferingDto o)
+        private void ValidateOffering(CourseOfferingDto course)
         {
-            if (o.RoomId == Guid.Empty)
-                throw new InvalidOperationException($"Room must be selected for {o.CourseTitle}.");
-            if (o.FacultyId == Guid.Empty)
-                throw new InvalidOperationException($"Faculty must be selected for {o.CourseTitle}.");
-            if (o.StartTime == default)
-                throw new InvalidOperationException($"Start time must be selected for {o.CourseTitle}.");
-            if (o.EndTime == default)
-                throw new InvalidOperationException($"End time must be selected for {o.CourseTitle}.");
-            if (o.StartTime >= o.EndTime)
-                throw new InvalidOperationException($"Start time must be earlier than end time for {o.CourseTitle}.");
-            if (!(o.Mon || o.Tue || o.Wed || o.Thu || o.Fri || o.Sat || o.Sun))
-                throw new InvalidOperationException($"At least one day must be selected for {o.CourseTitle}.");
+            if (course.RoomId == Guid.Empty)
+                throw new InvalidOperationException($"Room must be selected for {course.CourseTitle}.");
+
+            if (course.FacultyId == Guid.Empty)
+                throw new InvalidOperationException($"Faculty must be selected for {course.CourseTitle}.");
+
+            if (course.CurriculumId == Guid.Empty)
+                throw new InvalidOperationException($"Curriculum must be selected for {course.CourseTitle}.");
+
+            if (course.CourseId == Guid.Empty)
+                throw new InvalidOperationException($"Course must be selected for {course.CourseTitle}.");
+
+            if (course.StartTime == default)
+                throw new InvalidOperationException($"Start time must be selected for {course.CourseTitle}.");
+
+            if (course.EndTime == default)
+                throw new InvalidOperationException($"End time must be selected for {course.CourseTitle}.");
+
+            if (course.StartTime >= course.EndTime)
+                throw new InvalidOperationException($"Start time must be earlier than end time for {course.CourseTitle}.");
+
+            if (!(course.Mon || course.Tue || course.Wed || course.Thu || course.Fri || course.Sat || course.Sun))
+                throw new InvalidOperationException($"At least one day must be selected for {course.CourseTitle}.");
         }
+
 
         // -----------------------------
         // Room / Faculty / Batch Conflict Checks
@@ -242,7 +274,7 @@ namespace UniPortal.Services.Academics.Operations
 
                 if (timeOverlap && dayOverlap)
                     throw new InvalidOperationException(
-                        $"Schedule conflict detected for {course.CourseTitle} with faculty {course.FacultyId}.");
+                        $"Schedule conflict detected for {course.CourseTitle} with faculty {course.FacultyName}.");
             }
         }
 
@@ -342,7 +374,7 @@ namespace UniPortal.Services.Academics.Operations
             {
                 if (course.OfferingId.HasValue)
                     await UpdateOfferingAsync(course, selectedSemesterId);
-                else
+                else if (course.IsOffered)
                     await AddOfferingAsync(course, programId, batchId, sectionId, selectedSemesterId, semesterNumber);
             }
         }
@@ -350,34 +382,52 @@ namespace UniPortal.Services.Academics.Operations
         // -----------------------------
         // Remove or delete offerings
         // -----------------------------
-        private async Task RemoveOfferingsAsync(List<CourseOfferingDto> offerings,
-            Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
+        private async Task RemoveOfferingsAsync(
+            List<CourseOfferingDto> offerings, Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
         {
             var existingOfferings = await _context.CourseOfferings
-                .Where(x => x.ProgramId == programId
-                            && x.BatchId == batchId
-                            && x.SectionId == sectionId
-                            && x.SemesterNumber == semesterNumber
-                            && !x.IsDeleted)
+                .Where(o =>
+                    o.ProgramId == programId &&
+                    o.BatchId == batchId &&
+                    o.SectionId == sectionId &&
+                    o.SemesterNumber == semesterNumber &&
+                    !o.IsDeleted)
                 .ToListAsync();
 
             var selectedCurriculumIds = offerings.Select(o => o.CurriculumId).ToHashSet();
 
-            foreach (var offering in existingOfferings.Where(x => !selectedCurriculumIds.Contains(x.CurriculumId)))
+            // Offerings that user intends to remove
+            var offeringsToRemove = existingOfferings
+                .Where(o => !selectedCurriculumIds.Contains(o.CurriculumId))
+                .ToList();
+
+            if (!offeringsToRemove.Any())
+                return;
+
+            // Only fetch course titles for offerings to remove
+            var courseIds = offeringsToRemove.Select(o => o.CourseId).ToList();
+            var courseTitles = await _context.Courses
+                .Where(c => courseIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Title);
+
+            foreach (var offering in offeringsToRemove)
             {
                 bool hasEnrollments = await _context.Enrollments
                     .AnyAsync(e => e.CourseOfferingId == offering.Id);
 
-                if (!hasEnrollments)
+                if (hasEnrollments)
                 {
-                    offering.IsDeleted = true; // safe to delete
-                }
-                else
-                {
+                    var courseTitle = courseTitles.TryGetValue(offering.CourseId, out var title)
+                        ? title
+                        : "Unknown Course";
+
                     throw new InvalidOperationException(
-                        $"Cannot delete course '{offering.CourseId}' because students are enrolled.");
+                        $"Cannot delete course '{courseTitle}' because students are already enrolled.");
                 }
+
+                offering.IsDeleted = true;
             }
         }
+
     }
 }

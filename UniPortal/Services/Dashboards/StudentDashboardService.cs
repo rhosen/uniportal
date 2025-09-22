@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
+using UniPortal.Dtos;
 using UniPortal.Services.Accounts;
-using UniPortal.ViewModels.Dashboards;
 using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Services.Dashboards
@@ -57,7 +57,7 @@ namespace UniPortal.Services.Dashboards
         // -----------------------------
         // Get dashboard metrics
         // -----------------------------
-        public async Task<MetricsViewModel> GetDashboardMetricsAsync(Guid studentId)
+        public async Task<StudentMetricDto> GetDashboardMetricsAsync(Guid studentId)
         {
             var today = DateTime.Today;
             var currentDayOfWeek = today.DayOfWeek;
@@ -134,7 +134,7 @@ namespace UniPortal.Services.Dashboards
                                          where e.StudentId == studentId && !co.IsDeleted && !e.IsDeleted
                                          select co.RoomId).Distinct().CountAsync();
 
-            return new MetricsViewModel
+            return new StudentMetricDto
             {
                 Courses = courseCount,
                 PendingAssignments = pendingAssignments,

@@ -2,7 +2,6 @@
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Dtos;
-using UniPortal.ViewModels.Academics;
 
 namespace UniPortal.Services.Academics.Configs
 {
@@ -15,18 +14,21 @@ namespace UniPortal.Services.Academics.Configs
             _context = context;
         }
 
+        // Get all rooms (regardless of IsClassroom)
         public async Task<List<Room>> GetAllAsync()
-        {
-            return await _context.Rooms.Where(c => !c.IsDeleted)
-                .OrderBy(c => c.RoomName)
-                .ToListAsync();
-        }
-
-        public async Task<List<SelectOption>> GetOptionsAsync()
         {
             return await _context.Rooms
                 .Where(r => !r.IsDeleted)
-                .OrderBy(x=> x.RoomName)
+                .OrderBy(r => r.RoomName)
+                .ToListAsync();
+        }
+
+        // Get rooms that are classrooms only
+        public async Task<List<SelectOption>> GetOptionsAsync()
+        {
+            return await _context.Rooms
+                .Where(r => !r.IsDeleted && r.IsClassroom) // only classrooms
+                .OrderBy(r => r.RoomName)
                 .Select(r => new SelectOption
                 {
                     Id = r.Id,
@@ -35,87 +37,86 @@ namespace UniPortal.Services.Academics.Configs
                 .ToListAsync();
         }
 
-        public async Task<Room> GetByIdAsync(string id)
+        // Get room by Id
+        public async Task<Room?> GetByIdAsync(Guid id) // use Guid directly
         {
             return await _context.Rooms
-                .FirstOrDefaultAsync(c => c.Id.ToString() == id);
+                .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
         }
 
-        public async Task CreateAsync(string roomName, int capacity, string location)
+        // Create a new classroom
+        public async Task CreateAsync(string roomName, int capacity, string location, bool isClassroom = true)
         {
-            var classroom = new Room
+            var room = new Room
             {
                 RoomName = roomName,
                 Capacity = capacity,
-                Location = location
+                Location = location,
+                IsClassroom = isClassroom
             };
-            _context.Rooms.Add(classroom);
+            _context.Rooms.Add(room);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Guid id, string roomName, int capacity, string location)
+        // Update room info
+        public async Task UpdateAsync(Guid id, string roomName, int capacity, string location, bool isClassroom)
         {
-            var classroom = await _context.Rooms.FindAsync(id);
-            if (classroom != null)
-            {
-                classroom.RoomName = roomName;
-                classroom.Capacity = capacity;
-                classroom.Location = location
-                    ;
-                classroom.UpdatedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task DeleteAsync(string id)
-        {
-            if (!Guid.TryParse(id, out var roomId))
-                return;
-
-            var room = await _context.Rooms.FirstOrDefaultAsync(r => r.Id == roomId);
+            var room = await _context.Rooms.FindAsync(id);
             if (room == null) return;
 
-            // Check if room is used in any active course offerings
+            room.RoomName = roomName;
+            room.Capacity = capacity;
+            room.Location = location;
+            room.IsClassroom = isClassroom;
+            room.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
+
+        // Soft delete room
+        public async Task DeleteAsync(Guid id)
+        {
+            var room = await _context.Rooms.FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
+            if (room == null) return;
+
+            // Check if room is used in active course offerings
             var isUsed = await _context.CourseOfferings
-                .AnyAsync(co => co.RoomId == roomId && !co.IsDeleted);
+                .AnyAsync(co => co.RoomId == id && !co.IsDeleted);
 
             if (isUsed)
-            {
                 throw new InvalidOperationException(
                     "This room cannot be deleted because it is assigned to active course offerings."
                 );
-            }
 
-            // Safe to soft delete
             room.IsDeleted = true;
             room.DeletedAt = DateTime.Now;
             await _context.SaveChangesAsync();
         }
 
-
-        public async Task ActivateAsync(string id)
+        // Reactivate room
+        public async Task ActivateAsync(Guid id)
         {
-            var classroom = await _context.Rooms.FindAsync(Guid.Parse(id));
-            if (classroom != null)
-            {
-                classroom.IsDeleted = false;
-                classroom.DeletedAt = null;
-                await _context.SaveChangesAsync();
-            }
+            var room = await _context.Rooms.FindAsync(id);
+            if (room == null) return;
+
+            room.IsDeleted = false;
+            room.DeletedAt = null;
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<List<ClassroomAvailabilityViewModel>> GetClassroomAvailabilityAsync()
+        // Get classroom status
+        public async Task<List<ClassroomStatusDto>> GetClassroomStatusAsync()
         {
             var now = DateTime.Now;
             var currentDayOfWeek = now.DayOfWeek;
             var currentTime = TimeOnly.FromDateTime(now);
 
-            // Fetch all classrooms
+            // Fetch only classrooms
             var classrooms = await _context.Rooms
-                .Where(r => !r.IsDeleted)
+                .Where(r => !r.IsDeleted && r.IsClassroom)
                 .ToListAsync();
 
-            // Fetch ongoing offerings today (join CourseOfferings + Courses)
+            // Fetch ongoing offerings today
             var offeringsTodayQuery =
                 from co in _context.CourseOfferings
                 join c in _context.Courses on co.CourseId equals c.Id
@@ -141,7 +142,7 @@ namespace UniPortal.Services.Academics.Configs
 
             var offeringsToday = await offeringsTodayQuery.ToListAsync();
 
-            // Map classrooms with their ongoing schedules
+            // Map classrooms with ongoing schedules
             var result = classrooms.Select(r =>
             {
                 var currentSchedules = offeringsToday
@@ -155,7 +156,7 @@ namespace UniPortal.Services.Academics.Configs
                     })
                     .ToList();
 
-                return new ClassroomAvailabilityViewModel
+                return new ClassroomStatusDto
                 {
                     Id = r.Id,
                     RoomName = r.RoomName,
@@ -168,7 +169,5 @@ namespace UniPortal.Services.Academics.Configs
 
             return result;
         }
-
-
     }
 }

@@ -38,20 +38,20 @@
 
                         <div class="mb-3">
                             <label>Program</label>
-                            <select asp-for="ProgramId" class="form-select">
-                                <option value="">Select Program</option>
-                                @foreach (var p in Model.Programs)
-                                {
-                                    <option value="@p.Id" selected="@(Model.ProgramId == p.Id ? "selected" : null)">
-                                        @p.Name
-                                    </option>
-                                }
-                            </select>
+                            <select asp-for="ProgramId" class="form-select" onchange="this.form.submit()">
+                                    <option value="">Select Program</option>
+                                    @foreach (var p in Model.Programs)
+                                    {
+                                        <option value="@p.Id" selected="@(Model.ProgramId == p.Id ? "selected" : null)">
+                                            @p.Name
+                                        </option>
+                                    }
+                                </select>
                         </div>
 
                         <div class="mb-3">
                             <label>Batch</label>
-                            <select asp-for="BatchId" class="form-select">
+                            <select asp-for="BatchId" class="form-select" onchange="this.form.submit()">
                                 <option value="">Select Batch</option>
                                 @foreach (var b in Model.Batches)
                                 {
@@ -64,7 +64,7 @@
 
                         <div class="mb-3">
                             <label>Section</label>
-                            <select asp-for="SectionId" class="form-select">
+                            <select asp-for="SectionId" class="form-select" onchange="this.form.submit()">
                                 <option value="">Select Section</option>
                                 @foreach (var s in Model.Sections)
                                 {
@@ -76,18 +76,17 @@
                         </div>
 
                         <div class="mb-3">
-                            <label>Semester</label>
-                            <select asp-for="SemesterNumber" class="form-select">
-                                <option value="">-- Select Semester --</option>
-                                @foreach (var s in Model.SemesterNumberOptions)
-                                {
-                                    <option value="@s.Number" selected="@(Model.SemesterNumber == s.Number ? "selected" : null)">
-                                        @s.Name
-                                    </option>
-                                }
-                            </select>
+                            <label>Curriculum Semester</label>
+                            <select asp-for="SemesterNumber" class="form-select" onchange="this.form.submit()">
+                                    <option value="">-- Select Semester --</option>
+                                    @foreach (var s in Model.SemesterNumberOptions)
+                                    {
+                                        <option value="@s.Number" selected="@(Model.SemesterNumber == s.Number ? "selected" : null)">
+                                            @s.Name
+                                        </option>
+                                    }
+                                </select>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Load Courses</button>
                     </form>
                 </div>
             </div>
@@ -123,6 +122,10 @@
                                 var o = Model.Offerings[i];
                                 <tr>
                                     <input type="hidden" asp-for="Offerings[i].CurriculumId" />
+                                    <input type="hidden" asp-for="Offerings[i].CourseId" />
+                                    <input type="hidden" asp-for="Offerings[i].CourseTitle" />
+                                    <input type="hidden" asp-for="Offerings[i].FacultyName" />
+                                    <input type="hidden" asp-for="Offerings[i].OfferingId" />
 
                                     <td>@o.CourseTitle</td>
 

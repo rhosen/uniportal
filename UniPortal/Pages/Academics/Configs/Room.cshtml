@@ -1,5 +1,5 @@
 ﻿@page
-@model UniPortal.Pages.Academics.Configs.ClassroomModel
+@model UniPortal.Pages.Academics.Configs.RoomModel
 @{
     ViewData["Title"] = "Classroom Management";
     Layout = "_AdminLayout";
@@ -25,6 +25,7 @@
                     <th>Room Name</th>
                     <th>Capacity</th>
                     <th>Location</th>
+                    <th>Is Classroom</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -34,6 +35,11 @@
                     <td><input asp-for="NewClassroom.RoomName" class="form-control" required /></td>
                     <td><input asp-for="NewClassroom.Capacity" type="number" class="form-control" required /></td>
                     <td><input asp-for="NewClassroom.Location" type="text" class="form-control" required /></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="NewClassroom.IsClassroom" checked />
+                        </div>
+                    </td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
@@ -49,6 +55,7 @@
                 <th>Room Name</th>
                 <th>Capacity</th>
                 <th>Location</th>
+                <th>Is Classroom</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -67,6 +74,12 @@
                         <td><input name="EditClassroom.Capacity" type="number" value="@Model.EditClassroom.Capacity" class="form-control" /></td>
                         <td><input name="EditClassroom.Location" type="text" value="@Model.EditClassroom.Location" class="form-control" /></td>
                         <td>
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" name="EditClassroom.IsClassroom" value="true" @(Model.EditClassroom.IsClassroom ? "checked" : "") />
+                                <label class="form-check-label">Classroom</label>
+                            </div>
+                        </td>
+                        <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
                             <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
                         </td>
@@ -77,6 +90,11 @@
                         <td>@room.RoomName</td>
                         <td>@room.Capacity</td>
                         <td>@room.Location</td>
+                        <td>
+                            <span class="badge @(room.IsClassroom ? "bg-success" : "bg-secondary")">
+                                @(room.IsClassroom ? "Yes" : "No")
+                            </span>
+                        </td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@room.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (!room.IsDeleted)

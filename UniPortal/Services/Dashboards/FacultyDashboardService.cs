@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
-using UniPortal.ViewModels.Dashboards;
+using UniPortal.Dtos;
 using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Services.Dashboards
@@ -36,7 +36,7 @@ namespace UniPortal.Services.Dashboards
         // -----------------------------
         // Get dashboard metrics
         // -----------------------------
-        public async Task<FacultyMetricsViewModel> GetDashboardMetricsAsync(Guid accountId)
+        public async Task<FacultyMetricDto> GetDashboardMetricsAsync(Guid accountId)
         {
             // Get faculty ID
             var facultyId = await _context.Faculties
@@ -45,7 +45,7 @@ namespace UniPortal.Services.Dashboards
                 .FirstOrDefaultAsync();
 
             if (facultyId == Guid.Empty)
-                return new FacultyMetricsViewModel { TotalCourses = 0, UpcomingClass = "N/A" };
+                return new FacultyMetricDto { TotalCourses = 0, UpcomingClass = "N/A" };
 
             // Total courses taught
             int totalCourses = await _context.CourseOfferings
@@ -97,7 +97,7 @@ namespace UniPortal.Services.Dashboards
                 ? $"{nextClassEntry.StartTime:hh\\:mm} - {nextClassEntry.Title}"
                 : "N/A";
 
-            return new FacultyMetricsViewModel
+            return new FacultyMetricDto
             {
                 TotalCourses = totalCourses,
                 UpcomingClass = nextClass

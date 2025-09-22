@@ -1,8 +1,6 @@
-﻿using UniPortal.Dtos;
-
-namespace UniPortal.ViewModels.Academics
+﻿namespace UniPortal.Dtos
 {
-    public class ClassroomAvailabilityViewModel
+    public class ClassroomStatusDto
     {
         public Guid Id { get; set; }
         public string RoomName { get; set; }

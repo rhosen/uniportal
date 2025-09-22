@@ -7,6 +7,7 @@ using UniPortal.Dtos;
 using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
 using UniPortal.ViewModels.Grades;
+using UniPortal.Services.Academics.Configs;
 
 namespace UniPortal.Pages.Academics.Operations
 {
@@ -15,20 +16,20 @@ namespace UniPortal.Pages.Academics.Operations
     {
         private readonly GradeService _gradeService;
         private readonly EnrollmentService _enrollmentService;
-        private readonly IConfiguration _configuration;
+        private readonly SemesterService _semesterService;
 
         public GradeModel(GradeService gradeService,
                           EnrollmentService enrollmentService,
                           AccountService accountService,
-                          IConfiguration configuration) : base(accountService)
+                          SemesterService semesterService) : base(accountService)
         {
             _gradeService = gradeService;
             _enrollmentService = enrollmentService;
-            _configuration = configuration;
+            this._semesterService = semesterService;
         }
 
         public List<TeacherGradeViewModel> Grades { get; set; } = new();
-        public List<SemesterOption> Semesters { get; set; } = new();
+        public List<SemesterOption> SemesterNumberOptions { get; set; } = new();
         public List<SelectOption> Students { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
@@ -48,12 +49,8 @@ namespace UniPortal.Pages.Academics.Operations
 
         public async Task OnGetAsync()
         {
-            int totalSemesters = _configuration.GetValue("TotalSemesters", 8);
-
             // Generate semesters dropdown
-            Semesters = Enumerable.Range(1, totalSemesters)
-                                  .Select(n => new SemesterOption { Number = n, Name = n.ToString() })
-                                  .ToList();
+            SemesterNumberOptions = _semesterService.GetSemesterNumberOptions();
 
             if (SelectedSemesterNumber > 0)
             {

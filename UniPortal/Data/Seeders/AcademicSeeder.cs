@@ -23,11 +23,11 @@ namespace UniPortal.Data.Seeders
             // --- Rooms ---
             var rooms = new List<Room>();
             for (int i = 101; i <= 115; i++)
-                rooms.Add(new Room { Id = Guid.NewGuid(), RoomName = $"Room {i}", Capacity = 25 + (i % 5) * 5, Location = "Main Building", CreatedAt = now, IsDeleted = false });
+                rooms.Add(new Room { Id = Guid.NewGuid(), RoomName = $"Room {i}", Capacity = 25 + (i % 5) * 5, Location = "Main Building", IsClassroom = true, CreatedAt = now, IsDeleted = false });
             for (int i = 201; i <= 215; i++)
-                rooms.Add(new Room { Id = Guid.NewGuid(), RoomName = $"Lab {i}", Capacity = 20 + (i % 5) * 5, Location = "Lab Building", CreatedAt = now, IsDeleted = false });
+                rooms.Add(new Room { Id = Guid.NewGuid(), RoomName = $"Lab {i}", Capacity = 20 + (i % 5) * 5, Location = "Lab Building", IsClassroom = true, CreatedAt = now, IsDeleted = false });
             var specialRooms = new[] { "Conference Hall", "Auditorium", "Seminar Room", "Workshop Room" };
-            rooms.AddRange(specialRooms.Select(r => new Room { Id = Guid.NewGuid(), RoomName = r, Capacity = r == "Auditorium" ? 100 : 60, Location = "Admin Block", CreatedAt = now, IsDeleted = false }));
+            rooms.AddRange(specialRooms.Select(r => new Room { Id = Guid.NewGuid(), RoomName = r, Capacity = r == "Auditorium" ? 100 : 60, Location = "Admin Block", IsClassroom = false, CreatedAt = now, IsDeleted = false }));
             dbContext.Rooms.AddRange(rooms);
             await dbContext.SaveChangesAsync();
 
