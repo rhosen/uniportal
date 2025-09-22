@@ -100,7 +100,7 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await D(() => _departmentService.DeleteAsync(id), "Department deleted successfully.");
+            await R(() => _departmentService.DeleteAsync(id), "Department deleted successfully.");
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

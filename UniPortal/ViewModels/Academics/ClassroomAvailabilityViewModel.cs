@@ -9,6 +9,6 @@ namespace UniPortal.ViewModels.Academics
         public string Location { get; set; }
         public int Capacity { get; set; }
         public bool IsOccupied { get; set; }
-        public List<ScheduleInfo> CurrentSchedules { get; set; } = new();
+        public List<ScheduleDto> CurrentSchedules { get; set; } = new();
     }
 }

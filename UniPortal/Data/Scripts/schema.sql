@@ -260,7 +260,7 @@ CREATE TABLE dbo.CourseTypes (
 GO
 
 -- =========================
--- 11. Courses Table
+-- 11. Courses Table (fixed)
 -- =========================
 IF OBJECT_ID('dbo.Courses', 'U') IS NOT NULL
     DROP TABLE dbo.Courses;
@@ -272,6 +272,7 @@ CREATE TABLE dbo.Courses (
     Title NVARCHAR(200) NOT NULL,
     CreditHours INT NOT NULL,
     DepartmentId UNIQUEIDENTIFIER NOT NULL,
+    CourseTypeId UNIQUEIDENTIFIER NOT NULL,       -- new column
     ModifiedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
@@ -281,9 +282,12 @@ CREATE TABLE dbo.Courses (
     CONSTRAINT FK_Courses_Accounts_ModifiedById FOREIGN KEY (ModifiedById)
         REFERENCES dbo.Accounts(Id),
     CONSTRAINT FK_Courses_Departments_DepartmentId FOREIGN KEY (DepartmentId)
-        REFERENCES dbo.Departments(Id)
+        REFERENCES dbo.Departments(Id),
+    CONSTRAINT FK_Courses_CourseTypes_CourseTypeId FOREIGN KEY (CourseTypeId)
+        REFERENCES dbo.CourseTypes(Id)
 );
 GO
+
 
 -- =========================
 -- 12. Curriculums Table
@@ -295,11 +299,9 @@ GO
 CREATE TABLE dbo.Curriculums (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     ProgramId UNIQUEIDENTIFIER NOT NULL,
-    SemesterId UNIQUEIDENTIFIER NOT NULL,
-    SemesterNumber INT NOT NULL,
+    SemesterNumber INT NOT NULL,            -- e.g., 1st semester, 2nd semester
     CourseId UNIQUEIDENTIFIER NOT NULL,
     CreditHours INT NOT NULL,
-    CourseTypeId UNIQUEIDENTIFIER NOT NULL,
     SequenceOrder INT NOT NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
@@ -307,17 +309,11 @@ CREATE TABLE dbo.Curriculums (
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
 
-    CONSTRAINT FK_Curriculums_Programs_ProgramId FOREIGN KEY (ProgramId) REFERENCES dbo.Programs(Id),
-    CONSTRAINT FK_Curriculums_Semesters_SemesterId FOREIGN KEY (SemesterId) REFERENCES dbo.Semesters(Id),
-    CONSTRAINT FK_Curriculums_Courses_CourseId FOREIGN KEY (CourseId) REFERENCES dbo.Courses(Id),
-    CONSTRAINT FK_Curriculums_CourseTypes_CourseTypeId FOREIGN KEY (CourseTypeId) REFERENCES dbo.CourseTypes(Id),
+    CONSTRAINT FK_Curriculums_Programs FOREIGN KEY (ProgramId) REFERENCES dbo.Programs(Id),
+    CONSTRAINT FK_Curriculums_Courses FOREIGN KEY (CourseId) REFERENCES dbo.Courses(Id),
     CONSTRAINT FK_Curriculums_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id),
-    CONSTRAINT UQ_Curriculums_Program_Semester_Course UNIQUE (ProgramId, SemesterId, CourseId)
+    CONSTRAINT UQ_Curriculums_Program_Semester_Course UNIQUE (ProgramId, SemesterNumber, CourseId)
 );
-GO
-
--- Index for fast lookups per program and semester
-CREATE INDEX IX_Curriculums_Program_Semester ON dbo.Curriculums (ProgramId, SemesterId);
 GO
 
 -- =========================
@@ -352,17 +348,16 @@ GO
 
 CREATE TABLE dbo.CourseOfferings (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    CurriculumId UNIQUEIDENTIFIER NULL,         -- optional ref to Curriculum
-    CourseId UNIQUEIDENTIFIER NOT NULL,        -- snapshot from Curriculum
-    SemesterId UNIQUEIDENTIFIER NOT NULL,      -- snapshot
+    CurriculumId UNIQUEIDENTIFIER NOT NULL,         
+    CourseId UNIQUEIDENTIFIER NOT NULL,            
+    SemesterId UNIQUEIDENTIFIER NOT NULL,           
     SemesterNumber INT NOT NULL, 
-    ProgramId UNIQUEIDENTIFIER NOT NULL,       -- snapshot
+    ProgramId UNIQUEIDENTIFIER NOT NULL,           
     BatchId UNIQUEIDENTIFIER NOT NULL,
     SectionId UNIQUEIDENTIFIER NOT NULL,
     FacultyId UNIQUEIDENTIFIER NOT NULL,
-    CreditHours INT NOT NULL,                  -- snapshot from Curriculum
-    CourseTypeId UNIQUEIDENTIFIER NOT NULL,    -- snapshot from Curriculum
-    SequenceOrder INT NOT NULL,                -- snapshot from Curriculum
+    CreditHours INT NOT NULL,                      
+    SequenceOrder INT NOT NULL,                     
     MaxEnrollment INT NOT NULL,
     CurrentEnrollment INT NOT NULL DEFAULT 0,
 
@@ -374,9 +369,9 @@ CREATE TABLE dbo.CourseOfferings (
     Fri BIT NOT NULL DEFAULT 0,
     Sat BIT NOT NULL DEFAULT 0,
     Sun BIT NOT NULL DEFAULT 0,
-    StartTime TIME NULL,
-    EndTime TIME NULL,
-    RoomId UNIQUEIDENTIFIER NULL,
+    StartTime TIME NOT NULL,
+    EndTime TIME NOT NULL,
+    RoomId UNIQUEIDENTIFIER NOT NULL,
 
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
@@ -403,7 +398,6 @@ CREATE INDEX IX_CourseOfferings_Batch ON dbo.CourseOfferings (BatchId);
 CREATE INDEX IX_CourseOfferings_Section ON dbo.CourseOfferings (SectionId);
 CREATE INDEX IX_CourseOfferings_Faculty ON dbo.CourseOfferings (FacultyId);
 CREATE INDEX IX_CourseOfferings_Batch_Section ON dbo.CourseOfferings (BatchId, SectionId);
-
 GO
 
 -- =========================

@@ -12,7 +12,7 @@ namespace UniPortal.Data.Seeders
             var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var dbContext = services.GetRequiredService<UniPortalContext>();
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             // --- Roles ---
             var roles = new[] { Roles.Admin, Roles.Root };

@@ -58,6 +58,7 @@
                 <tr>
                     <form method="post">
                         <input type="hidden" name="id" value="@room.Id" />
+                        <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
 
                         @if (Model.EditClassroomId == room.Id.ToString())
                         {

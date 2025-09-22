@@ -68,11 +68,10 @@
 
                             <td>
                                 <select asp-for="EditStudent.CurrentSemester" class="form-select"
-                                        asp-items="@(new SelectList(Model.Semesters, "Id", "Name", Model.EditStudent.CurrentSemester))">
+                                        asp-items="@(new SelectList(Model.SemesterNumberOptions, "Number", "Name", Model.EditStudent.CurrentSemester))">
                                     <option value="">-- Select Semester --</option>
                                 </select>
                             </td>
-
 
                             <td class="d-flex gap-2">
                                 <button type="submit" asp-page-handler="Save" class="btn btn-sm btn-primary">Save</button>

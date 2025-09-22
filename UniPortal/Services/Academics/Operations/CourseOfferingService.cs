@@ -2,97 +2,79 @@
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Dtos;
+using UniPortal.Services.Academics.Configs;
 
 namespace UniPortal.Services.Academics.Operations
 {
     public class CourseOfferingService
     {
         private readonly UniPortalContext _context;
+        private readonly CurriculumService _curriculumService;
+        private readonly SemesterService _semesterService;
 
-        public CourseOfferingService(UniPortalContext context)
+        public CourseOfferingService(
+            UniPortalContext context,
+            CurriculumService curriculumService,
+            SemesterService semesterService)
         {
             _context = context;
+            _curriculumService = curriculumService;
+            _semesterService = semesterService;
         }
 
-        // 1️⃣ Load curriculum courses (for adding) if no offerings exist for batch + section
-        public async Task<List<CourseOfferingDto>> GetCurriculumCoursesAsync(
-            Guid programId, int semesterNumber, Guid batchId, Guid sectionId)
+
+        public async Task<Guid> GetOfferingSemesterIdAsync(Guid offeringId)
         {
-            bool hasOfferings = await _context.CourseOfferings
-                .AnyAsync(o => o.BatchId == batchId && o.SectionId == sectionId && !o.IsDeleted);
+            var semesterId = await _context.CourseOfferings
+                .Where(co => co.Id == offeringId && !co.IsDeleted)
+                .Select(co => co.SemesterId)
+                .FirstOrDefaultAsync();
 
-            if (hasOfferings)
-                return new List<CourseOfferingDto>();
+            if (semesterId == Guid.Empty)
+                throw new InvalidOperationException("Offering not found.");
 
-            var query =
+            return semesterId;
+        }
+
+
+        // -----------------------------
+        // Get curriculum + existing offerings for a semester
+        // -----------------------------
+        public async Task<List<CourseOfferingDto>> GetOfferingsForSemesterAsync(
+            Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
+        {
+            // 1️⃣ Curriculum courses
+            var curriculumCourses = await (
                 from c in _context.Curriculums
-                join crs in _context.Courses on c.CourseId equals crs.Id
-                join ct in _context.CourseTypes on c.CourseTypeId equals ct.Id
-                where c.ProgramId == programId
-                      && c.SemesterNumber == semesterNumber
-                      && !c.IsDeleted
-                orderby c.SequenceOrder
+                join co in _context.Courses on c.CourseId equals co.Id
+                where c.ProgramId == programId && c.SemesterNumber == semesterNumber
                 select new CourseOfferingDto
                 {
                     CurriculumId = c.Id,
-                    CourseId = crs.Id,
-                    CourseTitle = crs.Title,
-                    CourseType = ct.Name,
-                    CourseTypeId = ct.Id,
-                    SequenceOrder = c.SequenceOrder,
-                    FacultyId = Guid.Empty,
-                    FacultyName = string.Empty,
-                    StartTime = null,
-                    EndTime = null,
-                    MaxEnrollment = 0,
-                    Mon = false,
-                    Tue = false,
-                    Wed = false,
-                    Thu = false,
-                    Fri = false,
-                    Sat = false,
-                    Sun = false,
-                    SemesterNumber = c.SemesterNumber,
-                    BatchId = batchId,
-                    SectionId = sectionId
-                };
+                    CourseId = c.CourseId,
+                    CourseTitle = co.Code + " - " + co.Title,
+                    CreditHours = co.CreditHours,
+                    SequenceOrder = c.SequenceOrder
+                }).ToListAsync();
 
-            return await query.ToListAsync();
-        }
-
-        // 2️⃣ Load existing offerings (for editing)
-        public async Task<List<CourseOfferingDto>> GetOfferingsAsync(
-            Guid programId, int semesterNumber, Guid batchId, Guid sectionId)
-        {
-            var query =
+            // 2️⃣ Existing offerings
+            var existingOfferings = await (
                 from o in _context.CourseOfferings
-                join crs in _context.Courses on o.CourseId equals crs.Id
-                join ct in _context.CourseTypes on o.CourseTypeId equals ct.Id
-                join f in _context.Faculties on o.FacultyId equals f.Id into fJoin
-                from f in fJoin.DefaultIfEmpty()
-                join a in _context.Accounts on f.AccountId equals a.Id into aJoin
-                from a in aJoin.DefaultIfEmpty()
+                join co in _context.Courses on o.CourseId equals co.Id
                 where o.ProgramId == programId
                       && o.BatchId == batchId
                       && o.SectionId == sectionId
+                      && o.SemesterNumber == semesterNumber
                       && !o.IsDeleted
-                orderby o.SequenceOrder
                 select new CourseOfferingDto
                 {
-                    Id = o.Id,
                     CurriculumId = o.CurriculumId,
                     CourseId = o.CourseId,
-                    CourseTitle = crs.Title,
-                    CourseType = ct.Name,
-                    CourseTypeId = ct.Id,
+                    CourseTitle = co.Code + " - " + co.Title,
+                    CreditHours = o.CreditHours,
                     SequenceOrder = o.SequenceOrder,
-                    FacultyId = f != null ? f.Id : Guid.Empty,
-                    FacultyName = a != null && (a.FirstName + " " + a.LastName).Trim() != string.Empty
-                        ? (a.FirstName + " " + a.LastName).Trim()
-                        : (f != null ? f.FacultyNumber : string.Empty),
-                    StartTime = o.StartTime,
-                    EndTime = o.EndTime,
-                    MaxEnrollment = o.MaxEnrollment,
+                    FacultyId = o.FacultyId,
+                    RoomId = o.RoomId,
                     Mon = o.Mon,
                     Tue = o.Tue,
                     Wed = o.Wed,
@@ -100,135 +82,302 @@ namespace UniPortal.Services.Academics.Operations
                     Fri = o.Fri,
                     Sat = o.Sat,
                     Sun = o.Sun,
-                    SemesterNumber = semesterNumber, // snapshot from input
-                    BatchId = o.BatchId,
-                    SectionId = o.SectionId
-                };
+                    StartTime = o.StartTime,
+                    EndTime = o.EndTime,
+                    IsOffered = true,
+                    OfferingId = o.Id
+                }).ToListAsync();
 
-            return await query.ToListAsync();
-        }
-
-        // 3️⃣ Add or update offerings (partial save allowed)
-        public async Task AddOrUpdateOfferingsAsync(
-            Guid programId, int semesterNumber, Guid batchId, Guid sectionId, List<CourseOfferingDto> dtos)
-        {
-            var existingOfferings = await _context.CourseOfferings
-                .Where(o => o.ProgramId == programId
-                            && o.BatchId == batchId
-                            && o.SectionId == sectionId
-                            && !o.IsDeleted)
-                .ToListAsync();
-
-            foreach (var dto in dtos)
+            // Merge existing data into curriculum courses
+            foreach (var c in curriculumCourses)
             {
-                var offering = existingOfferings.FirstOrDefault(o => o.CourseId == dto.CourseId);
-
-                if (offering == null)
+                var existing = existingOfferings.FirstOrDefault(e => e.CourseId == c.CourseId);
+                if (existing != null)
                 {
-                    // Add new
-                    offering = new CourseOffering
-                    {
-                        Id = Guid.NewGuid(),
-                        CurriculumId = dto.CurriculumId,
-                        CourseId = dto.CourseId,
-                        SemesterId = Guid.Empty, // link to semester if needed
-                        ProgramId = programId,
-                        BatchId = batchId,
-                        SectionId = sectionId,
-                        FacultyId = dto.FacultyId,
-                        SequenceOrder = dto.SequenceOrder,
-                        CreditHours = dto.CreditHours,
-                        CourseTypeId = dto.CourseTypeId,
-                        MaxEnrollment = dto.MaxEnrollment,
-                        Mon = dto.Mon,
-                        Tue = dto.Tue,
-                        Wed = dto.Wed,
-                        Thu = dto.Thu,
-                        Fri = dto.Fri,
-                        Sat = dto.Sat,
-                        Sun = dto.Sun,
-                        StartTime = dto.StartTime,
-                        EndTime = dto.EndTime,
-                        IsDeleted = false,
-                        CurrentEnrollment = 0,
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    _context.CourseOfferings.Add(offering);
-                }
-                else
-                {
-                    // Update existing
-                    offering.FacultyId = dto.FacultyId;
-                    offering.SequenceOrder = dto.SequenceOrder;
-                    offering.StartTime = dto.StartTime;
-                    offering.EndTime = dto.EndTime;
-                    offering.MaxEnrollment = dto.MaxEnrollment;
-                    offering.Mon = dto.Mon;
-                    offering.Tue = dto.Tue;
-                    offering.Wed = dto.Wed;
-                    offering.Thu = dto.Thu;
-                    offering.Fri = dto.Fri;
-                    offering.Sat = dto.Sat;
-                    offering.Sun = dto.Sun;
-                    offering.UpdatedAt = DateTime.UtcNow;
+                    c.IsOffered = true;
+                    c.OfferingId = existing.OfferingId;
+                    c.FacultyId = existing.FacultyId;
+                    c.RoomId = existing.RoomId;
+                    c.Mon = existing.Mon;
+                    c.Tue = existing.Tue;
+                    c.Wed = existing.Wed;
+                    c.Thu = existing.Thu;
+                    c.Fri = existing.Fri;
+                    c.Sat = existing.Sat;
+                    c.Sun = existing.Sun;
+                    c.StartTime = existing.StartTime;
+                    c.EndTime = existing.EndTime;
+                    c.SequenceOrder = existing.SequenceOrder;
+                    c.CreditHours = existing.CreditHours;
                 }
             }
 
+            return curriculumCourses;
+        }
+
+        // -----------------------------
+        // Save offerings (add/update/delete) with validation and conflict checks
+        // -----------------------------
+        public async Task SaveOfferingsAsync(List<CourseOfferingDto> offerings,
+                             Guid programId, Guid batchId, Guid sectionId, Guid selectedSemesterId, int semesterNumber)
+        {
+            if (offerings.Count == 0) return;
+
+            await EnsureSemesterIsCurrentAsync(semesterNumber, selectedSemesterId);
+
+            // 1️⃣ Validation + conflict checks
+            await ValidateAllOfferingsAsync(offerings, selectedSemesterId, programId, batchId, sectionId, semesterNumber);
+
+            // 2️⃣ Remove or delete offerings
+            await RemoveOfferingsAsync(offerings, programId, batchId, sectionId, semesterNumber);
+
+            // 3️⃣ Add or update offerings
+            await AddOrUpdateOfferingsAsync(offerings, programId, batchId, sectionId, selectedSemesterId, semesterNumber);
+
+            // 4️⃣ Commit changes
             await _context.SaveChangesAsync();
         }
 
-        // 4️⃣ Soft delete offering
-        public async Task DeleteAsync(Guid offeringId)
+        private async Task EnsureSemesterIsCurrentAsync(int semesterNumber, Guid semesterId)
         {
-            var offering = await _context.CourseOfferings
-                .FirstOrDefaultAsync(o => o.Id == offeringId && !o.IsDeleted);
+            var semester = await _semesterService.GetCurrentSemesterAsync();
 
-            if (offering == null)
-                throw new InvalidOperationException("Course offering not found or already deleted.");
-
-            // Check related entities without navigation
-            bool hasEnrollments = await _context.Enrollments.AnyAsync(e => e.CourseOfferingId == offeringId && !e.IsDeleted);
-            bool hasAssignments = await _context.Assignments.AnyAsync(a => a.CourseOfferingId == offeringId && !a.IsDeleted);
-
-            if (hasEnrollments || hasAssignments)
-                throw new InvalidOperationException("Cannot delete this course offering because students are enrolled or assignments exist.");
-
-            offering.IsDeleted = true;
-            offering.DeletedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
+            if (semester.Id != semesterId)
+                throw new InvalidOperationException(
+                    $"Cannot modify offerings for semester {semesterNumber} because it is not the current semester.");
         }
 
-
-        public async Task<List<CourseDto>> GetEligibleCoursesForStudentAsync(Guid studentId, int semesterNumber)
+        // -----------------------------
+        // Validation + conflict checks
+        // -----------------------------
+        private async Task ValidateAllOfferingsAsync(List<CourseOfferingDto> offerings, Guid semesterId,
+            Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
         {
-            // Fetch student's program, batch, section
-            var student = await _context.Students
-                .Where(s => s.Id == studentId && !s.IsDeleted)
-                .Select(s => new { s.ProgramId, s.BatchId, s.SectionId })
-                .FirstOrDefaultAsync();
+            foreach (var course in offerings)
+            {
+                // TODO: Previously offered courses (OfferingId.HasValue) that are now not offered (IsOffered = false) 
+                // will skip validation. Remember to handle this if editing unoffered courses becomes allowed in the future.
 
-            if (student == null) return new List<CourseDto>();
-
-            // Get eligible course offerings
-            var query = from co in _context.CourseOfferings
-                        join c in _context.Courses on co.CourseId equals c.Id
-                        join t in _context.Accounts on co.FacultyId equals t.Id
-                        where co.ProgramId == student.ProgramId
-                              && co.BatchId == student.BatchId
-                              && co.SectionId == student.SectionId
-                              && co.SemesterNumber == semesterNumber
-                              && !co.IsDeleted
-                        select new CourseDto
-                        {
-                            Id = co.Id,
-                            CourseName = c.Code + " - " + c.Title,
-                            TeacherName = t.FirstName + " " + t.LastName,
-                            Credits = co.CreditHours
-                        };
-
-            return await query.ToListAsync();
+                if (course.IsOffered)
+                {
+                    ValidateOffering(course);
+                    await CheckRoomConflictAsync(course, semesterId);
+                    await CheckFacultyTimeConflictAsync(course, programId, batchId, sectionId, semesterNumber);
+                    await CheckBatchTimeConflictAsync(course, programId, batchId, sectionId, semesterNumber);
+                }
+            }
         }
 
+        private void ValidateOffering(CourseOfferingDto o)
+        {
+            if (o.RoomId == Guid.Empty)
+                throw new InvalidOperationException($"Room must be selected for {o.CourseTitle}.");
+            if (o.FacultyId == Guid.Empty)
+                throw new InvalidOperationException($"Faculty must be selected for {o.CourseTitle}.");
+            if (o.StartTime == default)
+                throw new InvalidOperationException($"Start time must be selected for {o.CourseTitle}.");
+            if (o.EndTime == default)
+                throw new InvalidOperationException($"End time must be selected for {o.CourseTitle}.");
+            if (o.StartTime >= o.EndTime)
+                throw new InvalidOperationException($"Start time must be earlier than end time for {o.CourseTitle}.");
+            if (!(o.Mon || o.Tue || o.Wed || o.Thu || o.Fri || o.Sat || o.Sun))
+                throw new InvalidOperationException($"At least one day must be selected for {o.CourseTitle}.");
+        }
+
+        // -----------------------------
+        // Room / Faculty / Batch Conflict Checks
+        // -----------------------------
+        private async Task CheckRoomConflictAsync(CourseOfferingDto course, Guid semesterId)
+        {
+            var existingOfferings = _context.CourseOfferings
+                .Where(x => x.RoomId == course.RoomId
+                            && x.SemesterId == semesterId
+                            && !x.IsDeleted);
+
+            if (course.OfferingId.HasValue)
+                existingOfferings = existingOfferings.Where(x => x.Id != course.OfferingId.Value);
+
+            await foreach (var existing in existingOfferings.AsAsyncEnumerable())
+            {
+                bool timeOverlap = course.StartTime < existing.EndTime && course.EndTime > existing.StartTime;
+                bool dayOverlap =
+                    (course.Mon && existing.Mon) ||
+                    (course.Tue && existing.Tue) ||
+                    (course.Wed && existing.Wed) ||
+                    (course.Thu && existing.Thu) ||
+                    (course.Fri && existing.Fri) ||
+                    (course.Sat && existing.Sat) ||
+                    (course.Sun && existing.Sun);
+
+                if (timeOverlap && dayOverlap)
+                    throw new InvalidOperationException($"Room conflict detected for {course.CourseTitle}.");
+            }
+        }
+
+        private async Task CheckFacultyTimeConflictAsync(CourseOfferingDto course, Guid programId, Guid batchId, Guid sectionId,
+            int semesterNumber)
+        {
+            var existingOfferings = _context.CourseOfferings
+                .Where(x => x.FacultyId == course.FacultyId
+                            && x.ProgramId == programId
+                            && x.BatchId == batchId
+                            && x.SectionId == sectionId
+                            && x.SemesterNumber == semesterNumber
+                            && !x.IsDeleted);
+
+            if (course.OfferingId.HasValue)
+                existingOfferings = existingOfferings.Where(x => x.Id != course.OfferingId.Value);
+
+            await foreach (var existing in existingOfferings.AsAsyncEnumerable())
+            {
+                bool timeOverlap = course.StartTime < existing.EndTime && course.EndTime > existing.StartTime;
+                bool dayOverlap =
+                    (course.Mon && existing.Mon) ||
+                    (course.Tue && existing.Tue) ||
+                    (course.Wed && existing.Wed) ||
+                    (course.Thu && existing.Thu) ||
+                    (course.Fri && existing.Fri) ||
+                    (course.Sat && existing.Sat) ||
+                    (course.Sun && existing.Sun);
+
+                if (timeOverlap && dayOverlap)
+                    throw new InvalidOperationException(
+                        $"Schedule conflict detected for {course.CourseTitle} with faculty {course.FacultyId}.");
+            }
+        }
+
+        private async Task CheckBatchTimeConflictAsync(
+            CourseOfferingDto course, Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
+        {
+            var existingOfferings = _context.CourseOfferings
+                .Where(x => x.ProgramId == programId
+                            && x.BatchId == batchId
+                            && x.SectionId == sectionId
+                            && x.SemesterNumber == semesterNumber
+                            && !x.IsDeleted);
+
+            if (course.OfferingId.HasValue)
+                existingOfferings = existingOfferings.Where(x => x.Id != course.OfferingId.Value);
+
+            await foreach (var existing in existingOfferings.AsAsyncEnumerable())
+            {
+                bool timeOverlap = course.StartTime < existing.EndTime && course.EndTime > existing.StartTime;
+                bool dayOverlap =
+                    (course.Mon && existing.Mon) ||
+                    (course.Tue && existing.Tue) ||
+                    (course.Wed && existing.Wed) ||
+                    (course.Thu && existing.Thu) ||
+                    (course.Fri && existing.Fri) ||
+                    (course.Sat && existing.Sat) ||
+                    (course.Sun && existing.Sun);
+
+                if (timeOverlap && dayOverlap)
+                    throw new InvalidOperationException(
+                        $"Schedule conflict detected for {course.CourseTitle} with the same batch.");
+            }
+        }
+
+        // -----------------------------
+        // Add / Update Offerings
+        // -----------------------------
+        private async Task UpdateOfferingAsync(CourseOfferingDto course, Guid selectedSemesterId)
+        {
+            var existing = await _context.CourseOfferings.FindAsync(course.OfferingId.Value);
+            if (existing != null)
+            {
+                existing.FacultyId = course.FacultyId;
+                existing.RoomId = course.RoomId;
+                existing.SemesterId = selectedSemesterId;
+                existing.Mon = course.Mon;
+                existing.Tue = course.Tue;
+                existing.Wed = course.Wed;
+                existing.Thu = course.Thu;
+                existing.Fri = course.Fri;
+                existing.Sat = course.Sat;
+                existing.Sun = course.Sun;
+                existing.StartTime = course.StartTime;
+                existing.EndTime = course.EndTime;
+                existing.SequenceOrder = course.SequenceOrder;
+                existing.CreditHours = course.CreditHours;
+            }
+        }
+
+        private async Task AddOfferingAsync(CourseOfferingDto course, Guid programId, Guid batchId, Guid sectionId, Guid selectedSemesterId, int semesterNumber)
+        {
+            var curriculum = await _context.Curriculums.FindAsync(course.CurriculumId);
+            if (curriculum == null)
+                throw new InvalidOperationException($"Curriculum not found for ID {course.CurriculumId}.");
+
+            _context.CourseOfferings.Add(new CourseOffering
+            {
+                Id = Guid.NewGuid(),
+                ProgramId = programId,
+                BatchId = batchId,
+                SectionId = sectionId,
+                SemesterId = selectedSemesterId,
+                SemesterNumber = semesterNumber,
+                CurriculumId = curriculum.Id,
+                CourseId = curriculum.CourseId,
+                FacultyId = course.FacultyId,
+                RoomId = course.RoomId,
+                Mon = course.Mon,
+                Tue = course.Tue,
+                Wed = course.Wed,
+                Thu = course.Thu,
+                Fri = course.Fri,
+                Sat = course.Sat,
+                Sun = course.Sun,
+                StartTime = course.StartTime,
+                EndTime = course.EndTime,
+                CreditHours = curriculum.CreditHours,
+                SequenceOrder = curriculum.SequenceOrder,
+                IsDeleted = false
+            });
+        }
+
+        private async Task AddOrUpdateOfferingsAsync(List<CourseOfferingDto> offerings,
+            Guid programId, Guid batchId, Guid sectionId, Guid selectedSemesterId, int semesterNumber)
+        {
+            foreach (var course in offerings)
+            {
+                if (course.OfferingId.HasValue)
+                    await UpdateOfferingAsync(course, selectedSemesterId);
+                else
+                    await AddOfferingAsync(course, programId, batchId, sectionId, selectedSemesterId, semesterNumber);
+            }
+        }
+
+        // -----------------------------
+        // Remove or delete offerings
+        // -----------------------------
+        private async Task RemoveOfferingsAsync(List<CourseOfferingDto> offerings,
+            Guid programId, Guid batchId, Guid sectionId, int semesterNumber)
+        {
+            var existingOfferings = await _context.CourseOfferings
+                .Where(x => x.ProgramId == programId
+                            && x.BatchId == batchId
+                            && x.SectionId == sectionId
+                            && x.SemesterNumber == semesterNumber
+                            && !x.IsDeleted)
+                .ToListAsync();
+
+            var selectedCurriculumIds = offerings.Select(o => o.CurriculumId).ToHashSet();
+
+            foreach (var offering in existingOfferings.Where(x => !selectedCurriculumIds.Contains(x.CurriculumId)))
+            {
+                bool hasEnrollments = await _context.Enrollments
+                    .AnyAsync(e => e.CourseOfferingId == offering.Id);
+
+                if (!hasEnrollments)
+                {
+                    offering.IsDeleted = true; // safe to delete
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot delete course '{offering.CourseId}' because students are enrolled.");
+                }
+            }
+        }
     }
 }

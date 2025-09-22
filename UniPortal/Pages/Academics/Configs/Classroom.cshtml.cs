@@ -10,9 +10,9 @@ namespace UniPortal.Pages.Academics.Configs
     [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
     public class ClassroomModel : BasePageModel
     {
-        private readonly ClassroomService _classroomService;
+        private readonly RoomService _classroomService;
 
-        public ClassroomModel(ClassroomService classroomService,
+        public ClassroomModel(RoomService classroomService,
             AccountService accountService) : base(accountService)
         {
             _classroomService = classroomService;
@@ -86,7 +86,7 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await D(() => _classroomService.DeleteAsync(id), "Room deleted successfully.");
+            await R(() => _classroomService.DeleteAsync(id), "Room deleted successfully.");
             return RedirectToPage();
         }
 

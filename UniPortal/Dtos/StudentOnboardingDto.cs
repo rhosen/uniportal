@@ -1,6 +1,6 @@
 ﻿namespace UniPortal.Dtos
 {
-    public class StudentOnboardDto
+    public class StudentOnboardingDto
     {
         public Guid AccountId { get; set; }
         public string Email { get; set; } 

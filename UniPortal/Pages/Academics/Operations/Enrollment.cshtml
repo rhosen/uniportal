@@ -116,9 +116,9 @@
                                     @foreach (var course in Model.EligibleCourses)
                                     {
                                         <tr>
-                                            <td>@course.CourseName</td>
-                                            <td>@course.TeacherName</td>
-                                            <td>@course.Credits</td>
+                                            <td>@course.CourseTitle</td>
+                                            <td>@course.FacultyName</td>
+                                            <td>@course.CreditHours</td>
                                             <td>
                                                 <div class="form-check form-switch m-0">
                                                     <input class="form-check-input" type="checkbox"
@@ -159,7 +159,7 @@
                                     <ul class="mb-0 text-muted">
                                         @foreach (var c in sem.Value)
                                         {
-                                            <li>@c.CourseName</li>
+                                            <li>@c.CourseTitle</li>
                                         }
                                     </ul>
                                 </div>

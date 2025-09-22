@@ -1,4 +1,3 @@
-using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UniPortal.Constants;
@@ -13,16 +12,23 @@ namespace UniPortal.Pages.Academics.Configs
     {
         private readonly CourseService _courseService;
         private readonly DepartmentService _departmentService;
+        private readonly CourseTypeService _courseTypeService;
 
-        public CourseModel(CourseService courseService, DepartmentService departmentService, AccountService accountService)
+        public CourseModel(
+            CourseService courseService,
+            DepartmentService departmentService,
+            CourseTypeService courseTypeService,
+            AccountService accountService)
             : base(accountService)
         {
             _courseService = courseService;
             _departmentService = departmentService;
+            _courseTypeService = courseTypeService;
         }
 
         public List<Course> Courses { get; set; } = new();
         public List<Department> Departments { get; set; } = new();
+        public List<CourseType> CourseTypes { get; set; } = new();
 
         [BindProperty] public Course NewCourse { get; set; } = new();
         [BindProperty] public Course EditCourse { get; set; } = new();
@@ -33,11 +39,11 @@ namespace UniPortal.Pages.Academics.Configs
         public int PageSize { get; set; } = 10;
         public int TotalPages { get; set; }
 
-        
         public async Task OnGetAsync()
         {
-            // Load departments for dropdowns
+            // Load dropdowns
             Departments = await _departmentService.GetAllAsync();
+            CourseTypes = await _courseTypeService.GetAllAsync();
 
             var allCourses = await _courseService.GetAllAsync();
 
@@ -63,6 +69,7 @@ namespace UniPortal.Pages.Academics.Configs
                 NewCourse.Title,
                 NewCourse.CreditHours,
                 NewCourse.DepartmentId,
+                NewCourse.CourseTypeId,   // <--- Important: pass CourseTypeId
                 CurrentAccount.Id
             );
             return RedirectToPage(new { CurrentPage, SearchTerm });
@@ -80,7 +87,8 @@ namespace UniPortal.Pages.Academics.Configs
                     Code = course.Code,
                     Title = course.Title,
                     CreditHours = course.CreditHours,
-                    DepartmentId = course.DepartmentId
+                    DepartmentId = course.DepartmentId,
+                    CourseTypeId = course.CourseTypeId   // <--- populate CourseTypeId
                 };
             }
 
@@ -102,6 +110,7 @@ namespace UniPortal.Pages.Academics.Configs
                 EditCourse.Title,
                 EditCourse.CreditHours,
                 EditCourse.DepartmentId,
+                EditCourse.CourseTypeId, // <--- Important: pass CourseTypeId
                 CurrentAccount.Id
             );
             return RedirectToPage(new { CurrentPage, SearchTerm });
@@ -109,10 +118,9 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
-            await D(() => _courseService.DeleteAsync(id, CurrentAccount.Id), "Course deleted successfully.");
+            await R(() => _courseService.DeleteAsync(id, CurrentAccount.Id), "Course deleted successfully.");
             return RedirectToPage();
         }
-
 
         public async Task<IActionResult> OnPostActivateAsync(string id)
         {

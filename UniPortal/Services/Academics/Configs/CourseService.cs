@@ -14,7 +14,9 @@ namespace UniPortal.Services.Academics.Configs
         {
         }
 
-
+        // -----------------------------
+        // Get select options
+        // -----------------------------
         public async Task<List<SelectOption>> GetSelectOptionsAsync()
         {
             return await _context.Courses
@@ -28,27 +30,34 @@ namespace UniPortal.Services.Academics.Configs
                 .ToListAsync();
         }
 
-
+        // -----------------------------
         // Get all courses
+        // -----------------------------
         public async Task<List<Course>> GetAllAsync()
         {
             return await _context.Courses
                 .Include(c => c.Department)
+                .Include(c => c.CourseType)
                 .Where(c => !c.IsDeleted)
                 .OrderBy(c => c.Title)
                 .ToListAsync();
         }
 
+        // -----------------------------
         // Get course by Id
+        // -----------------------------
         public async Task<Course?> GetByIdAsync(Guid courseId)
         {
             return await _context.Courses
                 .Include(c => c.Department)
+                .Include(c => c.CourseType)
                 .FirstOrDefaultAsync(c => c.Id == courseId && !c.IsDeleted);
         }
 
+        // -----------------------------
         // Create course
-        public async Task<Course> CreateAsync(string code, string title, int creditHours, Guid departmentId, Guid userId)
+        // -----------------------------
+        public async Task<Course> CreateAsync(string code, string title, int creditHours, Guid departmentId, Guid courseTypeId, Guid userId)
         {
             var course = new Course
             {
@@ -56,7 +65,10 @@ namespace UniPortal.Services.Academics.Configs
                 Code = code,
                 Title = title,
                 CreditHours = creditHours,
-                DepartmentId = departmentId
+                DepartmentId = departmentId,
+                CourseTypeId = courseTypeId,
+                CreatedAt = DateTime.Now,
+                IsDeleted = false
             };
 
             _context.Courses.Add(course);
@@ -67,24 +79,35 @@ namespace UniPortal.Services.Academics.Configs
                 ActionType.Create,
                 "Course",
                 course.Id,
-                new { Code = code, Title = title, CreditHours = creditHours, DepartmentId = departmentId }
+                new { Code = code, Title = title, CreditHours = creditHours, DepartmentId = departmentId, CourseTypeId = courseTypeId }
             );
 
             return course;
         }
 
+        // -----------------------------
         // Update course
-        public async Task UpdateAsync(Guid courseId, string code, string title, int creditHours, Guid departmentId, Guid userId)
+        // -----------------------------
+        public async Task UpdateAsync(Guid courseId, string code, string title, int creditHours, Guid departmentId, Guid courseTypeId, Guid userId)
         {
             var course = await _context.Courses.FindAsync(courseId);
             if (course == null) return;
 
-            var oldValues = new { course.Code, course.Title, course.CreditHours, course.DepartmentId };
+            var oldValues = new
+            {
+                course.Code,
+                course.Title,
+                course.CreditHours,
+                course.DepartmentId,
+                course.CourseTypeId
+            };
 
             course.Code = code;
             course.Title = title;
             course.CreditHours = creditHours;
             course.DepartmentId = departmentId;
+            course.CourseTypeId = courseTypeId;
+            course.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -93,32 +116,28 @@ namespace UniPortal.Services.Academics.Configs
                 ActionType.Update,
                 "Course",
                 course.Id,
-                new { Old = oldValues, New = new { Code = code, Title = title, CreditHours = creditHours, DepartmentId = departmentId } }
+                new { Old = oldValues, New = new { Code = code, Title = title, CreditHours = creditHours, DepartmentId = departmentId, CourseTypeId = courseTypeId } }
             );
         }
 
+        // -----------------------------
         // Soft delete course
+        // -----------------------------
         public async Task DeleteAsync(Guid courseId, Guid userId)
         {
             var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
             if (course == null) return;
 
-            // Check if course is used in any active curriculums
+            // Check dependencies
             var hasCurriculums = await _context.Curriculums
                 .AnyAsync(c => c.CourseId == courseId && !c.IsDeleted);
 
-            // Check if course has any active course offerings
             var hasCourseOfferings = await _context.CourseOfferings
                 .AnyAsync(co => co.CourseId == courseId && !co.IsDeleted);
 
             if (hasCurriculums || hasCourseOfferings)
-            {
-                throw new InvalidOperationException(
-                    "This course cannot be deleted because it is part of active curriculums or course offerings."
-                );
-            }
+                throw new InvalidOperationException("This course cannot be deleted because it is part of active curriculums or course offerings.");
 
-            // Safe to soft delete
             course.IsDeleted = true;
             course.DeletedAt = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -126,7 +145,9 @@ namespace UniPortal.Services.Academics.Configs
             await LogAsync(userId, ActionType.Delete, "Course", course.Id);
         }
 
-        // Activate (undo soft delete)
+        // -----------------------------
+        // Activate course
+        // -----------------------------
         public async Task ActivateAsync(Guid courseId, Guid userId)
         {
             var course = await _context.Courses.FindAsync(courseId);

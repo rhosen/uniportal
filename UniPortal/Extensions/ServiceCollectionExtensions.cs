@@ -49,7 +49,7 @@ namespace UniPortal.Extensions
             // ========================
             services.AddScoped<DepartmentService>();
             services.AddScoped<SemesterService>();
-            services.AddScoped<ClassroomService>();
+            services.AddScoped<RoomService>();
             services.AddScoped<CourseService>();
             services.AddScoped<CourseTypeService>();
             services.AddScoped<NoticeService>();

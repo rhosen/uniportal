@@ -27,7 +27,7 @@ namespace UniPortal.Services.Accounts
         }
 
         // Get accounts of active students without StudentNumber
-        public async Task<List<StudentOnboardDto>> GetStudentsWithoutStudentIdAsync()
+        public async Task<List<StudentOnboardingDto>> GetStudentsWithoutStudentIdAsync()
         {
             var studentRoleName = Roles.Student;
 
@@ -42,7 +42,7 @@ namespace UniPortal.Services.Accounts
                               && account.IsActive && !account.IsDeleted
                               && !_unitOfWork.Context.Students
                                   .Any(s => s.AccountId == account.Id && !string.IsNullOrEmpty(s.StudentNumber))
-                        select new StudentOnboardDto
+                        select new StudentOnboardingDto
                         {
                             AccountId = account.Id,
                             Email = account.Email,
@@ -189,12 +189,12 @@ namespace UniPortal.Services.Accounts
                         join d in _context.Departments on p.DepartmentId equals d.Id
                         join b in _context.Batches on s.BatchId equals b.Id
                         join sec in _context.Sections on s.SectionId equals sec.Id
+                        // Join to get all courses in student's current semester
                         join c in _context.Curriculums
                             on new { s.ProgramId, SemesterNumber = s.CurrentSemester }
                             equals new { c.ProgramId, c.SemesterNumber } into curriculumJoin
                         from c in curriculumJoin.DefaultIfEmpty()
-                        join sem in _context.Semesters on c.SemesterId equals sem.Id into semJoin
-                        from sem in semJoin.DefaultIfEmpty()
+                            // We no longer have SemesterId in Curriculum, so remove sem join
                         where !s.IsDeleted && a.IsActive && s.Id == studentId
                         select new StudentDto
                         {
@@ -204,7 +204,7 @@ namespace UniPortal.Services.Accounts
                             ProgramName = p.Name,
                             DepartmentName = d.Name,
                             CurrentSemester = s.CurrentSemester,
-                            CurrentSemesterName = sem != null ? sem.SemesterType + " " + sem.AcademicYear : $"Semester {s.CurrentSemester}"
+                            CurrentSemesterName = $"Semester {s.CurrentSemester}"
                         };
 
             return await query.FirstOrDefaultAsync();

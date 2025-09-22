@@ -11,7 +11,6 @@
         public Guid SectionId { get; set; }
         public Guid FacultyId { get; set; }
         public int CreditHours { get; set; }
-        public Guid CourseTypeId { get; set; }
         public int SequenceOrder { get; set; }
         public int MaxEnrollment { get; set; }
         public int CurrentEnrollment { get; set; } = 0;
@@ -22,8 +21,8 @@
         public bool Fri { get; set; } = false;
         public bool Sat { get; set; } = false;
         public bool Sun { get; set; } = false;
-        public TimeOnly? StartTime { get; set; }
-        public TimeOnly? EndTime { get; set; }
-        public Guid? RoomId { get; set; }
+        public TimeOnly StartTime { get; set; }
+        public TimeOnly EndTime { get; set; }
+        public Guid RoomId { get; set; }
     }
 }

@@ -86,7 +86,7 @@ namespace UniPortal.Services.Accounts
             account.Address = profile.Address;
             account.DateOfBirth = profile.DateOfBirth;
             account.Gender = profile.Gender;
-            account.UpdatedAt = DateTime.UtcNow;
+            account.UpdatedAt = DateTime.Now;
 
             _unitOfWork.Context.Accounts.Update(account);
 
@@ -103,7 +103,7 @@ namespace UniPortal.Services.Accounts
             if (account == null) return;
 
             account.IsDeleted = true;
-            account.DeletedAt = DateTime.UtcNow;
+            account.DeletedAt = DateTime.Now;
 
             _unitOfWork.Context.Accounts.Update(account);
 
@@ -119,7 +119,7 @@ namespace UniPortal.Services.Accounts
             if (account == null) return;
 
             account.IsActive = true;
-            account.UpdatedAt = DateTime.UtcNow;
+            account.UpdatedAt = DateTime.Now;
 
             _unitOfWork.Context.Accounts.Update(account);
 
@@ -145,7 +145,7 @@ namespace UniPortal.Services.Accounts
                 }
 
                 account.Email = newEmail;
-                account.UpdatedAt = DateTime.UtcNow;
+                account.UpdatedAt = DateTime.Now;
 
                 _unitOfWork.Context.Accounts.Update(account);
 

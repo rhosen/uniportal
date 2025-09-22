@@ -8,7 +8,7 @@ namespace UniPortal.Data.Seeders
         public static async Task SeedGradeScaleAsync(IServiceProvider services)
         {
             var dbContext = services.GetRequiredService<UniPortalContext>();
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             var gradeScales = new List<GradeScale>
             {

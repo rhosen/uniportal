@@ -30,10 +30,10 @@ namespace UniPortal.Pages.Academics.Operations
         [BindProperty] public StudentDto SelectedStudent { get; set; }
 
         // Current semester courses
-        public List<CourseDto> EligibleCourses { get; set; } = new();
+        public List<EnrollmentCourseDto> EligibleCourses { get; set; } = new();
 
         // Past enrollments
-        public Dictionary<string, List<CourseDto>> PastEnrollmentsBySemester { get; set; } = new();
+        public Dictionary<string, List<EnrollmentCourseDto>> PastEnrollmentsBySemester { get; set; } = new();
 
         // GET: load all students and optionally selected student
         public async Task OnGetAsync(Guid? studentId)
@@ -52,7 +52,7 @@ namespace UniPortal.Pages.Academics.Operations
             if (SelectedStudent == null) return;
 
             // Current semester courses
-            EligibleCourses = await _courseOfferingService.GetEligibleCoursesForStudentAsync(SelectedStudent.Id, SelectedStudent.CurrentSemester);
+            EligibleCourses = await _enrollmentService.GetEligibleCoursesForStudentAsync(SelectedStudent.Id, SelectedStudent.CurrentSemester);
 
             // Mark enrolled courses
             var enrolledCourses = await _enrollmentService.GetEnrollmentsAsync(SelectedStudent.Id, SelectedStudent.CurrentSemester);

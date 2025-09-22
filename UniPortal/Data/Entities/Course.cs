@@ -6,8 +6,10 @@
         public string Title { get; set; } = string.Empty;
         public int CreditHours { get; set; }
         public Guid DepartmentId { get; set; }
+        public Guid CourseTypeId { get; set; }
 
         // Navigation property
         public virtual Department Department { get; set; } = null!;
+        public virtual CourseType CourseType { get; set; } = null!;
     }
 }

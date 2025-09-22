@@ -25,7 +25,7 @@ namespace UniPortal.Pages.Students
             _batchService = batchService;
         }
 
-        public List<StudentOnboardDto> Students { get; set; } = new();
+        public List<StudentOnboardingDto> Students { get; set; } = new();
         public List<Data.Entities.Program> Programs { get; set; } = new();
         public List<SelectOption> Batches { get; set; } = new();
         public List<SelectOption> Sections { get; set; } = new();
@@ -40,7 +40,7 @@ namespace UniPortal.Pages.Students
         public int TotalPages { get; set; }
 
         [BindProperty]
-        public StudentOnboardDto Student { get; set; } = new();
+        public StudentOnboardingDto Student { get; set; } = new();
 
         public async Task OnGetAsync()
         {

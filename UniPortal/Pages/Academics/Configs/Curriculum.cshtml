@@ -22,10 +22,8 @@
             <thead class="table-dark">
                 <tr>
                     <th>Program</th>
-                    <th>Semester</th>
-                    <th>Semester No</th> <!-- Added -->
+                    <th>Semester No</th>
                     <th>Course</th>
-                    <th>Course Type</th>
                     <th>Sequence</th>
                     <th>Actions</th>
                 </tr>
@@ -42,16 +40,15 @@
                         </select>
                     </td>
                     <td>
-                        <select asp-for="NewCurriculum.SemesterId" class="form-select" required>
-                            <option value="">Select Semester</option>
-                            @foreach (var s in Model.SemesterOptions)
+                        <select asp-for="NewCurriculum.SemesterNumber" class="form-select" required>
+                            <option value="">-- Select Semester Number --</option>
+                            @foreach (var s in Model.SemesterNumberOptions)
                             {
-                                <option value="@s.Id">@s.Name</option>
+                                <option value="@s.Number" selected="@(Model.NewCurriculum.SemesterNumber == s.Number ? "selected" : null)">
+                                    @s.Name
+                                </option>
                             }
                         </select>
-                    </td>
-                    <td>
-                        <input asp-for="NewCurriculum.SemesterNumber" type="number" class="form-control" placeholder="Semester #" required />
                     </td>
                     <td>
                         <select asp-for="NewCurriculum.CourseId" class="form-select" required>
@@ -59,15 +56,6 @@
                             @foreach (var c in Model.CourseOptions)
                             {
                                 <option value="@c.Id">@c.Name</option>
-                            }
-                        </select>
-                    </td>
-                    <td>
-                        <select asp-for="NewCurriculum.CourseTypeId" class="form-select" required>
-                            <option value="">Select Requirement Type</option>
-                            @foreach (var r in Model.CourseTypeOptions)
-                            {
-                                <option value="@r.Id">@r.Name</option>
                             }
                         </select>
                     </td>
@@ -87,10 +75,8 @@
         <thead class="table-dark">
             <tr>
                 <th>Program</th>
-                <th>Semester</th>
-                <th>Semester No</th> <!-- Added -->
+                <th>Semester No</th>
                 <th>Course</th>
-                <th>Requirement Type</th>
                 <th>Sequence</th>
                 <th>Actions</th>
             </tr>
@@ -101,6 +87,8 @@
                 <tr>
                     <form method="post">
                         <input type="hidden" name="id" value="@item.Id" />
+                        <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
+
 
                         @if (Model.EditCurriculumId == item.Id.ToString())
                         {
@@ -113,29 +101,21 @@
                             </select>
                         </td>
                         <td>
-                            <select asp-for="EditCurriculum.SemesterId" class="form-select" required>
-                                @foreach (var s in Model.SemesterOptions)
+                            <select asp-for="EditCurriculum.SemesterNumber" class="form-select" required>
+                                <option value="">-- Select Semester Number --</option>
+                                @foreach (var s in Model.SemesterNumberOptions)
                                 {
-                                    <option value="@s.Id" selected="@(s.Id == item.SemesterId ? "selected" : null)">@s.Name</option>
+                                    <option value="@s.Number" selected="@(Model.EditCurriculum.SemesterNumber == s.Number ? "selected" : null)">
+                                        @s.Name
+                                    </option>
                                 }
                             </select>
-                        </td>
-                        <td>
-                            <input asp-for="EditCurriculum.SemesterNumber" type="number" class="form-control" value="@item.SemesterNumber" required />
                         </td>
                         <td>
                             <select asp-for="EditCurriculum.CourseId" class="form-select" required>
                                 @foreach (var c in Model.CourseOptions)
                                 {
                                     <option value="@c.Id" selected="@(c.Id == item.CourseId ? "selected" : null)">@c.Name</option>
-                                }
-                            </select>
-                        </td>
-                        <td>
-                            <select asp-for="EditCurriculum.CourseTypeId" class="form-select" required>
-                                @foreach (var r in Model.CourseTypeOptions)
-                                {
-                                    <option value="@r.Id" selected="@(r.Id == item.CourseTypeId ? "selected" : null)">@r.Name</option>
                                 }
                             </select>
                         </td>
@@ -150,10 +130,8 @@
                     else
                     {
                         <td>@item.ProgramName</td>
-                        <td>@item.SemesterName</td>
                         <td>@item.SemesterNumber</td>
                         <td>@item.CourseTitle</td>
-                        <td>@item.CourseTypeName</td>
                         <td>@item.SequenceOrder</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@item.Id" class="btn btn-warning btn-sm">Edit</button>

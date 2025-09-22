@@ -26,6 +26,7 @@
                     <th>Title</th>
                     <th>Credit Hours</th>
                     <th>Department</th>
+                    <th>Course Type</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -45,6 +46,15 @@
                         </select>
                     </td>
                     <td>
+                        <select asp-for="NewCourse.CourseTypeId" class="form-control" required>
+                            <option value="">-- Select Course Type --</option>
+                            @foreach (var type in Model.CourseTypes)
+                            {
+                                <option value="@type.Id">@type.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
                 </tr>
@@ -60,6 +70,7 @@
                 <th>Title</th>
                 <th>Credit Hours</th>
                 <th>Department</th>
+                <th>Course Type</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -69,6 +80,7 @@
                 <tr>
                     <form method="post">
                         <input type="hidden" name="id" value="@course.Id" />
+                        <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
 
                         @if (Model.EditCourseId == course.Id.ToString())
                         {
@@ -87,6 +99,16 @@
                             </select>
                         </td>
                         <td>
+                            <select name="EditCourse.CourseTypeId" class="form-control">
+                                @foreach (var type in Model.CourseTypes)
+                                {
+                                    <option value="@type.Id" selected="@(Model.EditCourse.CourseTypeId == type.Id ? "selected" : null)">
+                                        @type.Name
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
                             <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
                         </td>
@@ -98,11 +120,12 @@
                         <td>@course.Title</td>
                         <td>@course.CreditHours</td>
                         <td>@course.Department.Name</td>
+                        <td>@course.CourseType.Name</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@course.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (!course.IsDeleted)
                             {
-                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@course.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')"> Delete </button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@course.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')">Delete</button>
                             }
                             else
                             {

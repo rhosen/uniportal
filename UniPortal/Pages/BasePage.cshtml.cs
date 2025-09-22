@@ -62,7 +62,7 @@ namespace UniPortal.Pages
         }
 
         // BasePageModel
-        protected Task D(Func<Task> action, string msg) => RunWithMessageAsync(action, msg);
+        protected Task R(Func<Task> action, string msg) => RunWithMessageAsync(action, msg);
 
         public async Task RunWithMessageAsync(Func<Task> action, string successMessage = "Action completed successfully.")
         {

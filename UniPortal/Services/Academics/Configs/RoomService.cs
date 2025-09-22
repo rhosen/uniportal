@@ -6,11 +6,11 @@ using UniPortal.ViewModels.Academics;
 
 namespace UniPortal.Services.Academics.Configs
 {
-    public class ClassroomService
+    public class RoomService
     {
         private readonly UniPortalContext _context;
 
-        public ClassroomService(UniPortalContext context)
+        public RoomService(UniPortalContext context)
         {
             _context = context;
         }
@@ -19,6 +19,19 @@ namespace UniPortal.Services.Academics.Configs
         {
             return await _context.Rooms.Where(c => !c.IsDeleted)
                 .OrderBy(c => c.RoomName)
+                .ToListAsync();
+        }
+
+        public async Task<List<SelectOption>> GetOptionsAsync()
+        {
+            return await _context.Rooms
+                .Where(r => !r.IsDeleted)
+                .OrderBy(x=> x.RoomName)
+                .Select(r => new SelectOption
+                {
+                    Id = r.Id,
+                    Name = r.RoomName
+                })
                 .ToListAsync();
         }
 
@@ -133,7 +146,7 @@ namespace UniPortal.Services.Academics.Configs
             {
                 var currentSchedules = offeringsToday
                     .Where(o => o.RoomId == r.Id)
-                    .Select(o => new ScheduleInfo
+                    .Select(o => new ScheduleDto
                     {
                         SubjectCode = o.Code,
                         SubjectName = o.Title,

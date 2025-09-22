@@ -1,4 +1,3 @@
-using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UniPortal.Constants;
@@ -16,6 +15,7 @@ namespace UniPortal.Pages.Academics.Configs
         private readonly SemesterService _semesterService;
         private readonly CourseService _courseService;
         private readonly CourseTypeService _requirementTypeService;
+        private readonly IConfiguration _configuration;
 
         public CurriculumModel(
             CurriculumService curriculumService,
@@ -23,7 +23,8 @@ namespace UniPortal.Pages.Academics.Configs
             SemesterService semesterService,
             CourseService courseService,
             CourseTypeService requirementTypeService,
-            AccountService accountService)
+            AccountService accountService,
+            IConfiguration configuration)
             : base(accountService)
         {
             _curriculumService = curriculumService;
@@ -31,6 +32,7 @@ namespace UniPortal.Pages.Academics.Configs
             _semesterService = semesterService;
             _courseService = courseService;
             _requirementTypeService = requirementTypeService;
+            _configuration = configuration;
         }
 
         // DTO list for page display
@@ -39,6 +41,7 @@ namespace UniPortal.Pages.Academics.Configs
         // SelectOption lists for dropdowns
         public List<SelectOption> ProgramOptions { get; set; } = new();
         public List<SelectOption> SemesterOptions { get; set; } = new();
+        public List<SemesterOption> SemesterNumberOptions { get; set; } = new();
         public List<SelectOption> CourseOptions { get; set; } = new();
         public List<SelectOption> CourseTypeOptions { get; set; } = new();
 
@@ -53,7 +56,7 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task OnGetAsync()
         {
-            // Get dropdown options from services
+            SemesterNumberOptions = _semesterService.GetSemesterNumberOptions();
             ProgramOptions = await _programService.GetSelectOptionsAsync();
             SemesterOptions = await _semesterService.GetSelectOptionsAsync();
             CourseOptions = await _courseService.GetSelectOptionsAsync();
@@ -67,7 +70,6 @@ namespace UniPortal.Pages.Academics.Configs
                 allCurriculums = allCurriculums
                     .Where(c =>
                         c.ProgramName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                        c.SemesterName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
                         c.CourseTitle.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
@@ -81,15 +83,14 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            await _curriculumService.CreateAsync(
+            await R(() => _curriculumService.CreateAsync(
                 NewCurriculum.ProgramId,
-                NewCurriculum.SemesterId,
                 EditCurriculum.SemesterNumber,
                 NewCurriculum.CourseId,
-                NewCurriculum.CourseTypeId,
                 NewCurriculum.SequenceOrder,
                 CurrentAccount.Id
-            );
+            ), "Curriculum created successfully");
+
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
@@ -114,23 +115,22 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostSaveEditAsync(string id)
         {
-            await _curriculumService.UpdateAsync(
+           await R(() => _curriculumService.UpdateAsync(
                 Guid.Parse(id),
                 EditCurriculum.ProgramId,
-                EditCurriculum.SemesterId,
                 EditCurriculum.SemesterNumber,
                 EditCurriculum.CourseId,
-                EditCurriculum.CourseTypeId,
                 EditCurriculum.SequenceOrder,
                 CurrentAccount.Id
-            );
+            ), "Curriculum updated successfully");
+
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
-            await D(() => _curriculumService.DeleteAsync(id, CurrentAccount.Id), "Curriculum deleted successfully.");
+            await R(() => _curriculumService.DeleteAsync(id, CurrentAccount.Id), "Curriculum deleted successfully.");
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

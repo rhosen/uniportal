@@ -3,7 +3,6 @@ using UniPortal.Dtos;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
-using UniPortal.ViewModels.Operations;
 
 namespace UniPortal.Pages.Academics.Operations
 {
@@ -13,110 +12,113 @@ namespace UniPortal.Pages.Academics.Operations
         private readonly BatchService _batchService;
         private readonly SectionService _sectionService;
         private readonly FacultyService _facultyService;
-        private readonly CurriculumService _curriculumService;
+        private readonly RoomService _roomService;
         private readonly CourseOfferingService _courseOfferingService;
         private readonly IConfiguration _configuration;
+        private readonly SemesterService _semesterService;
 
         public CourseOfferingsModel(
             ProgramService programService,
             BatchService batchService,
             SectionService sectionService,
             FacultyService facultyService,
-            CurriculumService curriculumService,
+            RoomService roomService,
             CourseOfferingService courseOfferingService,
+            AccountService accountService,
             IConfiguration configuration,
-            AccountService accountService) : base(accountService)
+            SemesterService semesterService) : base(accountService)
         {
             _programService = programService;
             _batchService = batchService;
             _sectionService = sectionService;
             _facultyService = facultyService;
-            _curriculumService = curriculumService;
+            _roomService = roomService;
             _courseOfferingService = courseOfferingService;
             _configuration = configuration;
+            _semesterService = semesterService;
         }
 
-        // Dropdowns
+        [BindProperty] public Guid ProgramId { get; set; }
+        [BindProperty] public Guid BatchId { get; set; }
+        [BindProperty] public Guid SectionId { get; set; }
+        [BindProperty] public Guid SelectedSemesterId { get; set; }
+        [BindProperty] public int SemesterNumber { get; set; }
+        [BindProperty] public List<CourseOfferingDto> Offerings { get; set; } = new();
+
+
         public List<SelectOption> Programs { get; set; } = new();
         public List<SelectOption> Batches { get; set; } = new();
         public List<SelectOption> Sections { get; set; } = new();
         public List<SelectOption> Faculties { get; set; } = new();
+        public List<SelectOption> Rooms { get; set; } = new();
+        public List<SemesterOption> SemesterNumberOptions { get; set; } = new();
+        public List<SelectOption> SemesterOptions { get; set; } = new();
 
-        // Semester dropdown configurable via appsettings
-        public List<SelectOption> Semesters { get; set; } = new();
-
-        // Unified model for binding form
-        [BindProperty]
-        public CourseOfferingForm Form { get; set; } = new();
-
-        // Existing offerings for editing
-        public List<CourseOfferingDto> ExistingOfferings { get; set; } = new();
-
-        // Courses from curriculum to add
-        public List<CourseOfferingDto> CurriculumCourses { get; set; } = new();
+        public string[] Days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+        public bool IsCurrentSemester { get; set; }
 
         public async Task OnGetAsync()
         {
-            Programs = await _programService.GetProgramOptionsAsync();
-            Batches = await _batchService.GetBatchOptionsAsync();
-            Sections = await _sectionService.GetSectionOptionsAsync();
-            Faculties = new List<SelectOption>();
-
-            // Load semesters from appsettings (e.g., "SemesterCount":8)
-            int semesterCount = _configuration.GetValue<int>("SemesterCount", 8);
-            Semesters = Enumerable.Range(1, semesterCount)
-                .Select(n => new SelectOption { Id = Guid.Empty, Name = n.ToString() })
-                .ToList();
+            await LoadDropdownsAsync();
         }
 
-        public async Task<IActionResult> OnPostLoadCoursesAsync()
+        public async Task<IActionResult> OnPostLoadAsync()
         {
-            if (Form.ProgramId == Guid.Empty || Form.SemesterNumber == 0)
-                return BadRequest("Program and Semester must be selected.");
+            if (ProgramId == Guid.Empty || SemesterNumber == 0)
+            {
+                await LoadDropdownsAsync();
+                return Page();
+            }
 
-            // Load curriculum courses (for adding)
-            CurriculumCourses = await _curriculumService.GetCurriculumCoursesAsync(Form.ProgramId, Form.SemesterNumber);
+            await LoadDropdownsAsync();
 
-            // Load faculties for dropdown
-            Faculties = await _facultyService.GetFacultiesAsync(Form.ProgramId);
+            Offerings = await _courseOfferingService.GetOfferingsForSemesterAsync(
+                ProgramId, BatchId, SectionId, SemesterNumber);
 
-            // Load existing offerings for editing
-            ExistingOfferings = await _courseOfferingService.GetOfferingsAsync(Form.ProgramId, Form.SemesterNumber, Form.BatchId, Form.SectionId);
-
-            // Remove from CurriculumCourses those already added
-            var existingCourseIds = ExistingOfferings.Select(e => e.CourseId).ToHashSet();
-            CurriculumCourses = CurriculumCourses.Where(c => !existingCourseIds.Contains(c.CourseId)).ToList();
-
-            // Reload other dropdowns
-            Programs = await _programService.GetProgramOptionsAsync();
-            Batches = await _batchService.GetBatchOptionsAsync();
-            Sections = await _sectionService.GetSectionOptionsAsync();
+            IsCurrentSemester = await IsCurrentSemesterAsync(Offerings);
 
             return Page();
         }
 
-        public async Task<IActionResult> OnPostSaveOfferingsAsync()
+        private async Task LoadDropdownsAsync()
         {
-            if (!ModelState.IsValid)
-                return Page();
-
-            // Add or update offerings (both new from curriculum and edited existing)
-            await _courseOfferingService.AddOrUpdateOfferingsAsync(
-                Form.ProgramId,
-                Form.SemesterNumber,
-                Form.BatchId,
-                Form.SectionId,
-                Form.Courses);
-
-            return RedirectToPage();
+            SemesterNumberOptions = _semesterService.GetSemesterNumberOptions();
+            SemesterOptions = await _semesterService.GetSelectOptionsAsync();
+            Programs = await _programService.GetProgramOptionsAsync();
+            Batches = await _batchService.GetBatchOptionsAsync();
+            Sections = await _sectionService.GetSectionOptionsAsync();
+            Faculties = await _facultyService.GetFacultiesAsync(ProgramId);
+            Rooms = await _roomService.GetOptionsAsync();
         }
 
-        public async Task<IActionResult> OnPostDeleteOfferingAsync(Guid id)
+
+        private async Task<bool> IsCurrentSemesterAsync(List<CourseOfferingDto> offerings)
         {
-            if (id == Guid.Empty) return BadRequest();
-            await D(() => _courseOfferingService.DeleteAsync(id), "Course offering deleted successfully.");
-            return RedirectToPage();
+            if (offerings == null || offerings.Count == 0)
+                return false;
+
+            var currentSemester = await _semesterService.GetCurrentSemesterAsync();
+
+            if (currentSemester == null) return false;
+
+            var existingOffering = offerings.FirstOrDefault(x => x.OfferingId != null);
+
+            if (existingOffering == null)  return true; // new offering
+
+            var offeringSemesterId = await _courseOfferingService.GetOfferingSemesterIdAsync(existingOffering.OfferingId.Value);
+           
+            return offeringSemesterId == currentSemester.Id;
+        }
+
+
+        public async Task<IActionResult> OnPostSaveAsync()
+        {
+            await R(() => _courseOfferingService.SaveOfferingsAsync(
+                    Offerings, ProgramId, BatchId, SectionId, SelectedSemesterId, SemesterNumber), "Offerings saved successfully");
+
+           await LoadDropdownsAsync();
+
+            return RedirectToPage(new { ProgramId, BatchId, SectionId, SemesterNumber, SelectedSemesterId });
         }
     }
-
 }

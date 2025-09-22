@@ -133,8 +133,6 @@ namespace UniPortal.Services.Infrastructures
                     await AcademicSeeder.SeedAsync(scope.ServiceProvider);
                     await RoleSeeder.SeedRolesAsync(roleManager);
                     await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
-                    await FacultySeeder.SeedFacultyAsync(scope.ServiceProvider);
-                    await StudentSeeder.SeedStudentsAsync(scope.ServiceProvider);
                     await RecipientSeeder.SeedRecipientTypesAsync(scope.ServiceProvider);
                     await GradeScaleSeeder.SeedGradeScaleAsync(scope.ServiceProvider);
                     break;

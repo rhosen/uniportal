@@ -17,7 +17,7 @@ namespace UniPortal.Pages.Users
         private readonly BatchService _batchService;
         private readonly SectionService _sectionService;
         private readonly AccountService _accountService;
-        private readonly IConfiguration _configuration;
+        private readonly SemesterService _semesterService;
 
         public StudentModel(
             StudentService studentService,
@@ -25,21 +25,21 @@ namespace UniPortal.Pages.Users
             BatchService batchService,
             SectionService sectionService,
             AccountService accountService,
-            IConfiguration configuration)
+            SemesterService semesterService)
         {
             _studentService = studentService;
             _programService = programService;
             _batchService = batchService;
             _sectionService = sectionService;
             _accountService = accountService;
-            _configuration = configuration;
+            _semesterService = semesterService;
         }
 
         public List<StudentViewModel> Students { get; set; } = new();
         public List<SelectOption> Programs { get; set; } = new();
         public List<SelectOption> Batches { get; set; } = new();
         public List<SelectOption> Sections { get; set; } = new();
-        public List<SelectOption> Semesters { get; set; } = new(); // Semester dropdown
+        public List<SemesterOption> SemesterNumberOptions { get; set; } = new(); 
 
         [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
         [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
@@ -54,12 +54,7 @@ namespace UniPortal.Pages.Users
             Programs = await _programService.GetProgramOptionsAsync();
             Batches = await _batchService.GetBatchOptionsAsync();
             Sections = await _sectionService.GetSectionOptionsAsync();
-
-            // Read total semesters from appsettings (default 8)
-            int totalSemesters = _configuration.GetValue<int>("TotalSemesters", 8);
-            Semesters = Enumerable.Range(1, totalSemesters)
-                                  .Select(n => new SelectOption { Id = Guid.Empty, Name = n.ToString() })
-                                  .ToList();
+            SemesterNumberOptions = _semesterService.GetSemesterNumberOptions();
 
             var allStudents = await _studentService.GetAllOnboardedStudentsAsync();
 

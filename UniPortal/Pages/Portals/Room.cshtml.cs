@@ -8,11 +8,11 @@ namespace UniPortal.Pages.Portals
     [Authorize]
     public class RoomModel : BasePageModel
     {
-        private readonly ClassroomService _classroomService;
+        private readonly RoomService _classroomService;
 
         public List<ClassroomAvailabilityViewModel> Classrooms { get; set; } = new();
 
-        public RoomModel(ClassroomService classroomService, AccountService accountService) : base(accountService)
+        public RoomModel(RoomService classroomService, AccountService accountService) : base(accountService)
         {
             _classroomService = classroomService;
         }

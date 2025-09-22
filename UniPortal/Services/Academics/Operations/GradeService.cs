@@ -124,7 +124,7 @@ namespace UniPortal.Services.Academics.Operations
                 existing.GPA = gradeScale.GPA;
                 existing.Marks = marks;
                 existing.ModifiedById = modifiedBy;
-                existing.UpdatedAt = DateTime.UtcNow;
+                existing.UpdatedAt = DateTime.Now;
             }
             else
             {
@@ -137,7 +137,7 @@ namespace UniPortal.Services.Academics.Operations
                     Marks = marks,
                     ModifiedById = modifiedBy,
                     IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 });
             }
 

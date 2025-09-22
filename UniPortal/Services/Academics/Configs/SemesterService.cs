@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Dtos;
@@ -8,23 +9,43 @@ namespace UniPortal.Services.Academics.Configs
     public class SemesterService
     {
         private readonly UniPortalContext _context;
+        private readonly IConfiguration _configuration;
 
-        public SemesterService(UniPortalContext context)
+        public SemesterService(UniPortalContext context,
+            IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         public async Task<List<SelectOption>> GetSelectOptionsAsync()
         {
             return await _context.Semesters
                 .Where(s => !s.IsDeleted)
-                .OrderBy(s => s.AcademicYear).ThenBy(s => s.SemesterType)
+                .OrderBy(s => s.AcademicYear)
+                .ThenBy(s => s.SemesterType)
                 .Select(s => new SelectOption
                 {
                     Id = s.Id,
-                    Name = $"{s.SemesterType} {s.AcademicYear}"
+                    Name = s.IsCurrent ? $"{s.SemesterType} {s.AcademicYear} (Current)"
+                                       : $"{s.SemesterType} {s.AcademicYear}"
                 })
                 .ToListAsync();
+        }
+
+
+
+        public List<SemesterOption> GetSemesterNumberOptions()
+        {
+            int totalSemesters = _configuration.GetValue<int>("TotalSemesters", 8);
+
+            return Enumerable.Range(1, totalSemesters)
+                .Select(n => new SemesterOption
+                {
+                    Number = n,
+                    Name = $"Semester {n}"
+                })
+                .ToList();
         }
 
         public async Task<List<Semester>> GetAllAsync()
@@ -115,15 +136,12 @@ namespace UniPortal.Services.Academics.Configs
             var semester = await _context.Semesters.FirstOrDefaultAsync(s => s.Id == semesterId);
             if (semester == null) return;
 
-            // Check if semester has any active curriculums
-            var hasCurriculums = await _context.Curriculums
-                .AnyAsync(c => c.SemesterId == semesterId && !c.IsDeleted);
 
             // Check if semester has any active course offerings
             var hasCourseOfferings = await _context.CourseOfferings
                 .AnyAsync(co => co.SemesterId == semesterId && !co.IsDeleted);
 
-            if (hasCurriculums || hasCourseOfferings)
+            if (hasCourseOfferings)
             {
                 throw new InvalidOperationException(
                     "This semester cannot be deleted because it contains related curriculums or course offerings."
@@ -149,52 +167,70 @@ namespace UniPortal.Services.Academics.Configs
             }
         }
 
-        // --------------------- PRIVATE HELPER ---------------------
         private async Task<OperationResult> SaveSemesterAsync(Semester semester, Guid? ignoreId = null)
         {
-            // 1️⃣ Validate Dates
-            var validationResult = await ValidateSemesterDatesAsync(semester.StartDate, semester.EndDate, ignoreId);
+            if (semester == null)
+                throw new ArgumentNullException(nameof(semester));
+
+            // 1️⃣ Validation
+            var validationResult = await ValidateSemesterAsync(semester, ignoreId);
             if (validationResult != null)
                 return validationResult;
 
-            // 2️⃣ Handle IsCurrent - ensure only one semester is current
+            // 2️⃣ Unmark other current semesters if needed
             if (semester.IsCurrent)
-            {
-                var otherCurrentSemesters = await _context.Semesters
-                    .Where(s => !s.IsDeleted && s.IsCurrent && (ignoreId == null || s.Id != ignoreId))
-                    .ToListAsync();
-
-                foreach (var other in otherCurrentSemesters)
-                    other.IsCurrent = false;
-            }
+                await UnmarkOtherCurrentSemestersAsync(semester.Id);
 
             // 3️⃣ Add or update
-            if (semester.Id == Guid.Empty || !await _context.Semesters.AnyAsync(s => s.Id == semester.Id))
-            {
+            if (semester.Id == Guid.Empty)
+                semester.Id = Guid.NewGuid();
+
+            var trackedSemester = await _context.Semesters.FindAsync(semester.Id);
+            if (trackedSemester == null)
                 _context.Semesters.Add(semester);
-            }
-            // Else it's already tracked by EF for update
+            else
+                _context.Entry(trackedSemester).CurrentValues.SetValues(semester);
 
             await _context.SaveChangesAsync();
 
             return OperationResult.Ok("Semester saved successfully.");
         }
 
-        // --------------------- VALIDATE ---------------------
-        private async Task<OperationResult?> ValidateSemesterDatesAsync(DateTime startDate, DateTime endDate, Guid? ignoreId = null)
+        private async Task UnmarkOtherCurrentSemestersAsync(Guid semesterId)
         {
-            if (endDate <= startDate)
+            var otherCurrentSemesters = await _context.Semesters
+                .Where(s => !s.IsDeleted && s.IsCurrent && s.Id != semesterId)
+                .ToListAsync();
+
+            foreach (var other in otherCurrentSemesters)
+                other.IsCurrent = false;
+        }
+
+
+        private async Task<OperationResult> ValidateSemesterAsync(Semester semester, Guid? ignoreId = null)
+        {
+            if (semester.EndDate <= semester.StartDate)
                 return OperationResult.Fail("End date must be after start date.");
 
+            // Check for overlapping semesters
             bool overlapExists = await _context.Semesters
                 .AnyAsync(s => !s.IsDeleted &&
                                (ignoreId == null || s.Id != ignoreId) &&
-                               ((startDate >= s.StartDate && startDate <= s.EndDate) ||
-                                (endDate >= s.StartDate && endDate <= s.EndDate) ||
-                                (startDate <= s.StartDate && endDate >= s.EndDate)));
+                               ((semester.StartDate >= s.StartDate && semester.StartDate <= s.EndDate) ||
+                                (semester.EndDate >= s.StartDate && semester.EndDate <= s.EndDate) ||
+                                (semester.StartDate <= s.StartDate && semester.EndDate >= s.EndDate)));
 
             if (overlapExists)
                 return OperationResult.Fail("A semester already exists within this timeline.");
+
+            // ✅ Validate IsCurrent
+            if (semester.IsCurrent)
+            {
+                var today = DateTime.Today;
+                if (semester.StartDate > today || semester.EndDate < today)
+                    return OperationResult.Fail(
+                        "Cannot mark this semester as current because today's date is outside its start/end range.");
+            }
 
             return null;
         }

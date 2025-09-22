@@ -122,7 +122,7 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await D(() => _programService.DeleteAsync(id), "Program deleted successfully.");
+            await R(() => _programService.DeleteAsync(id), "Program deleted successfully.");
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
