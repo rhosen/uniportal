@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QuestPDF.Fluent;
 using UniPortal.Constants;
 using UniPortal.Dtos;
-using UniPortal.Pages;
+using UniPortal.Reports;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Accounts;
 
@@ -15,11 +16,12 @@ namespace UniPortal.Pages.Academics.Operations
         private readonly EnrollmentService _enrollmentService;
         private readonly SemesterService _semesterService;
 
-        public EnrollmentModel(StudentService studentService,
+        public EnrollmentModel(
+            StudentService studentService,
             EnrollmentService enrollmentService,
             AccountService accountService,
-            SemesterService semesterService)
-            : base(accountService)
+            SemesterService semesterService
+        ) : base(accountService)
         {
             _studentService = studentService;
             _enrollmentService = enrollmentService;
@@ -31,7 +33,6 @@ namespace UniPortal.Pages.Academics.Operations
 
         public List<EnrollmentCourseDto> EligibleCourses { get; set; } = new();
         public Dictionary<string, List<EnrollmentCourseDto>> PastEnrollmentsBySemester { get; set; } = new();
-
         public string AcademicSemesterName { get; set; } = string.Empty;
 
         public async Task OnGetAsync(Guid? studentId)
@@ -59,7 +60,6 @@ namespace UniPortal.Pages.Academics.Operations
                 : "";
         }
 
-
         public async Task<IActionResult> OnPostSaveAsync(Guid StudentId, List<Guid> EnrolledCourses)
         {
             await R(
@@ -73,6 +73,30 @@ namespace UniPortal.Pages.Academics.Operations
 
             // Redirect back to refresh the page
             return RedirectToPage(new { studentId = StudentId });
+        }
+
+        public async Task<IActionResult> OnGetExportEnrollmentPdfDirectAsync(Guid studentId)
+        {
+            var student = await _studentService.GetStudentByIdAsync(studentId);
+            if (student == null) return NotFound();
+
+            var courses = await _enrollmentService.GetEligibleWithEnrollmentStatusAsync(
+                student.Id, student.CurrentSemester);
+
+            var enrolledCourses = courses.Where(c => c.IsEnrolled).ToList();
+            if (!enrolledCourses.Any()) return NotFound();
+
+            var faculty = CurrentAccount.FirstName + " " + CurrentAccount.LastName;
+
+            var document = new EnrollmentReportDocument(student, enrolledCourses, faculty);
+            using var stream = new MemoryStream();
+            document.GeneratePdf(stream);
+            stream.Position = 0;
+
+            var safeName = string.Concat(student.FullName.Split(Path.GetInvalidFileNameChars()));
+            var fileName = $"Enrollment_{student.StudentNumber}_{safeName}.pdf";
+
+            return File(stream.ToArray(), "application/pdf", fileName);
         }
 
     }

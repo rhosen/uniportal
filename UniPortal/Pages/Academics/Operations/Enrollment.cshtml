@@ -78,26 +78,30 @@
         <div class="col-md-9">
             @if (Model.SelectedStudent != null)
             {
-                <div class="mb-3 d-flex gap-2 no-print">
-                    <button class="btn btn-secondary" onclick="window.print()">
-                        <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M2 1a1 1 0 0 0-1 1v4h2V2h10v4h2V2a1 1 0 0 0-1-1H2z" />
-                            <path d="M2 7v6h2v3h8v-3h2V7H2z" />
-                        </svg>
-                        Print Enrollment
-                    </button>
-                    <a asp-page-handler="ExportEnrollmentPdfDirect" class="btn btn-secondary">
-                        <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2z" />
-                        </svg>
-                        Export to PDF
-                    </a>
+                <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+                    <!-- Left: Print & PDF Buttons -->
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M2 1a1 1 0 0 0-1 1v4h2V2h10v4h2V2a1 1 0 0 0-1-1H2z" />
+                                <path d="M2 7v6h2v3h8v-3h2V7H2z" />
+                            </svg>
+                            Print
+                        </button>
+                        <a asp-page-handler="ExportEnrollmentPdfDirect" asp-route-studentId="@Model.SelectedStudent.Id" class="btn btn-outline-secondary">
+                            <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2z" />
+                            </svg>
+                            Export PDF
+                        </a>
+                    </div>
+
+                    <!-- Right: Semester Info -->
+                    <div class="text-muted fst-italic small">
+                        Academic Semester: @Model.AcademicSemesterName
+                    </div>
                 </div>
 
-                <!-- Academic Semester Badge -->
-                <div class="mb-2">
-                    <span class="badge bg-info">Academic Semester: @Model.AcademicSemesterName</span>
-                </div>
 
                 <!-- Eligible Courses -->
                 <div class="card shadow-sm border-0 mb-4">
@@ -106,7 +110,7 @@
                             <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-4 4.5a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l1.094 1.093 3.492-3.446z" />
                             <path d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm0 13H2V2h12v12z" />
                         </svg>
-                        <h5 class="mb-0">Eligible Courses (Current Semester)</h5>
+                        <h6 class="mb-0">Available Courses</h6>
                     </div>
                     <div class="card-body p-0">
 
@@ -255,3 +259,27 @@
 
     </div>
 </div>
+
+<style>
+    @@media print {
+        .no-print, .btn {
+            display: none !important;
+        }
+
+        body {
+            background: white;
+            color: black;
+            font-size: 12pt;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .card {
+            box-shadow: none !important;
+        }
+    }
+
+</style>

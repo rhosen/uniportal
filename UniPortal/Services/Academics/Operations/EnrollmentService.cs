@@ -55,7 +55,7 @@ public class EnrollmentService
                                    $"{(co.Fri ? "Fri, " : "")}" +
                                    $"{(co.Sat ? "Sat, " : "")}" +
                                    $"{(co.Sun ? "Sun, " : "")}".TrimEnd(',', ' ') +
-                                   $" {co.StartTime:hh\\:mm} - {co.EndTime:hh\\:mm}"
+                                   $"{co.StartTime:hh:mm tt} - {co.EndTime:hh:mm tt}"
                     };
 
         return await query.ToListAsync();

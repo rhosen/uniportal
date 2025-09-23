@@ -177,7 +177,7 @@ namespace UniPortal.Services.Accounts
                             Id = s.Id,
                             StudentNumber = s.StudentNumber,
                             FullName = a.FirstName + " " + a.LastName,
-                            DepartmentName = d.Name,
+                            DepartmentName = d.Code,
                             ProgramName = p.Name,
                             CurrentSemester = s.CurrentSemester,
                             Batch = b.Number,
@@ -237,7 +237,9 @@ namespace UniPortal.Services.Accounts
                             StudentNumber = s.StudentNumber,
                             FullName = a.FirstName + " " + a.LastName,
                             ProgramName = p.Name,
-                            DepartmentName = d.Name,
+                            DepartmentName = d.Code,
+                            Batch = b.Number,
+                            Section = sec.Name,
                             CurrentSemester = s.CurrentSemester,
                             CurrentSemesterName = $"Semester {s.CurrentSemester}"
                         };
