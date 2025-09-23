@@ -109,6 +109,8 @@ namespace UniPortal.Pages.Academics.Operations
             await R(() => _courseOfferingService.SaveOfferingsAsync(
                     Offerings, ProgramId, BatchId, SectionId, SelectedSemesterId, SemesterNumber), "Offerings saved successfully");
 
+            await LoadDropdownsAsync();
+
             return RedirectToPage(new
             {
                 ProgramId,

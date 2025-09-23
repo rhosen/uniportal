@@ -18,7 +18,7 @@
 
     <div class="row g-4">
         <!-- Left Panel: Filters -->
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card shadow-sm border-0 rounded-4" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
                 <div class="card-body">
                     <form method="post" asp-page-handler="Load">
@@ -39,14 +39,14 @@
                         <div class="mb-3">
                             <label>Program</label>
                             <select asp-for="ProgramId" class="form-select" onchange="this.form.submit()">
-                                    <option value="">Select Program</option>
-                                    @foreach (var p in Model.Programs)
-                                    {
-                                        <option value="@p.Id" selected="@(Model.ProgramId == p.Id ? "selected" : null)">
-                                            @p.Name
-                                        </option>
-                                    }
-                                </select>
+                                <option value="">Select Program</option>
+                                @foreach (var p in Model.Programs)
+                                {
+                                    <option value="@p.Id" selected="@(Model.ProgramId == p.Id ? "selected" : null)">
+                                        @p.Name
+                                    </option>
+                                }
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -78,14 +78,14 @@
                         <div class="mb-3">
                             <label>Curriculum Semester</label>
                             <select asp-for="SemesterNumber" class="form-select" onchange="this.form.submit()">
-                                    <option value="">-- Select Semester --</option>
-                                    @foreach (var s in Model.SemesterNumberOptions)
-                                    {
-                                        <option value="@s.Number" selected="@(Model.SemesterNumber == s.Number ? "selected" : null)">
-                                            @s.Name
-                                        </option>
-                                    }
-                                </select>
+                                <option value="">-- Select Semester --</option>
+                                @foreach (var s in Model.SemesterNumberOptions)
+                                {
+                                    <option value="@s.Number" selected="@(Model.SemesterNumber == s.Number ? "selected" : null)">
+                                        @s.Name
+                                    </option>
+                                }
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -93,7 +93,7 @@
         </div>
 
         <!-- Right Panel: Courses -->
-        <div class="col-md-9">
+        <div class="col-md-10">
 
             @if (Model.Offerings.Any())
             {
@@ -113,6 +113,7 @@
                                 <th>Days</th>
                                 <th>Start</th>
                                 <th>End</th>
+                                <th>Capacity</th>
                                 <th>Offered</th>
                             </tr>
                         </thead>
@@ -126,9 +127,7 @@
                                     <input type="hidden" asp-for="Offerings[i].CourseTitle" />
                                     <input type="hidden" asp-for="Offerings[i].FacultyName" />
                                     <input type="hidden" asp-for="Offerings[i].OfferingId" />
-
                                     <td>@o.CourseTitle</td>
-
                                     <td>
                                         <select name="Offerings[@i].FacultyId" class="form-select form-select-sm">
                                             <option value="">Select Faculty</option>
@@ -140,7 +139,6 @@
                                             }
                                         </select>
                                     </td>
-
                                     <td>
                                         <select name="Offerings[@i].RoomId" class="form-select form-select-sm">
                                             <option value="">Select Room</option>
@@ -152,7 +150,6 @@
                                             }
                                         </select>
                                     </td>
-
                                     <td>
                                         <div class="d-flex flex-wrap gap-2">
                                             @for (int j = 0; j < Model.Days.Length; j++)
@@ -168,20 +165,23 @@
                                             }
                                         </div>
                                     </td>
-
-
                                     <td>
                                         <input type="time" name="Offerings[@i].StartTime"
                                                value="@(o.StartTime.ToString("HH\\:mm"))"
                                                class="form-control form-control-sm" />
                                     </td>
-
                                     <td>
                                         <input type="time" name="Offerings[@i].EndTime"
                                                value="@(o.EndTime.ToString("HH\\:mm"))"
                                                class="form-control form-control-sm" />
                                     </td>
-
+                                    <td>
+                                        <input type="number" class="form-control"
+                                               asp-for="Offerings[i].MaxEnrollment"
+                                               min="1" step="1"
+                                               disabled="@(Model.Offerings[i].IsOffered ? null : "disabled")" />
+                                        <input type="hidden" asp-for="Offerings[i].MaxEnrollment" />
+                                    </td>
                                     <td>
                                         <div class="form-check form-switch m-0">
                                             <input class="form-check-input" asp-for="Offerings[i].IsOffered" />

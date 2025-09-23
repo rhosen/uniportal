@@ -54,7 +54,7 @@ namespace UniPortal.Services.Academics.Operations
                     CourseId = c.CourseId,
                     CourseTitle = co.Code + " - " + co.Title,
                     CreditHours = co.CreditHours,
-                    SequenceOrder = c.SequenceOrder
+                    SequenceOrder = c.SequenceOrder,
                 }).ToListAsync();
 
             // 2️⃣ Existing offerings
@@ -73,6 +73,7 @@ namespace UniPortal.Services.Academics.Operations
                     CourseTitle = co.Code + " - " + co.Title,
                     CreditHours = o.CreditHours,
                     SequenceOrder = o.SequenceOrder,
+                    MaxEnrollment = o.MaxEnrollment,
                     FacultyId = o.FacultyId,
                     RoomId = o.RoomId,
                     Mon = o.Mon,
@@ -108,6 +109,7 @@ namespace UniPortal.Services.Academics.Operations
                     c.StartTime = existing.StartTime;
                     c.EndTime = existing.EndTime;
                     c.SequenceOrder = existing.SequenceOrder;
+                    c.MaxEnrollment = existing.MaxEnrollment;
                     c.CreditHours = existing.CreditHours;
                 }
             }
@@ -331,6 +333,7 @@ namespace UniPortal.Services.Academics.Operations
                 existing.EndTime = course.EndTime;
                 existing.SequenceOrder = course.SequenceOrder;
                 existing.CreditHours = course.CreditHours;
+                existing.MaxEnrollment = course.MaxEnrollment;
             }
         }
 
@@ -363,6 +366,7 @@ namespace UniPortal.Services.Academics.Operations
                 EndTime = course.EndTime,
                 CreditHours = curriculum.CreditHours,
                 SequenceOrder = curriculum.SequenceOrder,
+                MaxEnrollment = course.MaxEnrollment,
                 IsDeleted = false
             });
         }
