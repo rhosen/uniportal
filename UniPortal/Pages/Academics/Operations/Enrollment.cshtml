@@ -78,6 +78,22 @@
         <div class="col-md-9">
             @if (Model.SelectedStudent != null)
             {
+                <div class="mb-3 d-flex gap-2 no-print">
+                    <button class="btn btn-secondary" onclick="window.print()">
+                        <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2 1a1 1 0 0 0-1 1v4h2V2h10v4h2V2a1 1 0 0 0-1-1H2z" />
+                            <path d="M2 7v6h2v3h8v-3h2V7H2z" />
+                        </svg>
+                        Print Enrollment
+                    </button>
+                    <a asp-page-handler="ExportEnrollmentPdfDirect" class="btn btn-secondary">
+                        <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2z" />
+                        </svg>
+                        Export to PDF
+                    </a>
+                </div>
+
                 <!-- Academic Semester Badge -->
                 <div class="mb-2">
                     <span class="badge bg-info">Academic Semester: @Model.AcademicSemesterName</span>

@@ -163,6 +163,30 @@ namespace UniPortal.Services.Accounts
             return await query.ToListAsync();
         }
 
+        public async Task<StudentDto> GetStudentAsync(Guid accountId)
+        {
+            var query = from s in _context.Students
+                        join a in _context.Accounts on s.AccountId equals a.Id
+                        join p in _context.Programs on s.ProgramId equals p.Id
+                        join d in _context.Departments on p.DepartmentId equals d.Id
+                        join b in _context.Batches on s.BatchId equals b.Id
+                        join sec in _context.Sections on s.SectionId equals sec.Id
+                        where !s.IsDeleted && a.IsActive && a.Id == accountId
+                        select new StudentDto
+                        {
+                            Id = s.Id,
+                            StudentNumber = s.StudentNumber,
+                            FullName = a.FirstName + " " + a.LastName,
+                            DepartmentName = d.Name,
+                            ProgramName = p.Name,
+                            CurrentSemester = s.CurrentSemester,
+                            Batch = b.Number,
+                            Section = sec.Name
+                        };
+
+            return await query.FirstOrDefaultAsync();
+        }
+
         // Get single student
         public async Task<Student> GetStudentAsync(
             Guid? accountId = null,
@@ -175,9 +199,6 @@ namespace UniPortal.Services.Accounts
             var query = _context.Students
                 .AsNoTracking()
                 .Include(s => s.Account)
-                .Include(s => s.Program).ThenInclude(p => p.Department)
-                .Include(s => s.Batch)
-                .Include(s => s.Section)
                 .AsQueryable();
 
             if (accountId.HasValue)

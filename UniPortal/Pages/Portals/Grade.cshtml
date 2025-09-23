@@ -5,128 +5,144 @@
     ViewData["Title"] = "My Grades";
 }
 
-<!-- Print & Export Buttons -->
-<div class="mb-3 no-print">
-    <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Grades</button>
-    <a asp-page-handler="ExportExcel" class="btn btn-secondary">⬇️ Export to Excel</a>
-    <a asp-page-handler="ExportPdf" class="btn btn-secondary">⬇️ Export to PDF</a>
-</div>
+<div class="container my-4">
 
-<!-- Student Info & Cumulative CGPA -->
-<div class="mb-4 p-3 border rounded bg-light">
-    <h5>Student Information</h5>
-    <p><strong>Name:</strong> @Model.StudentName</p>
-    <p><strong>Student ID:</strong> @Model.StudentId</p>
-    <p><strong>Program:</strong> @Model.Program</p>
-    <p><strong>Cumulative CGPA:</strong> @Model.CumulativeCGPA</p>
-</div>
+    <!-- Page Header -->
+    <div class="d-flex align-items-center mb-4">
+        <svg class="me-2 text-primary" width="40" height="40" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 7v7c0 5 5 9 10 9s10-4 10-9V7l-10-5zM12 22c-4.5 0-8-3-8-7V9.5l8-4 8 4V15c0 4-3.5 7-8 7z" />
+        </svg>
+        <h5 class="mb-0 fw-bold">My Grades</h5>
+    </div>
 
-<!-- Grades Section -->
-@if (Model.GradesBySemester == null || !Model.GradesBySemester.Any())
-{
-    <p>No grades available.</p>
-}
-else
-{
-    @foreach (var semester in Model.GradesBySemester)
-    {
-        <div class="semester-table mb-5">
-            <h5 class="mt-4">@semester.Key</h5>
-            <table class="table table-striped table-bordered">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Course Code</th>
-                        <th>Course Name</th>
-                        <th>Faculty Name</th>
-                        <th>Grade</th>
-                        <th>Marks</th>
-                        <th>GPA</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var grade in semester.Value)
-                    {
-                        <tr class="@(grade.IsFail ? "table-danger" : "")">
-                            <td>@grade.CourseCode</td>
-                            <td>@grade.CourseTitle</td>
-                            <td>@grade.FacultyName</td>
-                            <td>
-                                @if (grade.Grade == "A" || grade.Grade == "A-")
-                                {
-                                    <span class="badge bg-success">@grade.Grade</span>
-                                }
-                                else if (grade.Grade.StartsWith("B"))
-                                {
-                                    <span class="badge bg-warning text-dark">@grade.Grade</span>
-                                }
-                                else if (grade.Grade.StartsWith("C"))
-                                {
-                                    <span class="badge bg-orange text-dark">@grade.Grade</span>
-                                }
-                                else if (grade.Grade.StartsWith("D"))
-                                {
-                                    <span class="badge bg-primary text-white">@grade.Grade</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">@grade.Grade</span>
-                                }
-                            </td>
-                            <td>@grade.Marks.ToString("0.##")</td>
-                            <td>@grade.GPA.ToString("0.##")</td>
-                        </tr>
-                    }
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="5" class="text-end"><strong>Semester GPA:</strong></td>
-                        <td><strong>@semester.Value.Average(g => g.GPA).ToString("0.##")</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
+    <div class="row g-4">
+
+        <!-- Left Panel: Student Info -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-4 p-3" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
+                <h6 class="fw-semibold d-flex align-items-center mb-3">
+                    <svg class="me-2 text-primary" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" />
+                    </svg>
+                    Student Information
+                </h6>
+                <div class="mb-2"><strong>Name:</strong> @Model.Student.FullName</div>
+                <div class="mb-2"><strong>Student ID:</strong> @Model.Student.StudentNumber</div>
+                <div class="mb-2"><strong>Department:</strong> @Model.Student.DepartmentName</div>
+                <div class="mb-2"><strong>Program:</strong> @Model.Student.ProgramName</div>
+                <div class="mb-2"><strong>Batch:</strong> @Model.Student.Batch</div>
+                <div class="mb-2"><strong>Section:</strong> @Model.Student.Section</div>
+                <div><strong>Cumulative CGPA:</strong> @Model.CumulativeCGPA</div>
+            </div>
         </div>
-    }
-}
 
-<!-- Custom CSS -->
+        <!-- Right Panel: Grades -->
+        <div class="col-md-9">
+
+            <!-- Print & Export Buttons -->
+            <div class="mb-3 d-flex gap-2">
+                <button class="btn btn-secondary" onclick="window.print()">
+                    <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2 1a1 1 0 0 0-1 1v4h2V2h10v4h2V2a1 1 0 0 0-1-1H2z" />
+                        <path d="M2 7v6h2v3h8v-3h2V7H2z" />
+                    </svg>
+                    Print Grades
+                </button>
+                <a asp-page-handler="ExportPdfDirect" class="btn btn-secondary">
+                    <svg class="me-1" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2z" />
+                    </svg>
+                    Export to PDF
+                </a>
+            </div>
+
+            <!-- Grades Section -->
+            @if (Model.GradesBySemester == null || !Model.GradesBySemester.Any())
+            {
+                <!-- Empty Placeholder -->
+                <div class="card shadow-sm border-0 rounded-4 p-5 text-center text-muted" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
+                    <svg class="mb-3" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm0 13H2V2h12v12z" />
+                    </svg>
+                    <h5>No grades available</h5>
+                    <p>Grades will appear here once entered by the faculty.</p>
+                </div>
+            }
+            else
+            {
+                <!-- Grades by Semester -->
+                @foreach (var semester in Model.GradesBySemester)
+                {
+                    <div class="card shadow-sm border-0 rounded-4 mb-4 p-3">
+                        <h6 class="fw-semibold d-flex align-items-center mb-3">
+                            <svg class="me-2 text-info" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M3 0h10a1 1 0 0 1 1 1v14l-8-4-8 4V1a1 1 0 0 1 1-1z" />
+                            </svg>
+                            @semester.Key
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light text-muted">
+                                    <tr>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Faculty</th>
+                                        <th>Grade</th>
+                                        <th>Marks</th>
+                                        <th>GPA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var grade in semester.Value)
+                                    {
+                                        <tr>
+                                            <td>@grade.CourseCode</td>
+                                            <td>@grade.CourseTitle</td>
+                                            <td>@grade.FacultyName</td>
+                                            <td>
+                                                <span class="badge bg-light text-dark border">@grade.Grade</span>
+                                            </td>
+                                            <td>@grade.Marks.ToString("0.##")</td>
+                                            <td>@grade.GPA.ToString("0.##")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5" class="text-end"><strong>Semester GPA:</strong></td>
+                                        <td><strong>@semester.Value.Average(g => g.GPA).ToString("0.##")</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                }
+            }
+
+        </div>
+    </div>
+</div>
+
 <style>
-    .no-print {
-        display: inline-block;
-    }
-
-    .bg-orange {
-        background-color: orange;
-        color: black;
-    }
-
+    /* Hide print/export buttons when printing */
     @@media print {
-        .no-print
+        .btn, .no-print {
+            display: none !important;
+        }
 
-    {
-        display: none !important;
-    }
+        body {
+            background: white;
+            color: black;
+            font-size: 12pt;
+        }
 
-    body {
-        background: white;
-        color: black;
-        font-size: 12pt;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-    .badge {
-        background-color: transparent !important;
-        color: black !important;
-        box-shadow: none;
-    }
-
-    .semester-table {
-        page-break-inside: avoid;
-        margin-bottom: 1.5rem;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
+        .card {
+            box-shadow: none !important;
+        }
     }
 </style>

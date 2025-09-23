@@ -51,26 +51,27 @@ namespace UniPortal.Services.Academics.Operations
         // -------------------------
         public async Task<List<StudenGradeDto>> GetGradesForStudentAsync(Guid accountId)
         {
+            // Get the student's Id from their account
             var studentId = await _context.Students
-                .Where(s => s.AccountId == accountId)
+                .Where(s => s.AccountId == accountId && !s.IsDeleted)
                 .Select(s => s.Id)
                 .FirstOrDefaultAsync();
 
             if (studentId == Guid.Empty)
                 return new List<StudenGradeDto>();
 
-            // Only include courses where student is enrolled
+            // Query grades
             var query = from g in _context.Grades
                         join co in _context.CourseOfferings on g.CourseOfferingId equals co.Id
-                        join e in _context.Enrollments on new { g.StudentId, g.CourseOfferingId }
-                                                          equals new { e.StudentId, e.CourseOfferingId }
                         join c in _context.Courses on co.CourseId equals c.Id
-                        join t in _context.Accounts on co.FacultyId equals t.Id
+                        join f in _context.Faculties on co.FacultyId equals f.Id
+                        join t in _context.Accounts on f.AccountId equals t.Id
                         where g.StudentId == studentId
                               && !g.IsDeleted
                               && !co.IsDeleted
                               && !c.IsDeleted
-                              && !e.IsDeleted
+                              && !f.IsDeleted
+                              && !t.IsDeleted
                         orderby co.SemesterNumber
                         select new StudenGradeDto
                         {
@@ -86,6 +87,7 @@ namespace UniPortal.Services.Academics.Operations
 
             return await query.ToListAsync();
         }
+
 
         // -------------------------
         // Teacher perspective

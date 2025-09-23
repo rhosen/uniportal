@@ -1,5 +1,4 @@
-using DinkToPdf;
-using DinkToPdf.Contracts;
+using QuestPDF.Infrastructure;
 using Serilog;
 using UniPortal.Extensions;
 using UniPortal.Helpers;
@@ -32,8 +31,6 @@ internal class Program
 
         builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
-        builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
-
         builder.Services.AddSingleton<RazorViewToStringRenderer>();
 
         builder.Services.AddAppServices();
@@ -41,6 +38,8 @@ internal class Program
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(builder.Configuration)
             .CreateLogger();
+
+        QuestPDF.Settings.License = LicenseType.Community;
 
         var app = builder.Build();
 
