@@ -165,7 +165,7 @@ namespace UniPortal.Services.Academics.Configs
                     IsOccupied = currentSchedules.Any(),
                     CurrentSchedules = currentSchedules
                 };
-            }).ToList();
+            }).OrderBy(x => x.RoomName).ToList();
 
             return result;
         }

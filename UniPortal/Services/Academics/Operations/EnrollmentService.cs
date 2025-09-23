@@ -2,192 +2,228 @@
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Dtos;
+using UniPortal.Services.Accounts;
 
-namespace UniPortal.Services.Academics.Operations
+public class EnrollmentService
 {
-    public class EnrollmentService
+    private readonly UniPortalContext _context;
+    private readonly StudentService _studentService;
+
+    public EnrollmentService(UniPortalContext context,
+        StudentService studentService)
     {
-        private readonly UniPortalContext _context;
-
-        public EnrollmentService(UniPortalContext context)
-        {
-            _context = context;
-        }
-
-        // -----------------------------
-        // Get students for a teacher in a semester
-        // -----------------------------
-        public async Task<List<SelectOption>> GetStudentsBySemesterAndTeacherAsync(int semesterNumber, Guid facultyId)
-        {
-            var students = await (
-                from e in _context.Enrollments
-                join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
-                join s in _context.Students on e.StudentId equals s.Id
-                join a in _context.Accounts on s.AccountId equals a.Id
-                where co.SemesterNumber == semesterNumber
-                      && co.FacultyId == facultyId
-                      && !e.IsDeleted
-                      && !s.IsDeleted
-                select new
-                {
-                    s.Id,
-                    s.StudentNumber,
-                    a.FirstName,
-                    a.LastName
-                })
-                .Distinct()
-                .OrderBy(s => s.StudentNumber)
-                .Select(s => new SelectOption
-                {
-                    Id = s.Id,
-                    Name = $"{s.StudentNumber} - {s.FirstName} {s.LastName}"
-                })
-                .ToListAsync();
-
-            return students;
-        }
-
-
-        // -----------------------------
-        // Get enrollments for a student in a semester
-        // -----------------------------
-        public async Task<List<EnrollmentDto>> GetEnrollmentsAsync(Guid studentId, int semesterNumber)
-        {
-            var query = from e in _context.Enrollments
-                        join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
-                        join c in _context.Courses on co.CourseId equals c.Id
-                        join t in _context.Accounts on co.FacultyId equals t.Id
-                        where e.StudentId == studentId
-                              && co.SemesterNumber == semesterNumber
-                              && !e.IsDeleted
-                        select new EnrollmentDto
-                        {
-                            Id = e.Id,
-                            CourseId = co.Id,
-                            CourseName = c.Code + " - " + c.Title,
-                            TeacherName = t.FirstName + " " + t.LastName,
-                            Credits = co.CreditHours
-                        };
-
-            return await query.ToListAsync();
-        }
-
-
-        // -----------------------------
-        // Get past enrollments grouped by semester
-        // -----------------------------
-        public async Task<Dictionary<string, List<EnrollmentCourseDto>>> GetPastEnrollmentsGroupedBySemesterAsync(
-     Guid studentId, int currentSemesterNumber)
-        {
-            var query = from e in _context.Enrollments
-                        join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
-                        join c in _context.Courses on co.CourseId equals c.Id
-                        join t in _context.Accounts on co.FacultyId equals t.Id
-                        join sem in _context.Semesters on co.SemesterId equals sem.Id
-                        where e.StudentId == studentId
-                              && co.SemesterNumber < currentSemesterNumber // use SemesterNumber
-                              && !e.IsDeleted
-                        orderby co.SemesterNumber // order by semester number
-                        select new
-                        {
-                            SemesterName = $"{sem.SemesterType} ({sem.StartDate:MMM yyyy} - {sem.EndDate:MMM yyyy}) - Semester {co.SemesterNumber}",
-                            Course = new EnrollmentCourseDto
-                            {
-                                Id = co.Id,
-                                CourseTitle = c.Code + " - " + c.Title,
-                                FacultyName = t.FirstName + " " + t.LastName,
-                                CreditHours = co.CreditHours
-                            }
-                        };
-
-            var list = await query.ToListAsync();
-
-            return list
-                .GroupBy(x => x.SemesterName)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(x => x.Course).ToList()
-                );
-        }
-
-
-        // -----------------------------
-        // Update enrollments for a student
-        // -----------------------------
-        public async Task UpdateEnrollmentsAsync(Guid studentId, List<Guid> enrolledCourseOfferingIds, int semesterNumber, Guid modifiedBy)
-        {
-            // Fetch only the CourseOfferingIds for this student and semester
-            var existingEnrollments = await _context.Enrollments
-                .Where(e => e.StudentId == studentId && !e.IsDeleted)
-                .Where(e => _context.CourseOfferings
-                    .Where(co => co.SemesterNumber == semesterNumber)
-                    .Select(co => co.Id)
-                    .Contains(e.CourseOfferingId))
-                .ToListAsync();
-
-            var existingIds = existingEnrollments.Select(e => e.CourseOfferingId).ToList();
-
-            // Courses to add
-            var toAdd = enrolledCourseOfferingIds.Except(existingIds);
-            foreach (var coId in toAdd)
-            {
-                _context.Enrollments.Add(new Enrollment
-                {
-                    Id = Guid.NewGuid(),
-                    StudentId = studentId,
-                    CourseOfferingId = coId,
-                    ModifiedById = modifiedBy,
-                    CreatedAt = DateTime.Now,
-                    IsDeleted = false
-                });
-            }
-
-            // Courses to remove
-            var toRemove = existingIds.Except(enrolledCourseOfferingIds);
-            foreach (var coId in toRemove)
-            {
-                var enrollment = existingEnrollments.First(e => e.CourseOfferingId == coId);
-                enrollment.IsDeleted = true;
-                enrollment.ModifiedById = modifiedBy;
-                enrollment.UpdatedAt = DateTime.Now;
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<List<EnrollmentCourseDto>> GetEligibleCoursesForStudentAsync(Guid studentId, int semesterNumber)
-        {
-            var student = await _context.Students
-                .Where(s => s.Id == studentId && !s.IsDeleted)
-                .Select(s => new { s.ProgramId, s.BatchId, s.SectionId })
-                .FirstOrDefaultAsync();
-
-            if (student == null) return new List<EnrollmentCourseDto>();
-
-            var query =
-                from co in _context.CourseOfferings
-                join c in _context.Courses on co.CourseId equals c.Id
-                join f in _context.Faculties on co.FacultyId equals f.Id into fJoin
-                from f in fJoin.DefaultIfEmpty()
-                join a in _context.Accounts on f.AccountId equals a.Id into aJoin
-                from a in aJoin.DefaultIfEmpty()
-                where co.ProgramId == student.ProgramId
-                      && co.BatchId == student.BatchId
-                      && co.SectionId == student.SectionId
-                      && co.SemesterNumber == semesterNumber
-                      && !co.IsDeleted
-                select new EnrollmentCourseDto
-                {
-                    Id = co.Id,
-                    CourseTitle = c.Code + " - " + c.Title,
-                    FacultyName = a != null
-                        ? (a.FirstName + " " + a.LastName).Trim()
-                        : (f != null ? f.FacultyNumber : string.Empty),
-                    CreditHours = co.CreditHours
-                };
-
-            return await query.ToListAsync();
-        }
-
+        _context = context;
+        _studentService = studentService;
     }
+
+    // -----------------------------
+    // Get eligible courses with enrollment status
+    // -----------------------------
+    public async Task<List<EnrollmentCourseDto>> GetEligibleWithEnrollmentStatusAsync(Guid studentId, int semesterNumber)
+    {
+        var student = await _context.Students
+            .Where(s => s.Id == studentId && !s.IsDeleted)
+            .Select(s => new { s.ProgramId, s.BatchId, s.SectionId })
+            .FirstOrDefaultAsync();
+
+        if (student == null) return new List<EnrollmentCourseDto>();
+
+        var query = from co in _context.CourseOfferings
+                    join c in _context.Courses on co.CourseId equals c.Id
+                    join f in _context.Faculties on co.FacultyId equals f.Id
+                    join a in _context.Accounts on f.AccountId equals a.Id
+                    let isEnrolled = _context.Enrollments
+                        .Any(e => e.StudentId == studentId && e.CourseOfferingId == co.Id && !e.IsDeleted)
+                    where co.ProgramId == student.ProgramId
+                          && co.BatchId == student.BatchId
+                          && co.SectionId == student.SectionId
+                          && co.SemesterNumber == semesterNumber
+                          && !co.IsDeleted
+                    select new EnrollmentCourseDto
+                    {
+                        Id = co.Id,
+                        CourseTitle = c.Code + " - " + c.Title,
+                        FacultyName = a.FirstName + " " + a.LastName,
+                        CreditHours = co.CreditHours,
+                        MaxEnrollment = co.MaxEnrollment,
+                        CurrentEnrollment = co.CurrentEnrollment,
+                        IsEnrolled = isEnrolled,
+                        Schedule = $"{(co.Mon ? "Mon, " : "")}" +
+                                   $"{(co.Tue ? "Tue, " : "")}" +
+                                   $"{(co.Wed ? "Wed, " : "")}" +
+                                   $"{(co.Thu ? "Thu, " : "")}" +
+                                   $"{(co.Fri ? "Fri, " : "")}" +
+                                   $"{(co.Sat ? "Sat, " : "")}" +
+                                   $"{(co.Sun ? "Sun, " : "")}".TrimEnd(',', ' ') +
+                                   $" {co.StartTime:hh\\:mm} - {co.EndTime:hh\\:mm}"
+                    };
+
+        return await query.ToListAsync();
+    }
+
+    // -----------------------------
+    // Get past enrollments grouped by semester
+    // -----------------------------
+    public async Task<Dictionary<string, List<EnrollmentCourseDto>>> GetPastEnrollmentsGroupedBySemesterAsync(
+        Guid studentId, int currentSemesterNumber)
+    {
+        var query = from e in _context.Enrollments
+                    join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                    join c in _context.Courses on co.CourseId equals c.Id
+                    join t in _context.Accounts on co.FacultyId equals t.Id
+                    join sem in _context.Semesters on co.SemesterId equals sem.Id
+                    where e.StudentId == studentId
+                          && co.SemesterNumber < currentSemesterNumber
+                          && !e.IsDeleted
+                    orderby co.SemesterNumber
+                    select new
+                    {
+                        SemesterName = $"{sem.SemesterType} ({sem.StartDate:MMM yyyy} - {sem.EndDate:MMM yyyy}) - Semester {co.SemesterNumber}",
+                        Course = new EnrollmentCourseDto
+                        {
+                            Id = co.Id,
+                            CourseTitle = c.Code + " - " + c.Title,
+                            FacultyName = t.FirstName + " " + t.LastName,
+                            CreditHours = co.CreditHours
+                        }
+                    };
+
+        var list = await query.ToListAsync();
+
+        return list
+            .GroupBy(x => x.SemesterName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.Course).ToList()
+            );
+    }
+
+
+    private async Task<List<Enrollment>> GetExistingEnrollmentsAsync(Guid studentId)
+    {
+        var query = from e in _context.Enrollments
+                    join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                    join s in _context.Students on e.StudentId equals s.Id
+                    where e.StudentId == studentId
+                          && !e.IsDeleted
+                          && !co.IsDeleted
+                          && co.SemesterNumber == s.CurrentSemester
+                    select e;
+
+        return await query.ToListAsync();
+    }
+
+    private async Task<HashSet<Guid>> GetGradedCourseIdsAsync(Guid studentId)
+    {
+        var ids = await _context.Grades
+            .Where(g => g.StudentId == studentId)
+            .Select(g => g.CourseOfferingId)
+            .ToListAsync();
+
+        return ids.ToHashSet();
+    }
+
+    public async Task UpdateEnrollmentsAsync(Guid studentId, List<Guid> offeredCourseIds, Guid modifiedBy)
+    {
+        // 1. Load core data
+        int semesterNumber = await _studentService.GetCurrentSemesterNumber(studentId);
+        var existingEnrollments = await GetExistingEnrollmentsAsync(studentId);
+        var existingIds = existingEnrollments.Select(e => e.CourseOfferingId).ToHashSet();
+        var gradedIds = await GetGradedCourseIdsAsync(studentId);
+
+        var offerings = await _context.CourseOfferings
+            .Where(co => co.SemesterNumber == semesterNumber && !co.IsDeleted)
+            .ToListAsync();
+
+        var offeredSet = offeredCourseIds.ToHashSet();
+
+        // 2. Validate all actions before making changes
+        ValidateEnrollments(offeredSet, existingIds, gradedIds, offerings);
+
+        // 3. Remove unchecked enrollments
+        RemoveUncheckedEnrollments(existingEnrollments, offeredSet, gradedIds, offerings, modifiedBy);
+
+        // 4. Add new enrollments
+        AddNewEnrollments(studentId, offeredSet, existingIds, offerings, modifiedBy);
+
+        // 5. Save once
+        await _context.SaveChangesAsync();
+    }
+
+    private void ValidateEnrollments(
+        HashSet<Guid> offeredSet,
+        HashSet<Guid> existingIds,
+        HashSet<Guid> gradedIds,
+        List<CourseOffering> offerings)
+    {
+        // Already enrolled check
+        if (!offeredSet.Except(existingIds).Any() && offeredSet.SetEquals(existingIds))
+            throw new InvalidOperationException("No enrollment changes detected.");
+
+        // Capacity check for new additions
+        foreach (var coId in offeredSet.Except(existingIds))
+        {
+            var co = offerings.FirstOrDefault(x => x.Id == coId)
+                     ?? throw new InvalidOperationException($"CourseOffering {coId} not found.");
+            if (co.CurrentEnrollment >= co.MaxEnrollment)
+                throw new InvalidOperationException($"Cannot enroll in {co.CourseId}: capacity reached.");
+        }
+
+        // Restriction check for removals
+        foreach (var coId in existingIds.Except(offeredSet))
+        {
+            if (gradedIds.Contains(coId))
+                throw new InvalidOperationException(
+                    $"Cannot remove course {coId}, grading already done.");
+        }
+    }
+
+    private void AddNewEnrollments(
+        Guid studentId,
+        HashSet<Guid> offeredSet,
+        HashSet<Guid> existingIds,
+        List<CourseOffering> offerings,
+        Guid modifiedBy)
+    {
+        var toAddIds = offeredSet.Except(existingIds);
+
+        foreach (var coId in toAddIds)
+        {
+            var co = offerings.First(x => x.Id == coId);
+
+            _context.Enrollments.Add(new Enrollment
+            {
+                Id = Guid.NewGuid(),
+                StudentId = studentId,
+                CourseOfferingId = coId,
+                ModifiedById = modifiedBy,
+                CreatedAt = DateTime.Now,
+                IsDeleted = false
+            });
+
+            co.CurrentEnrollment++;
+        }
+    }
+
+    private void RemoveUncheckedEnrollments(
+        List<Enrollment> existingEnrollments,
+        HashSet<Guid> offeredSet,
+        HashSet<Guid> gradedIds,
+        List<CourseOffering> offerings,
+        Guid modifiedBy)
+    {
+        foreach (var enrollment in existingEnrollments)
+        {
+            if (offeredSet.Contains(enrollment.CourseOfferingId)) continue;
+
+            enrollment.IsDeleted = true;
+            enrollment.ModifiedById = modifiedBy;
+            enrollment.UpdatedAt = DateTime.Now;
+
+            var co = offerings.FirstOrDefault(x => x.Id == enrollment.CourseOfferingId);
+            if (co != null && co.CurrentEnrollment > 0)
+                co.CurrentEnrollment--;
+        }
+    }
+
 }

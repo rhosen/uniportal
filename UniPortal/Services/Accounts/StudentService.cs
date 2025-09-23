@@ -26,6 +26,20 @@ namespace UniPortal.Services.Accounts
             _accountService = accountService;
         }
 
+        public async Task<int> GetCurrentSemesterNumber(Guid studentId)
+        {
+            var student = await _context.Students
+          .Where(s => s.Id == studentId && !s.IsDeleted)
+          .Select(s => new { s.Id, s.CurrentSemester })
+          .FirstOrDefaultAsync();
+
+            if (student == null)
+                throw new InvalidOperationException("Student not found.");
+
+            int semesterNumber = student.CurrentSemester;
+            return semesterNumber;
+        }
+
         // Get accounts of active students without StudentNumber
         public async Task<List<StudentOnboardingDto>> GetStudentsWithoutStudentIdAsync()
         {

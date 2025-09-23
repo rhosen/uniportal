@@ -7,6 +7,8 @@
 
 <div class="container my-4">
 
+
+
     <!-- Page Header -->
     <div class="d-flex align-items-center mb-4">
         <svg class="me-2 text-primary" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
@@ -98,6 +100,31 @@
             @if (Model.Offerings.Any())
             {
                 <form method="post" asp-page-handler="Save">
+
+
+                    <!-- Confirmation Modal -->
+                    <div class="modal fade" id="confirmOfferingsModal" tabindex="-1" aria-labelledby="confirmOfferingsModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="confirmOfferingsModalLabel">Confirm Changes</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>
+                                        All <strong>checked courses</strong> will be <span class="text-success">offered</span>.<br />
+                                        All <strong>unchecked courses</strong> will be <span class="text-danger">removed</span> from offerings.
+                                    </p>
+                                    <p>Do you want to save these changes?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Yes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <input type="hidden" asp-for="ProgramId" />
                     <input type="hidden" asp-for="BatchId" />
                     <input type="hidden" asp-for="SectionId" />
@@ -193,9 +220,11 @@
                     </table>
 
                     <div class="p-3">
-                        <button type="submit" class="btn btn-primary w-100"
-                                disabled="@(!Model.IsCurrentSemester)">
-                            Save Offerings
+                        <!-- Trigger Button -->
+                        <button type="button" class="btn btn-primary w-100"
+                                disabled="@(!Model.IsCurrentSemester)"
+                                data-bs-toggle="modal" data-bs-target="#confirmOfferingsModal">
+                            Save
                         </button>
 
                         @if (!Model.IsCurrentSemester)
@@ -204,7 +233,6 @@
                                 You cannot modify offerings for a previous semester.
                             </p>
                         }
-
                     </div>
 
                 </form>

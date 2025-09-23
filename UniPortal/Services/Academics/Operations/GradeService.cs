@@ -14,6 +14,38 @@ namespace UniPortal.Services.Academics.Operations
             _context = context;
         }
 
+        public async Task<List<SelectOption>> GetStudentsBySemesterAndTeacherAsync(int semesterNumber, Guid facultyId)
+        {
+            var students = await (
+                from e in _context.Enrollments
+                join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
+                join s in _context.Students on e.StudentId equals s.Id
+                join a in _context.Accounts on s.AccountId equals a.Id
+                where co.SemesterNumber == semesterNumber
+                      && co.FacultyId == facultyId
+                      && !e.IsDeleted
+                      && !s.IsDeleted
+                select new
+                {
+                    s.Id,
+                    s.StudentNumber,
+                    a.FirstName,
+                    a.LastName
+                })
+                .Distinct()
+                .OrderBy(s => s.StudentNumber)
+                .Select(s => new SelectOption
+                {
+                    Id = s.Id,
+                    Name = $"{s.StudentNumber} - {s.FirstName} {s.LastName}"
+                })
+                .ToListAsync();
+
+            return students;
+        }
+
+
+
         // -------------------------
         // Student perspective
         // -------------------------

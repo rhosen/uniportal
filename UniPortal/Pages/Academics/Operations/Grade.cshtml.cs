@@ -55,7 +55,7 @@ namespace UniPortal.Pages.Academics.Operations
             if (SelectedSemesterNumber > 0)
             {
                 var teacherId = CurrentAccount.Id;
-                Students = await _enrollmentService.GetStudentsBySemesterAndTeacherAsync(SelectedSemesterNumber, teacherId);
+                Students = await _gradeService.GetStudentsBySemesterAndTeacherAsync(SelectedSemesterNumber, teacherId);
             }
 
             if (SelectedSemesterNumber > 0 && SelectedStudentId != Guid.Empty)

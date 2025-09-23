@@ -2,6 +2,8 @@
 @{
     var fullName = User.Identity?.Name ?? "Faculty";
     var initials = string.Join("", fullName.Split(" ").Select(n => n[0])).ToUpper();
+    var message = TempData["StatusMessage"] as string;
+    var type = TempData["StatusMessageType"] as string ?? "info";
 }
 
 <!DOCTYPE html>
@@ -84,6 +86,13 @@
 
     <!-- Main Content -->
     <div class="container px-4 pb-5">
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert alert-@type alert-dismissible fade show" role="alert">
+                @message
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
         <main role="main" class="pb-5">
             @RenderBody()
         </main>

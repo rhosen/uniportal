@@ -9,7 +9,6 @@
 
     <!-- Page Header -->
     <div class="d-flex align-items-center mb-4">
-        <!-- Graduation Cap Icon -->
         <svg class="me-2 text-primary" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
             <path d="M8 0L0 4l8 4 8-4-8-4zm0 5L1 9l7 4 7-4-7-4z" />
             <path d="M1 11v1l7 4 7-4v-1l-7 4-7-4z" />
@@ -22,10 +21,9 @@
     <div class="row g-4">
 
         <!-- Left Panel: Student Info -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card shadow-sm border-0 rounded-4" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
                 <div class="card-body">
-                    <!-- Student Selection -->
                     <div class="mb-3">
                         <form method="get">
                             <select name="studentId" class="form-select student-select" onchange="this.form.submit()">
@@ -43,43 +41,33 @@
                     @if (Model.SelectedStudent != null)
                     {
                         <div class="mt-3">
-
-                            <!-- Full Name -->
                             <div class="d-flex align-items-center mb-2">
-                                <!-- User Icon -->
                                 <svg class="me-2 text-primary" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" />
                                 </svg>
                                 <span class="fw-semibold">@Model.SelectedStudent.FullName</span>
                             </div>
 
-                            <!-- Student ID -->
                             <div class="d-flex align-items-center mb-2">
-                                <!-- ID Card Icon -->
                                 <svg class="me-2 text-success" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm6 9H6v-1c0-1 2-1.5 6-1.5s6 .5 6 1.5v1z" />
                                 </svg>
                                 <span class="fw-semibold">@Model.SelectedStudent.StudentNumber</span>
                             </div>
 
-                            <!-- Program -->
                             <div class="d-flex align-items-center mb-2">
-                                <!-- Book Icon -->
                                 <svg class="me-2 text-warning" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M19 2H6c-1.1 0-2 .9-2 2v16l7-3 7 3V4c0-1.1-.9-2-2-2z" />
                                 </svg>
                                 <span class="fw-semibold">@Model.SelectedStudent.ProgramName</span>
                             </div>
 
-                            <!-- Current Semester -->
                             <div class="d-flex align-items-center">
-                                <!-- Calendar Icon -->
                                 <svg class="me-2 text-info" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 18H5V9h14v13z" />
                                 </svg>
                                 <span class="fw-semibold">@Model.SelectedStudent.CurrentSemesterName</span>
                             </div>
-
                         </div>
                     }
                 </div>
@@ -87,10 +75,14 @@
         </div>
 
         <!-- Right Panel: Courses -->
-        <div class="col-md-8">
-
+        <div class="col-md-9">
             @if (Model.SelectedStudent != null)
             {
+                <!-- Academic Semester Badge -->
+                <div class="mb-2">
+                    <span class="badge bg-info">Academic Semester: @Model.AcademicSemesterName</span>
+                </div>
+
                 <!-- Eligible Courses -->
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-header bg-white border-bottom d-flex align-items-center">
@@ -101,38 +93,88 @@
                         <h5 class="mb-0">Eligible Courses (Current Semester)</h5>
                     </div>
                     <div class="card-body p-0">
-                        <form method="post">
+
+                        <form method="post" asp-page-handler="Save">
+
                             <input type="hidden" name="StudentId" value="@Model.SelectedStudent.Id" />
+
+                            <!-- Confirmation Modal -->
+                            <div class="modal fade" id="confirmEnrollModal" tabindex="-1" aria-labelledby="confirmEnrollModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="confirmEnrollModalLabel">Confirm Changes</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>
+                                                All <strong>checked courses</strong> will be <span class="text-success">enrolled</span>.<br />
+                                                All <strong>unchecked courses</strong> will be <span class="text-danger">removed</span>.
+                                            </p>
+                                            <p>Do you want to proceed?</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Yes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <table class="table table-hover table-striped mb-0 align-middle">
                                 <thead class="table-light text-muted">
                                     <tr>
                                         <th>Course</th>
                                         <th>Teacher</th>
                                         <th>Credits</th>
+                                        <th>Schedule</th>
+                                        <th>Seats</th>
                                         <th>Enrolled</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var course in Model.EligibleCourses)
+                                    @for (int i = 0; i < Model.EligibleCourses.Count; i++)
                                     {
+                                        var course = Model.EligibleCourses[i];
                                         <tr>
                                             <td>@course.CourseTitle</td>
                                             <td>@course.FacultyName</td>
                                             <td>@course.CreditHours</td>
+                                            <td>@course.Schedule</td>
                                             <td>
-                                                <div class="form-check form-switch m-0">
-                                                    <input class="form-check-input" type="checkbox"
-                                                           name="EnrolledCourses" value="@course.Id"
-                                                           @(course.IsEnrolled ? "checked" : "") />
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-2">@course.CurrentEnrollment / @course.MaxEnrollment</div>
+                                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                                        <div class="progress-bar" role="progressbar" style="width: @( (double)course.CurrentEnrollment / course.MaxEnrollment * 100 )%">
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                @if (course.IsGraded)
+                                                {
+                                                    <span class="badge bg-success">Enrolled & Graded</span>
+                                                }
+                                                else
+                                                {
+                                                    <div class="form-check form-switch m-0">
+                                                        <input type="checkbox" class="form-check-input"
+                                                               name="EnrolledCourses" value="@course.Id"
+                                                               @(course.IsEnrolled ? "checked" : "") />
+                                                    </div>
+                                                }
                                             </td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
+
                             <div class="p-3">
-                                <button type="submit" asp-page-handler="Save" class="btn btn-primary">Enroll</button>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmEnrollModal">
+                                    Save
+                                </button>
                             </div>
+
                         </form>
                     </div>
                 </div>
@@ -155,13 +197,26 @@
                                 </button>
                             </h2>
                             <div id="collapse@semId" class="accordion-collapse collapse" aria-labelledby="heading@semId" data-bs-parent="#pastEnrollments">
-                                <div class="accordion-body p-2">
-                                    <ul class="mb-0 text-muted">
-                                        @foreach (var c in sem.Value)
-                                        {
-                                            <li>@c.CourseTitle</li>
-                                        }
-                                    </ul>
+                                <div class="accordion-body p-0">
+                                    <table class="table table-sm table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Course</th>
+                                                <th>Teacher</th>
+                                                <th>Credits</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var course in sem.Value)
+                                            {
+                                                <tr>
+                                                    <td>@course.CourseTitle</td>
+                                                    <td>@course.FacultyName</td>
+                                                    <td>@course.CreditHours</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -180,19 +235,7 @@
                     <p>Select a student from the left panel to view eligible courses and past enrollments.</p>
                 </div>
             }
-
         </div>
+
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        $(document).ready(function() {
-            $('.student-select').select2({
-                placeholder: "Select Student",
-                allowClear: true,
-                width: '100%'
-            });
-        });
-    </script>
-}
