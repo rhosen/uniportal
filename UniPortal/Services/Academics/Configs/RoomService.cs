@@ -149,8 +149,8 @@ namespace UniPortal.Services.Academics.Configs
                     .Where(o => o.RoomId == r.Id)
                     .Select(o => new ScheduleDto
                     {
-                        SubjectCode = o.Code,
-                        SubjectName = o.Title,
+                        CourseCode = o.Code,
+                        CourseName = o.Title,
                         StartTime = o.StartTime,
                         EndTime = o.EndTime
                     })

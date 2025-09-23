@@ -6,7 +6,7 @@
         public Guid CourseId { get; set; }
         public string CourseTitle { get; set; }
         public int CreditHours { get; set; }
-        public int SequenceOrder { get; set; }
+        public int Sequence { get; set; }
 
         // Editable fields for offering
         public Guid FacultyId { get; set; }

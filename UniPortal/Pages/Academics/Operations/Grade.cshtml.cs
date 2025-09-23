@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using UniPortal.Constants;
 using UniPortal.Dtos;
 using UniPortal.Services.Academics.Operations;
@@ -18,17 +16,19 @@ namespace UniPortal.Pages.Academics.Operations
         private readonly EnrollmentService _enrollmentService;
         private readonly SemesterService _semesterService;
 
-        public GradeModel(GradeService gradeService,
-                          EnrollmentService enrollmentService,
-                          AccountService accountService,
-                          SemesterService semesterService) : base(accountService)
+        public GradeModel(
+            GradeService gradeService,
+            EnrollmentService enrollmentService,
+            AccountService accountService,
+            SemesterService semesterService
+        ) : base(accountService)
         {
             _gradeService = gradeService;
             _enrollmentService = enrollmentService;
-            this._semesterService = semesterService;
+            _semesterService = semesterService;
         }
 
-        public List<TeacherGradeViewModel> Grades { get; set; } = new();
+        public List<FacultyGradeDto> Grades { get; set; } = new();
         public List<SemesterOption> SemesterNumberOptions { get; set; } = new();
         public List<SelectOption> Students { get; set; } = new();
 
@@ -38,60 +38,26 @@ namespace UniPortal.Pages.Academics.Operations
         [BindProperty(SupportsGet = true)]
         public Guid SelectedStudentId { get; set; }
 
-        [BindProperty(SupportsGet = true)]
-        public string SearchTerm { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public int CurrentPage { get; set; } = 1;
-
-        public int PageSize { get; set; } = 10;
-        public int TotalPages { get; set; }
-
         public async Task OnGetAsync()
         {
-            // Generate semesters dropdown
             SemesterNumberOptions = _semesterService.GetSemesterNumberOptions();
 
             if (SelectedSemesterNumber > 0)
-            {
-                var teacherId = CurrentAccount.Id;
-                Students = await _gradeService.GetStudentsBySemesterAndTeacherAsync(SelectedSemesterNumber, teacherId);
-            }
+                Students = await _gradeService.GetStudentsToGradeAsync(SelectedSemesterNumber, CurrentAccount.Id);
 
             if (SelectedSemesterNumber > 0 && SelectedStudentId != Guid.Empty)
-            {
-                await LoadGradesAsync();
-            }
+                Grades = await _gradeService.GetGradesByFacultyAsync(CurrentAccount.Id, SelectedSemesterNumber, SelectedStudentId);
         }
 
-        private async Task LoadGradesAsync()
+
+        public async Task<IActionResult> OnPostSaveAsync(Guid CourseOfferingId, decimal Marks)
         {
-            var allGrades = await _gradeService.GetGradesForTeacherAsync(CurrentAccount.Id, SelectedSemesterNumber, SelectedStudentId);
+            await R(()=> _gradeService.UpsertGradeAsync(SelectedStudentId, CourseOfferingId, Marks, CurrentAccount.Id), "Grades updated successfully!");
 
-            if (!string.IsNullOrWhiteSpace(SearchTerm))
-            {
-                allGrades = allGrades
-                    .Where(g => g.SubjectName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                g.SubjectCode.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-
-            TotalPages = (int)Math.Ceiling(allGrades.Count / (double)PageSize);
-            Grades = allGrades
-                .Skip((CurrentPage - 1) * PageSize)
-                .Take(PageSize)
-                .ToList();
-        }
-
-        public async Task<IActionResult> OnPostSaveAsync(Guid CourseId, decimal Marks)
-        {
-            await _gradeService.UpsertGradeAsync(SelectedStudentId, CourseId, Marks, CurrentAccount.Id);
             return RedirectToPage(new
             {
                 SelectedSemesterNumber,
-                SelectedStudentId,
-                SearchTerm,
-                CurrentPage
+                SelectedStudentId
             });
         }
     }

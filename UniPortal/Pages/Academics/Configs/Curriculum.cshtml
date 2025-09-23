@@ -60,7 +60,7 @@
                         </select>
                     </td>
                     <td>
-                        <input asp-for="NewCurriculum.SequenceOrder" type="number" class="form-control" required />
+                        <input asp-for="NewCurriculum.Sequence" type="number" class="form-control" required />
                     </td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
@@ -120,7 +120,7 @@
                             </select>
                         </td>
                         <td>
-                            <input asp-for="EditCurriculum.SequenceOrder" type="number" class="form-control" value="@item.SequenceOrder" required />
+                            <input asp-for="EditCurriculum.Sequence" type="number" class="form-control" value="@item.Sequence" required />
                         </td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-primary btn-sm">💾 Save</button>
@@ -132,7 +132,7 @@
                         <td>@item.ProgramName</td>
                         <td>@item.SemesterNumber</td>
                         <td>@item.CourseTitle</td>
-                        <td>@item.SequenceOrder</td>
+                        <td>@item.Sequence</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@item.Id" class="btn btn-warning btn-sm">Edit</button>
                             @if (!item.IsDeleted)

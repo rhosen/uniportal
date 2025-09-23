@@ -32,8 +32,8 @@
                                 {
                                     var schedule = room.CurrentSchedules.First();
                                     <div class="mt-1 small text-muted">
-                                        <strong>@schedule.SubjectCode</strong> <br />
-                                        @(schedule.SubjectName.Length > 15 ? schedule.SubjectName.Substring(0, 15) + "…" : schedule.SubjectName) <br />
+                                        <strong>@schedule.CourseCode</strong> <br />
+                                        @(schedule.CourseName.Length > 15 ? schedule.CourseName.Substring(0, 15) + "…" : schedule.CourseName) <br />
                                         @schedule.StartTime?.ToString("hh\\:mm tt") - @schedule.EndTime?.ToString("hh\\:mm tt")
                                     </div>
                                 }

@@ -98,6 +98,16 @@ public class EnrollmentService
             );
     }
 
+    private string GetCourseTitle(Guid courseOfferingId)
+    {
+        var title = (from co in _context.CourseOfferings
+                     join c in _context.Courses on co.CourseId equals c.Id
+                     where co.Id == courseOfferingId
+                     select c.Title)
+                     .FirstOrDefault();
+
+        return title ?? courseOfferingId.ToString();
+    }
 
     private async Task<List<Enrollment>> GetExistingEnrollmentsAsync(Guid studentId)
     {
@@ -151,32 +161,38 @@ public class EnrollmentService
     }
 
     private void ValidateEnrollments(
-        HashSet<Guid> offeredSet,
-        HashSet<Guid> existingIds,
-        HashSet<Guid> gradedIds,
-        List<CourseOffering> offerings)
+    HashSet<Guid> offeredSet,
+    HashSet<Guid> existingIds,
+    HashSet<Guid> gradedIds,
+    List<CourseOffering> offerings)
     {
-        // Already enrolled check
         if (!offeredSet.Except(existingIds).Any() && offeredSet.SetEquals(existingIds))
             throw new InvalidOperationException("No enrollment changes detected.");
 
-        // Capacity check for new additions
         foreach (var coId in offeredSet.Except(existingIds))
         {
             var co = offerings.FirstOrDefault(x => x.Id == coId)
                      ?? throw new InvalidOperationException($"CourseOffering {coId} not found.");
+
             if (co.CurrentEnrollment >= co.MaxEnrollment)
-                throw new InvalidOperationException($"Cannot enroll in {co.CourseId}: capacity reached.");
+            {
+                var title = GetCourseTitle(coId);
+                throw new InvalidOperationException(
+                    $"Cannot enroll in {title}: capacity reached.");
+            }
         }
 
-        // Restriction check for removals
         foreach (var coId in existingIds.Except(offeredSet))
         {
             if (gradedIds.Contains(coId))
+            {
+                var title = GetCourseTitle(coId);
                 throw new InvalidOperationException(
-                    $"Cannot remove course {coId}, grading already done.");
+                    $"Cannot remove course {title}, grading already done.");
+            }
         }
     }
+
 
     private void AddNewEnrollments(
         Guid studentId,

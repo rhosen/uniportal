@@ -24,7 +24,7 @@ namespace UniPortal.Services.Academics.Configs
                         join crs in _context.Courses on c.CourseId equals crs.Id
                         join ct in _context.CourseTypes on crs.CourseTypeId equals ct.Id
                         where !c.IsDeleted && !crs.IsDeleted
-                        orderby p.Name, c.SemesterNumber, c.SequenceOrder
+                        orderby p.Name, c.SemesterNumber, c.Sequence
                         select new CurriculumDto
                         {
                             Id = c.Id,
@@ -33,7 +33,7 @@ namespace UniPortal.Services.Academics.Configs
                             SemesterNumber = c.SemesterNumber,
                             CourseId = crs.Id,
                             CourseTitle = crs.Title,
-                            SequenceOrder = c.SequenceOrder,
+                            Sequence = c.Sequence,
                             IsDeleted = c.IsDeleted
                         };
 
@@ -58,7 +58,7 @@ namespace UniPortal.Services.Academics.Configs
                             SemesterNumber = c.SemesterNumber,
                             CourseId = crs.Id,
                             CourseTitle = crs.Title,
-                            SequenceOrder = c.SequenceOrder,
+                            Sequence = c.Sequence,
                             IsDeleted = c.IsDeleted
                         };
 
@@ -70,7 +70,7 @@ namespace UniPortal.Services.Academics.Configs
         // -----------------------------
         public async Task<Curriculum> CreateAsync(
             Guid programId, int semesterNumber,
-            Guid courseId, int sequenceOrder, Guid? createdById)
+            Guid courseId, int sequence, Guid? createdById)
         {
             var course = await _context.Courses.FindAsync(courseId);
             if (course == null)
@@ -82,7 +82,7 @@ namespace UniPortal.Services.Academics.Configs
                 ProgramId = programId,
                 SemesterNumber = semesterNumber,
                 CourseId = courseId,
-                SequenceOrder = sequenceOrder,
+                Sequence = sequence,
                 IsDeleted = false
             };
 
@@ -94,7 +94,7 @@ namespace UniPortal.Services.Academics.Configs
                 ActionType.Create,
                 nameof(Curriculum),
                 entity.Id,
-                new { programId, semesterNumber, courseId, sequenceOrder }
+                new { programId, semesterNumber, courseId, sequence }
             );
 
             return entity;
@@ -105,7 +105,7 @@ namespace UniPortal.Services.Academics.Configs
         // -----------------------------
         public async Task UpdateAsync(
             Guid id, Guid programId, int semesterNumber,
-            Guid courseId, int sequenceOrder, Guid? updatedById)
+            Guid courseId, int sequence, Guid? updatedById)
         {
             var entity = await _context.Curriculums.FindAsync(id);
             if (entity == null) return;
@@ -115,13 +115,13 @@ namespace UniPortal.Services.Academics.Configs
                 entity.ProgramId,
                 entity.SemesterNumber,
                 entity.CourseId,
-                entity.SequenceOrder
+                entity.Sequence
             };
 
             entity.ProgramId = programId;
             entity.SemesterNumber = semesterNumber;
             entity.CourseId = courseId;
-            entity.SequenceOrder = sequenceOrder;
+            entity.Sequence = sequence;
 
             await _context.SaveChangesAsync();
 
@@ -130,7 +130,7 @@ namespace UniPortal.Services.Academics.Configs
                 ActionType.Update,
                 nameof(Curriculum),
                 entity.Id,
-                new { Old = oldValues, New = new { programId, semesterNumber, courseId, sequenceOrder } }
+                new { Old = oldValues, New = new { programId, semesterNumber, courseId, sequence } }
             );
         }
 

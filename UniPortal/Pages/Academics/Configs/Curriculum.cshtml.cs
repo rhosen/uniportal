@@ -84,7 +84,7 @@ namespace UniPortal.Pages.Academics.Configs
                 NewCurriculum.ProgramId,
                 EditCurriculum.SemesterNumber,
                 NewCurriculum.CourseId,
-                NewCurriculum.SequenceOrder,
+                NewCurriculum.Sequence,
                 CurrentAccount.Id
             ), "Curriculum created successfully");
 
@@ -117,7 +117,7 @@ namespace UniPortal.Pages.Academics.Configs
                 EditCurriculum.ProgramId,
                 EditCurriculum.SemesterNumber,
                 EditCurriculum.CourseId,
-                EditCurriculum.SequenceOrder,
+                EditCurriculum.Sequence,
                 CurrentAccount.Id
             ), "Curriculum updated successfully");
 

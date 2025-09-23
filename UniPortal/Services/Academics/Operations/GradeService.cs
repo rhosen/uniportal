@@ -14,15 +14,16 @@ namespace UniPortal.Services.Academics.Operations
             _context = context;
         }
 
-        public async Task<List<SelectOption>> GetStudentsBySemesterAndTeacherAsync(int semesterNumber, Guid facultyId)
+        public async Task<List<SelectOption>> GetStudentsToGradeAsync(int semesterNumber, Guid accountId)
         {
             var students = await (
                 from e in _context.Enrollments
                 join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
                 join s in _context.Students on e.StudentId equals s.Id
                 join a in _context.Accounts on s.AccountId equals a.Id
+                join f in _context.Faculties on co.FacultyId equals f.Id
                 where co.SemesterNumber == semesterNumber
-                      && co.FacultyId == facultyId
+                      && f.AccountId == accountId
                       && !e.IsDeleted
                       && !s.IsDeleted
                 select new
@@ -32,7 +33,7 @@ namespace UniPortal.Services.Academics.Operations
                     a.FirstName,
                     a.LastName
                 })
-                .Distinct()
+                .Distinct()  // remove duplicates at the DB level
                 .OrderBy(s => s.StudentNumber)
                 .Select(s => new SelectOption
                 {
@@ -43,7 +44,6 @@ namespace UniPortal.Services.Academics.Operations
 
             return students;
         }
-
 
 
         // -------------------------
@@ -75,9 +75,9 @@ namespace UniPortal.Services.Academics.Operations
                         select new StudenGradeDto
                         {
                             SemesterName = "Semester " + co.SemesterNumber,
-                            SubjectCode = c.Code,
-                            SubjectName = c.Title,
-                            TeacherName = t.FirstName + " " + t.LastName,
+                            CourseCode = c.Code,
+                            CourseTitle = c.Title,
+                            FacultyName = t.FirstName + " " + t.LastName,
                             Grade = g.GradeValue,
                             Marks = g.Marks,
                             GPA = g.GPA,
@@ -90,33 +90,34 @@ namespace UniPortal.Services.Academics.Operations
         // -------------------------
         // Teacher perspective
         // -------------------------
-        public async Task<List<TeacherGradeViewModel>> GetGradesForTeacherAsync(
-            Guid facultyId, int semesterNumber, Guid studentId)
+        public async Task<List<FacultyGradeDto>> GetGradesByFacultyAsync(
+      Guid accountId, int semesterNumber, Guid studentId)
         {
             var query = from e in _context.Enrollments
                         join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
                         join c in _context.Courses on co.CourseId equals c.Id
                         join s in _context.Students on e.StudentId equals s.Id
                         join a in _context.Accounts on s.AccountId equals a.Id
-                        join t in _context.Accounts on co.FacultyId equals t.Id
+                        join f in _context.Faculties on co.FacultyId equals f.Id
+                        join t in _context.Accounts on f.AccountId equals t.Id
                         join g in _context.Grades
                             on new { e.StudentId, e.CourseOfferingId } equals new { g.StudentId, g.CourseOfferingId } into gj
                         from grade in gj.DefaultIfEmpty()
-                        where co.FacultyId == facultyId
+                        where t.Id == accountId   // <- filter on faculty's account
                               && co.SemesterNumber == semesterNumber
                               && e.StudentId == studentId
                               && !e.IsDeleted
                               && !co.IsDeleted
                               && !c.IsDeleted
                               && !s.IsDeleted
-                        select new TeacherGradeViewModel
+                        select new FacultyGradeDto
                         {
                             StudentId = s.Id,
                             StudentName = a.FirstName + " " + a.LastName,
                             CourseOfferingId = co.Id,
-                            SubjectCode = c.Code,
-                            SubjectName = c.Title,
-                            TeacherName = t.FirstName + " " + t.LastName,
+                            CourseCode = c.Code,
+                            CourseTitle = c.Title,
+                            FacultyName = t.FirstName + " " + t.LastName,
                             Grade = grade != null ? grade.GradeValue : null,
                             Marks = grade != null ? grade.Marks : (decimal?)null,
                             GPA = grade != null ? grade.GPA : (decimal?)null
@@ -124,9 +125,10 @@ namespace UniPortal.Services.Academics.Operations
 
             return await query
                 .OrderBy(x => x.StudentName)
-                .ThenBy(x => x.SubjectCode)
+                .ThenBy(x => x.CourseCode)
                 .ToListAsync();
         }
+
 
         // -------------------------
         // Upsert grade

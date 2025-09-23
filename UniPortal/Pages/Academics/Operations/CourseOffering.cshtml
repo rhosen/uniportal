@@ -99,7 +99,7 @@
 
             @if (Model.Offerings.Any())
             {
-                <form method="post" asp-page-handler="Save">
+                <form method="post" asp-page-handler="Save" novalidate>
 
 
                     <!-- Confirmation Modal -->
@@ -205,8 +205,8 @@
                                     <td>
                                         <input type="number" class="form-control"
                                                asp-for="Offerings[i].MaxEnrollment"
-                                               min="1" step="1"
-                                               disabled="@(Model.Offerings[i].IsOffered ? null : "disabled")" />
+                                               min="1" step="1" required="false"
+                                               />
                                         <input type="hidden" asp-for="Offerings[i].MaxEnrollment" />
                                     </td>
                                     <td>

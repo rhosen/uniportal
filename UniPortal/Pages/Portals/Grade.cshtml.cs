@@ -66,9 +66,9 @@ namespace UniPortal.Pages.Portals
             var ws = workbook.Worksheets.Add("Grades");
 
             ws.Cell(1, 1).Value = "Semester";
-            ws.Cell(1, 2).Value = "Subject Code";
-            ws.Cell(1, 3).Value = "Subject Name";
-            ws.Cell(1, 4).Value = "Teacher";
+            ws.Cell(1, 2).Value = "Course Code";
+            ws.Cell(1, 3).Value = "Course Title";
+            ws.Cell(1, 4).Value = "Faculty";
             ws.Cell(1, 5).Value = "Grade";
             ws.Cell(1, 6).Value = "Marks";
             ws.Cell(1, 7).Value = "GPA";
@@ -77,9 +77,9 @@ namespace UniPortal.Pages.Portals
             foreach (var g in grades)
             {
                 ws.Cell(row, 1).Value = g.SemesterName;
-                ws.Cell(row, 2).Value = g.SubjectCode;
-                ws.Cell(row, 3).Value = g.SubjectName;
-                ws.Cell(row, 4).Value = g.TeacherName;
+                ws.Cell(row, 2).Value = g.CourseCode;
+                ws.Cell(row, 3).Value = g.CourseTitle;
+                ws.Cell(row, 4).Value = g.FacultyName;
                 ws.Cell(row, 5).Value = g.Grade;
                 ws.Cell(row, 6).Value = g.Marks;
                 ws.Cell(row, 7).Value = g.GPA;

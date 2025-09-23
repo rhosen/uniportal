@@ -2,8 +2,8 @@
 {
     public class ScheduleDto
     {
-        public string SubjectCode { get; set; }
-        public string SubjectName { get; set; }
+        public string CourseCode { get; set; }
+        public string CourseName { get; set; }
         public TimeOnly? StartTime { get; set; }
         public TimeOnly? EndTime { get; set; }
     }

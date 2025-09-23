@@ -301,8 +301,7 @@ CREATE TABLE dbo.Curriculums (
     ProgramId UNIQUEIDENTIFIER NOT NULL,
     SemesterNumber INT NOT NULL,            -- e.g., 1st semester, 2nd semester
     CourseId UNIQUEIDENTIFIER NOT NULL,
-    CreditHours INT NOT NULL,
-    SequenceOrder INT NOT NULL,
+    Sequence INT NOT NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
     ModifiedById UNIQUEIDENTIFIER NULL,
@@ -359,7 +358,7 @@ CREATE TABLE dbo.CourseOfferings (
     SectionId UNIQUEIDENTIFIER NOT NULL,
     FacultyId UNIQUEIDENTIFIER NOT NULL,
     CreditHours INT NOT NULL,                      
-    SequenceOrder INT NOT NULL,                     
+    Sequence INT NOT NULL,                     
     MaxEnrollment INT NOT NULL,
     CurrentEnrollment INT NOT NULL DEFAULT 0,
 

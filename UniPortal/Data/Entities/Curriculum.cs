@@ -5,8 +5,7 @@
         public Guid ProgramId { get; set; }
         public int SemesterNumber { get; set; }   
         public Guid CourseId { get; set; }
-        public int CreditHours { get; set; }
-        public int SequenceOrder { get; set; } = 1;
+        public int Sequence { get; set; } = 1;
 
         // Navigation properties
         public Program Program { get; set; } = null!;

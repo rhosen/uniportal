@@ -11,7 +11,7 @@
         public Guid SectionId { get; set; }
         public Guid FacultyId { get; set; }
         public int CreditHours { get; set; }
-        public int SequenceOrder { get; set; }
+        public int Sequence { get; set; }
         public int MaxEnrollment { get; set; }
         public int CurrentEnrollment { get; set; } = 0;
         public bool Mon { get; set; } = false;

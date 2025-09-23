@@ -121,7 +121,7 @@ namespace UniPortal.Data.Seeders
                 ).ToList();
 
                 int semesterNumber = 1;
-                int sequenceOrder = 1;
+                int sequence = 1;
                 int maxSemesters = 2;
 
                 foreach (var course in programCourses)
@@ -134,16 +134,16 @@ namespace UniPortal.Data.Seeders
                         ProgramId = program.Id,
                         SemesterNumber = semesterNumber,
                         CourseId = course.Id,
-                        SequenceOrder = sequenceOrder,
+                        Sequence = sequence,
                         CreatedAt = now,
                         IsDeleted = false
                     });
 
-                    sequenceOrder++;
+                    sequence++;
                     int maxPerSemester = program.Code == "MSC-CSE" ? 3 : 4;
-                    if (sequenceOrder > maxPerSemester)
+                    if (sequence > maxPerSemester)
                     {
-                        sequenceOrder = 1;
+                        sequence = 1;
                         semesterNumber++;
                     }
                 }
