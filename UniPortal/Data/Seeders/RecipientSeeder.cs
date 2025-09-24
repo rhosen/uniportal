@@ -24,7 +24,7 @@ namespace UniPortal.Data.Seeders
                 {
                     Id = Guid.NewGuid(),
                     Name = "Faculty",
-                    Description = "Notice for all faculty members",
+                    Description = "Notice for a single faculty",
                     IsDeleted = false,
                     CreatedAt = now
                 },

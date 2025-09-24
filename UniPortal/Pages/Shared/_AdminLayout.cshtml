@@ -38,19 +38,72 @@
 
             <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" asp-page="/academics/configs/department">Departments</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/academics/configs/program">Programs</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/academics/configs/semester">Semesters</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/academics/configs/course">Courses</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/academics/configs/curriculum">Curriculums</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/academics/configs/room">Rooms</a></li>
 
-                    @if (User.IsInRole(Roles.Root))
-                    {
-                        <li class="nav-item"><a class="nav-link" asp-page="/users/admin">Admins</a></li>
-                    }
+                    <!-- Core Academic Setup -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="coreAcademicDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Academic Setup
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="coreAcademicDropdown">
+                            <li><a class="dropdown-item" asp-page="/academics/configs/department">Departments</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/degree">Degrees</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/program">Programs</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/semester">Semesters</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Courses & Grading -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="coursesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Courses & Grading
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="coursesDropdown">
+                            <li><a class="dropdown-item" asp-page="/academics/configs/gradescale">Grade Scales</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/coursetype">Course Types</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/course">Courses</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/curriculum">Curriculums</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Class Organization -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="classOrgDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Class Organization
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="classOrgDropdown">
+                            <li><a class="dropdown-item" asp-page="/academics/configs/room">Rooms</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/batch">Batches</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/configs/section">Sections</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Notices & Recipients -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="noticeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Notices & Recipients
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="noticeDropdown">
+                            <li><a class="dropdown-item" asp-page="/academics/configs/recipient">Recipients</a></li>
+                            <li><a class="dropdown-item" asp-page="/academics/operations/notice">Notices</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- User Management -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Users
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            @if (User.IsInRole(Roles.Root))
+                            {
+                                <li><a class="dropdown-item" asp-page="/users/admin">Admins</a></li>
+                            }
+                            <li><a class="dropdown-item" asp-page="/users/faculty">Faculties</a></li>
+                            <li><a class="dropdown-item" asp-page="/users/student">Students</a></li>
+                        </ul>
+                    </li>
+
                 </ul>
-
 
                 <div class="d-flex align-items-center ms-auto">
                     <span class="me-3">Welcome, <strong>@fullName</strong></span>
@@ -69,6 +122,9 @@
                     </form>
                 </div>
             </div>
+
+
+
         </div>
     </nav>
 

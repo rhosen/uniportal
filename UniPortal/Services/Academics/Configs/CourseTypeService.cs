@@ -1,108 +1,96 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using UniPortal.Constants;
 using UniPortal.Data;
 using UniPortal.Data.Entities;
 using UniPortal.Dtos;
-using UniPortal.Services.Infrastructures;
 
 namespace UniPortal.Services.Academics.Configs
 {
-    public class CourseTypeService : BaseService<CourseType>
+    public class CourseTypeService
     {
-        public CourseTypeService(UniPortalContext context, LogService logService)
-            : base(context, logService)
+        private readonly UniPortalContext _context;
+
+        public CourseTypeService(UniPortalContext context)
         {
+            _context = context;
         }
 
+        // Get all CourseTypes
+        public async Task<List<CourseType>> GetAllAsync()
+        {
+            return await _context.CourseTypes
+                .Where(ct => !ct.IsDeleted)
+                .OrderBy(ct => ct.Name)
+                .ToListAsync();
+        }
 
+        // Get options for dropdowns
         public async Task<List<SelectOption>> GetSelectOptionsAsync()
         {
             return await _context.CourseTypes
-                .Where(r => !r.IsDeleted)
-                .OrderBy(r => r.Name)
-                .Select(r => new SelectOption
+                .Where(ct => !ct.IsDeleted)
+                .OrderBy(ct => ct.Name)
+                .Select(ct => new SelectOption
                 {
-                    Id = r.Id,
-                    Name = r.Name
+                    Id = ct.Id,
+                    Name = ct.Name
                 })
                 .ToListAsync();
         }
 
-        public async Task<List<CourseType>> GetAllAsync()
-        {
-            return await _context.CourseTypes
-                .Where(r => !r.IsDeleted)
-                .OrderBy(r => r.Name)
-                .ToListAsync();
-        }
-
+        // Get CourseType by Id
         public async Task<CourseType?> GetByIdAsync(Guid id)
         {
             return await _context.CourseTypes
-                .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
+                .FirstOrDefaultAsync(ct => ct.Id == id && !ct.IsDeleted);
         }
 
-        public async Task<CourseType> CreateAsync(string name, Guid createdById)
+        // Create new CourseType
+        public async Task CreateAsync(string name)
         {
-            var type = new CourseType
+            var courseType = new CourseType
             {
-                Id = Guid.NewGuid(),
-                Name = name,
-                CreatedAt = DateTime.Now,
-                IsDeleted = false
+                Name = name
             };
-
-            _context.CourseTypes.Add(type);
+            _context.CourseTypes.Add(courseType);
             await _context.SaveChangesAsync();
-
-            await LogAsync(createdById, ActionType.Create, nameof(CourseType), type.Id, new { Name = name });
-
-            return type;
         }
 
-        public async Task UpdateAsync(Guid id, string name, Guid updatedById)
+        // Update existing CourseType
+        public async Task UpdateAsync(Guid id, string name)
         {
-            var type = await _context.CourseTypes.FindAsync(id);
-            if (type == null) return;
+            var courseType = await _context.CourseTypes.FindAsync(id);
+            if (courseType == null) return;
 
-            var oldValues = new { type.Name };
-
-            type.Name = name;
-            type.UpdatedAt = DateTime.Now;
-
+            courseType.Name = name;
+            courseType.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
-
-            await LogAsync(
-                updatedById,
-                ActionType.Update,
-                nameof(CourseType),
-                type.Id,
-                new { Old = oldValues, New = new { Name = name } }
-            );
         }
 
-        public async Task DeleteAsync(Guid id, Guid deletedById)
+        // Soft delete CourseType
+        public async Task DeleteAsync(Guid id)
         {
-            var type = await _context.CourseTypes.FindAsync(id);
-            if (type == null) return;
+            var courseType = await _context.CourseTypes.FirstOrDefaultAsync(ct => ct.Id == id && !ct.IsDeleted);
+            if (courseType == null) return;
 
-            type.IsDeleted = true;
-            type.DeletedAt = DateTime.Now;
+            // Check if it is used in any course
+            var isUsed = await _context.Courses.AnyAsync(c => c.CourseTypeId == id && !c.IsDeleted);
+            if (isUsed)
+                throw new InvalidOperationException("This course type is used in active courses and cannot be deleted.");
 
+            courseType.IsDeleted = true;
+            courseType.DeletedAt = DateTime.Now;
             await _context.SaveChangesAsync();
-            await LogAsync(deletedById, ActionType.Delete, nameof(CourseType), type.Id);
         }
 
-        public async Task ActivateAsync(Guid id, Guid activatedById)
+        // Reactivate soft-deleted CourseType
+        public async Task ActivateAsync(Guid id)
         {
-            var type = await _context.CourseTypes.FindAsync(id);
-            if (type == null) return;
+            var courseType = await _context.CourseTypes.FindAsync(id);
+            if (courseType == null) return;
 
-            type.IsDeleted = false;
-            type.DeletedAt = null;
-
+            courseType.IsDeleted = false;
+            courseType.DeletedAt = null;
             await _context.SaveChangesAsync();
-            await LogAsync(activatedById, ActionType.Activate, nameof(CourseType), type.Id);
         }
     }
 }
