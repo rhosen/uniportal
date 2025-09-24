@@ -31,14 +31,6 @@ namespace UniPortal.Data.Seeders
                 new Recipient
                 {
                     Id = Guid.NewGuid(),
-                    Name = "Department",
-                    Description = "Notice for a whole department",
-                    IsDeleted = false,
-                    CreatedAt = now
-                },
-                new Recipient
-                {
-                    Id = Guid.NewGuid(),
                     Name = "All",
                     Description = "Notice for everyone",
                     IsDeleted = false,
