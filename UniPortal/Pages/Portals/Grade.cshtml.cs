@@ -11,15 +11,18 @@ namespace UniPortal.Pages.Portals
     {
         private readonly GradeService _gradeService;
         private readonly StudentService _studentService;
+        private readonly GradesReportDocument _gradesReport;
 
         public GradesModel(
             AccountService accountService,
             GradeService gradeService,
-            StudentService studentService)
+            StudentService studentService,
+            GradesReportDocument gradesReport) // injected via DI
             : base(accountService)
         {
             _gradeService = gradeService;
             _studentService = studentService;
+            _gradesReport = gradesReport;
         }
 
         public StudentDto Student { get; set; }
@@ -35,9 +38,11 @@ namespace UniPortal.Pages.Portals
         {
             await LoadStudentGradesAsync();
 
-            var document = new GradesReportDocument(Student, GradesBySemester);
+            // Set the report data
+            _gradesReport.SetData(Student, GradesBySemester);
+
             using var stream = new MemoryStream();
-            document.GeneratePdf(stream);
+            _gradesReport.GeneratePdf(stream);
             stream.Position = 0;
 
             return File(stream.ToArray(), "application/pdf", "Grades.pdf");

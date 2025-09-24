@@ -1,10 +1,9 @@
-﻿namespace UniPortal.ViewModels.Users
+﻿public class FacultyProfileViewModel
 {
-    public class FacultyProfileViewModel
-    {
-        public Guid Id { get; set; }
-        public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-    }
+    public Guid Id { get; set; }
+    public string FullName { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public bool IsAdvisor { get; set; }
+    public string Title { get; set; }
 }

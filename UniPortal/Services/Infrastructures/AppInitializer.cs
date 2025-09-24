@@ -106,37 +106,27 @@ namespace UniPortal.Services.Infrastructures
                 _logger.LogInformation($"Script executed successfully: {scriptName}");
             }
         }
-
         private async Task RunSeedersAsync()
         {
             _logger.LogInformation("Running seeders...");
 
             using var scope = _serviceProvider.CreateScope();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<UniPortalContext>();
 
-            var seedMode = _config.GetValue<string>("Seed:Mode")?.ToLowerInvariant() ?? "full";
+            var seedEnabled = _config.GetValue<bool>("Seed:Enabled");
 
-            switch (seedMode)
+            await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
+            await InstitutionSeeder.SeedAsync(dbContext);
+            await GradeScaleSeeder.SeedGradeScaleAsync(scope.ServiceProvider);
+            await RoleSeeder.SeedRolesAsync(roleManager);
+
+            if (seedEnabled)
             {
-                case "minimal":
-                    _logger.LogInformation("Seeding in Minimal mode (roles + admin only)...");
-                    await RoleSeeder.SeedRolesAsync(roleManager);
-                    await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
-                    break;
-
-                case "none":
-                    _logger.LogInformation("Seeding disabled (Seed:Mode=None).");
-                    break;
-
-                default: // "full"
-                    _logger.LogInformation("Seeding in Full mode (all seeders)...");
-                    await AcademicSeeder.SeedAsync(scope.ServiceProvider);
-                    await RoleSeeder.SeedRolesAsync(roleManager);
-                    await AdminSeeder.SeedAdminAsync(scope.ServiceProvider);
-                    await RecipientSeeder.SeedRecipientTypesAsync(scope.ServiceProvider);
-                    await GradeScaleSeeder.SeedGradeScaleAsync(scope.ServiceProvider);
-                    break;
+                _logger.LogInformation("Seeding enabled: running AcademicSeeder...");
+                await AcademicSeeder.SeedAsync(scope.ServiceProvider);
             }
+
 
             _logger.LogInformation("Seeders executed successfully.");
         }

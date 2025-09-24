@@ -5,6 +5,7 @@ using UniPortal.Constants;
 using UniPortal.Dtos;
 using UniPortal.Reports;
 using UniPortal.Services.Academics.Configs;
+using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
 
 namespace UniPortal.Pages.Academics.Operations
@@ -15,17 +16,20 @@ namespace UniPortal.Pages.Academics.Operations
         private readonly StudentService _studentService;
         private readonly EnrollmentService _enrollmentService;
         private readonly SemesterService _semesterService;
+        private readonly EnrollmentReportDocument _enrollmentReport;
 
         public EnrollmentModel(
             StudentService studentService,
             EnrollmentService enrollmentService,
             AccountService accountService,
-            SemesterService semesterService
-        ) : base(accountService)
+            SemesterService semesterService,
+            EnrollmentReportDocument enrollmentReport) // injected via DI
+            : base(accountService)
         {
             _studentService = studentService;
             _enrollmentService = enrollmentService;
             _semesterService = semesterService;
+            _enrollmentReport = enrollmentReport;
         }
 
         public List<StudentDto> AllStudents { get; set; } = new();
@@ -86,11 +90,13 @@ namespace UniPortal.Pages.Academics.Operations
             var enrolledCourses = courses.Where(c => c.IsEnrolled).ToList();
             if (!enrolledCourses.Any()) return NotFound();
 
-            var faculty = CurrentAccount.FirstName + " " + CurrentAccount.LastName;
+            var faculty = $"{CurrentAccount.FirstName} {CurrentAccount.LastName}";
 
-            var document = new EnrollmentReportDocument(student, enrolledCourses, faculty);
+            // Use DI-injected report and SetData()
+            _enrollmentReport.SetData(student, enrolledCourses, faculty);
+
             using var stream = new MemoryStream();
-            document.GeneratePdf(stream);
+            _enrollmentReport.GeneratePdf(stream);
             stream.Position = 0;
 
             var safeName = string.Concat(student.FullName.Split(Path.GetInvalidFileNameChars()));
@@ -98,6 +104,5 @@ namespace UniPortal.Pages.Academics.Operations
 
             return File(stream.ToArray(), "application/pdf", fileName);
         }
-
     }
 }

@@ -26,17 +26,18 @@ namespace UniPortal.Services.Accounts
             _unitOfWork = unitOfWork;
         }
 
-
         public async Task<List<SelectOption>> GetSelectOptionsAsync()
         {
             return await (
                 from f in _unitOfWork.Context.Faculties
                 join a in _unitOfWork.Context.Accounts on f.AccountId equals a.Id
-                where a.IsActive
+                join ft in _unitOfWork.Context.FacultyTypes on f.FacultyTypeId equals ft.Id
+                where a.IsActive && !f.IsDeleted
+                orderby a.FirstName, a.LastName
                 select new SelectOption
                 {
                     Id = f.Id,
-                    Name = a.FirstName + " " + a.LastName
+                    Name = $"{a.FirstName} {a.LastName} ({ft.Name})"
                 }
             ).ToListAsync();
         }
@@ -48,40 +49,32 @@ namespace UniPortal.Services.Accounts
                 join d in _context.Departments on f.DepartmentId equals d.Id
                 join p in _context.Programs on d.Id equals p.DepartmentId
                 join a in _context.Accounts on f.AccountId equals a.Id
+                join ft in _context.FacultyTypes on f.FacultyTypeId equals ft.Id
                 where p.Id == programId && !f.IsDeleted && !a.IsDeleted
                 orderby a.FirstName, a.LastName, f.FacultyNumber
                 select new SelectOption
                 {
                     Id = f.Id,
-                    Name = (a.FirstName + " " + a.LastName).Trim() != string.Empty
-                        ? (a.FirstName + " " + a.LastName).Trim()
-                        : f.FacultyNumber
+                    Name = !string.IsNullOrWhiteSpace(a.FirstName + " " + a.LastName)
+                        ? $"{a.FirstName} {a.LastName} ({ft.Name})"
+                        : $"{f.FacultyNumber} ({ft.Name})"
                 };
 
             return await query.ToListAsync();
         }
 
-        /// <summary>
-        /// Public method to create a new faculty
-        /// </summary>
         public async Task CreateAsync(string email, string password, string firstName, string lastName,
-                                      Guid departmentId)
+                                      Guid departmentId, Guid facultyTypeId, bool isAdvisor = false)
         {
-            // 1️⃣ Generate Faculty Number
             var facultyNumber = await GenerateNextFacultyNumberAsync();
 
-            // 2️⃣ Create Account
             var account = await _accountService.CreateAccountAsync(email, password, Roles.Faculty, firstName, lastName);
 
-            // 3️⃣ Create Faculty entity in-memory
-            var faculty = BuildFacultyEntity(account.Id, departmentId, facultyNumber);
+            var faculty = BuildFacultyEntity(account.Id, departmentId, facultyNumber, facultyTypeId, isAdvisor);
 
-            // 4️⃣ Add entity and commit via UnitOfWork
             _unitOfWork.Context.Faculties.Add(faculty);
-
             await _unitOfWork.CommitAsync();
 
-            // 5️⃣ Log creation
             await LogAsync(account.Id, ActionType.Create, nameof(Faculty), faculty.AccountId, faculty);
         }
 
@@ -90,7 +83,6 @@ namespace UniPortal.Services.Accounts
             if (viewModel == null || viewModel.AccountId == Guid.Empty)
                 throw new ArgumentException("Invalid faculty view model.");
 
-            // Update account profile
             var profile = new AccountViewModel
             {
                 AccountId = viewModel.AccountId,
@@ -99,12 +91,10 @@ namespace UniPortal.Services.Accounts
             };
             await _accountService.UpdateProfileAsync(profile);
 
-            // Update email if changed
             var account = await _accountService.GetAccountAsync(viewModel.AccountId);
             if (account != null && !string.Equals(account.Email, viewModel.Email, StringComparison.OrdinalIgnoreCase))
                 await _accountService.UpdateEmailAsync(viewModel.AccountId, viewModel.Email);
 
-            // Update Faculty-specific field
             var faculty = await _unitOfWork.Context.Faculties
                 .FirstOrDefaultAsync(f => f.AccountId == viewModel.AccountId);
 
@@ -112,24 +102,18 @@ namespace UniPortal.Services.Accounts
                 throw new Exception("Faculty not found");
 
             faculty.DepartmentId = viewModel.DepartmentId;
-            _unitOfWork.Context.Faculties.Update(faculty);
+            faculty.FacultyTypeId = viewModel.FacultyTypeId;
+            faculty.IsAdvisor = viewModel.IsAdvisor;
 
-            // Commit and log
+            _unitOfWork.Context.Faculties.Update(faculty);
             await _unitOfWork.CommitAsync();
             await LogAsync(viewModel.AccountId, ActionType.Update, nameof(Faculty), faculty.AccountId, viewModel);
         }
 
-
-        #region Private Helper Methods
-
-        /// <summary>
-        /// Generates the next FacultyNumber (FYY-XXXX)
-        /// </summary>
         private async Task<string> GenerateNextFacultyNumberAsync()
         {
             var year = DateTime.Now.Year;
 
-            // Get last sequence for this year
             int lastSequence = 0;
             var lastFacultyNumber = await _unitOfWork.Context.Faculties
                 .Where(f => f.FacultyNumber.StartsWith($"F{year % 100:D2}"))
@@ -143,23 +127,20 @@ namespace UniPortal.Services.Accounts
             return _generator.GenerateNext(year, lastSequence);
         }
 
-
-        /// <summary>
-        /// Builds the Faculty entity
-        /// </summary>
-        private Faculty BuildFacultyEntity(Guid accountId, Guid departmentId, string facultyNumber)
+        private Faculty BuildFacultyEntity(Guid accountId, Guid departmentId, string facultyNumber,
+                                           Guid facultyTypeId, bool isAdvisor = false)
         {
             return new Faculty
             {
                 AccountId = accountId,
                 DepartmentId = departmentId,
                 FacultyNumber = facultyNumber,
+                FacultyTypeId = facultyTypeId,
+                IsAdvisor = isAdvisor
             };
         }
 
-        #endregion
 
-        #region Read / Update / Delete Methods
 
         public async Task<List<FacultyViewModel>> GetAllAsync()
         {
@@ -167,6 +148,7 @@ namespace UniPortal.Services.Accounts
                 from f in _unitOfWork.Context.Faculties
                 join a in _unitOfWork.Context.Accounts on f.AccountId equals a.Id
                 join d in _unitOfWork.Context.Departments on f.DepartmentId equals d.Id
+                join ft in _unitOfWork.Context.FacultyTypes on f.FacultyTypeId equals ft.Id
                 where f.Account.IsActive && !a.IsDeleted
                 orderby f.FacultyNumber
                 select new FacultyViewModel
@@ -178,11 +160,12 @@ namespace UniPortal.Services.Accounts
                     Email = a.Email,
                     DepartmentId = f.DepartmentId,
                     DepartmentName = d.Name,
+                    FacultyTypeId = f.FacultyTypeId,
+                    FacultyTypeName = ft.Name,
+                    IsAdvisor = f.IsAdvisor
                 }
             ).ToListAsync();
         }
-
-
 
         public async Task<FacultyViewModel?> GetAsync(
             Guid? facultyId = null,
@@ -196,6 +179,7 @@ namespace UniPortal.Services.Accounts
                 from f in _unitOfWork.Context.Faculties
                 join a in _unitOfWork.Context.Accounts on f.AccountId equals a.Id
                 join d in _unitOfWork.Context.Departments on f.DepartmentId equals d.Id
+                join ft in _unitOfWork.Context.FacultyTypes on f.FacultyTypeId equals ft.Id
                 where f.Account.IsActive && !a.IsDeleted
                       && (facultyId == null || f.Id == facultyId)
                       && (facultyNumber == null || f.FacultyNumber == facultyNumber)
@@ -209,10 +193,12 @@ namespace UniPortal.Services.Accounts
                     Email = a.Email,
                     DepartmentId = f.DepartmentId,
                     DepartmentName = d.Name,
+                    FacultyTypeId = f.FacultyTypeId,
+                    FacultyTypeName = ft.Name,
+                    IsAdvisor = f.IsAdvisor
                 }
             ).FirstOrDefaultAsync();
         }
-
 
         public async Task DeleteAsync(Guid accountId)
         {
@@ -250,6 +236,5 @@ namespace UniPortal.Services.Accounts
             await LogAsync(accountId, ActionType.Activate, nameof(Faculty), accountId, faculty);
         }
 
-        #endregion
     }
 }

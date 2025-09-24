@@ -90,17 +90,23 @@
                 </div>
 
                 <!-- Actions Row -->
-                <div class="col-md-3 col-sm-6">
-                    <div class="metric-card" onclick="location.href='@Url.Page("/academics/operations/enrollment")'">
-                        <div class="metric-content">
-                            <svg class="metric-icon" viewBox="0 0 64 48">
-                                <path d="M32 4C18 4 6 16 6 30s12 26 26 26 26-12 26-26S46 4 32 4zm0 4a22 22 0 1022 22A22 22 0 0032 8z" fill="#007bff" />
-                            </svg>
-                            <div class="card-title">Enroll </div>
-                            <div class="card-title">Students</div>
+                @{
+                    if (Model.Profile.IsAdvisor)
+                    {
+                        <div class="col-md-3 col-sm-6">
+                            <div class="metric-card" onclick="location.href='@Url.Page("/academics/operations/enrollment")'">
+                                <div class="metric-content">
+                                    <svg class="metric-icon" viewBox="0 0 64 48">
+                                        <path d="M32 4C18 4 6 16 6 30s12 26 26 26 26-12 26-26S46 4 32 4zm0 4a22 22 0 1022 22A22 22 0 0032 8z" fill="#007bff" />
+                                    </svg>
+                                    <div class="card-title">Enroll </div>
+                                    <div class="card-title">Students</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    }
+                }
+
 
                 <div class="col-md-3 col-sm-6">
                     <div class="metric-card" onclick="location.href='@Url.Page("/Faculty/UploadNotes")'">

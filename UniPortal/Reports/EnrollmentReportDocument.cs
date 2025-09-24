@@ -2,32 +2,41 @@
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using UniPortal.Dtos;
+using UniPortal.Services.Academics.Configs;
 
 namespace UniPortal.Reports
 {
-    public class EnrollmentReportDocument : IDocument
+    public class EnrollmentReportDocument : BaseReportDocument
     {
-        private readonly StudentDto _student;
-        private readonly List<EnrollmentCourseDto> _courses;
-        private readonly string _advisingFaculty;
+        private StudentDto? _student;
+        private List<EnrollmentCourseDto>? _courses;
+        private string? _advisingFaculty;
 
-        public EnrollmentReportDocument(StudentDto student, List<EnrollmentCourseDto> courses, string advisingFaculty)
+        // Only inject services here
+        public EnrollmentReportDocument(InstitutionService institutionService)
+            : base(institutionService)
+        {
+        }
+
+        // Set dynamic data before generating report
+        public void SetData(StudentDto student, List<EnrollmentCourseDto> courses, string advisingFaculty)
         {
             _student = student;
             _courses = courses;
             _advisingFaculty = advisingFaculty;
         }
 
-        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
-
-        public void Compose(IDocumentContainer container)
+        public override void Compose(IDocumentContainer container)
         {
+            if (_student == null || _courses == null || _advisingFaculty == null)
+                throw new InvalidOperationException("Report data not set. Call SetData() before generating.");
+
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
                 page.Margin(40);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontSize(12));
+                page.DefaultTextStyle(x => x.FontSize(10));
 
                 page.Header().Element(ComposeHeader);
                 page.Content().Element(ComposeContent);
@@ -36,35 +45,41 @@ namespace UniPortal.Reports
 
         private void ComposeHeader(IContainer container)
         {
-            container.PaddingBottom(10).Column(col =>
+            container.Column(col =>
             {
-                col.Spacing(4);
+                // Institution Header from base class
+                col.Item().Element(ComposeInstitutionHeader);
 
-                col.Item().Row(row =>
+                // Report Title (full width, centered)
+                col.Item().AlignCenter()
+                   .Text("Enrollment Summary")
+                   .Bold()
+                   .FontSize(12);
+
+                col.Item().PaddingTop(10).Column(infoCol =>
                 {
-                    // Left column: Student info (without Advising Faculty)
-                    row.RelativeItem().Column(left =>
+                    infoCol.Spacing(3); 
+
+                    infoCol.Item().Row(row =>
                     {
-                        left.Spacing(2);
-                        left.Item().Text(_student.FullName).SemiBold().FontSize(12);
-                        left.Item().Text($"Student ID: {_student.StudentNumber}");
-                        left.Item().Text($"Program: {_student.ProgramName}");
-                        left.Item().Text($"Batch: {_student.Batch}, Section: {_student.Section}");
+                        row.RelativeItem().Column(left =>
+                        {
+                            left.Spacing(2);
+                            left.Item().Text($"Date: {DateTime.Now:dd MMM yyyy}").FontSize(10);
+                            left.Item().Text($"Advisor: {_advisingFaculty}").FontSize(10);
+                            left.Item().Text($"Student: {_student.StudentNumber} - {_student!.FullName} ").FontSize(10);
+                            left.Item().Text($"Program: {_student.ProgramName}, Batch: {_student.Batch}, Sec: {_student.Section}").FontSize(10);
+                        });
                     });
 
-                    // Right column: Title, Date, Advising Faculty
-                    row.RelativeItem().Column(right =>
-                    {
-                        right.Spacing(2);
-                        right.Item().AlignRight().Text("Enrollment Summary").Bold().FontSize(14);
-                        right.Item().AlignRight().Text($"Date: {DateTime.Now:dd MMM yyyy}");
-                        right.Item().AlignRight().Text($"Advising Faculty: {_advisingFaculty}").SemiBold();
-                    });
+                    // Horizontal line separator
+                    infoCol.Item().PaddingTop(5)
+                           .LineHorizontal(1)
+                           .LineColor(Colors.Grey.Lighten2);
                 });
-
-                col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
             });
         }
+
 
         private void ComposeContent(IContainer container)
         {
@@ -72,27 +87,24 @@ namespace UniPortal.Reports
             {
                 col.Item().Table(table =>
                 {
-                    // Columns
                     table.ColumnsDefinition(columns =>
                     {
-                        columns.RelativeColumn(3); // Course Title
+                        columns.RelativeColumn(4); // Course Title
                         columns.RelativeColumn(2); // Faculty
                         columns.RelativeColumn(1); // Credits
                         columns.RelativeColumn(3); // Schedule
                     });
 
-                    // Header
                     table.Header(header =>
                     {
-                        header.Cell().PaddingVertical(3).Text("Course Title").SemiBold();
-                        header.Cell().PaddingVertical(4).Text("Faculty").SemiBold();
-                        header.Cell().PaddingVertical(4).Text("Credits").SemiBold();
-                        header.Cell().PaddingVertical(4).Text("Schedule").SemiBold();
+                        header.Cell().PaddingVertical(3).Text("Course Title").SemiBold().FontSize(10);
+                        header.Cell().PaddingVertical(3).Text("Faculty").SemiBold().FontSize(10);
+                        header.Cell().PaddingVertical(3).Text("Credits").SemiBold().FontSize(10);
+                        header.Cell().PaddingVertical(3).Text("Schedule").SemiBold().FontSize(10);
                     });
 
-                    // Data rows
                     int totalCredits = 0;
-                    foreach (var course in _courses)
+                    foreach (var course in _courses!)
                     {
                         totalCredits += course.CreditHours;
 
@@ -103,8 +115,8 @@ namespace UniPortal.Reports
                     }
 
                     // Total row
-                    table.Cell().ColumnSpan(2).PaddingVertical(6).Text("Total").SemiBold();
-                    table.Cell().PaddingVertical(6).Text(totalCredits.ToString()).SemiBold();
+                    table.Cell().ColumnSpan(2).PaddingVertical(6).Text("Total").SemiBold().FontSize(10);
+                    table.Cell().PaddingVertical(6).Text(totalCredits.ToString()).SemiBold().FontSize(10);
                     table.Cell(); // empty for schedule
                 });
             });
@@ -116,7 +128,8 @@ namespace UniPortal.Reports
                 .BorderBottom(1)
                 .BorderColor(Colors.Grey.Lighten4)
                 .PaddingVertical(4)
-                .Text(text);
+                .Text(text)
+                .FontSize(10);
         }
     }
 }

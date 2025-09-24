@@ -1,0 +1,62 @@
+﻿@page
+@model UniPortal.Pages.Academics.Configs.InstitutionModel
+@{
+    ViewData["Title"] = "Institution Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">🏫 Institution Management</h2>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Email</th>
+                <th>Phone</th>
+                @* <th>Logo URL</th> *@
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var inst in Model.Institutions)
+            {
+                <tr>
+                    <form method="post">
+                        <input type="hidden" name="id" value="@inst.Id" />
+
+                        @if (Model.EditInstitutionId == inst.Id.ToString())
+                        {
+                        <td><input name="EditInstitution.Name" value="@Model.EditInstitution.Name" class="form-control" required /></td>
+                        <td><input name="EditInstitution.Address" value="@Model.EditInstitution.Address" class="form-control" /></td>
+                        <td><input name="EditInstitution.Email" type="email" value="@Model.EditInstitution.Email" class="form-control" /></td>
+                        <td><input name="EditInstitution.Phone" value="@Model.EditInstitution.Phone" class="form-control" /></td>
+                        <td><input name="EditInstitution.LogoUrl" value="@Model.EditInstitution.LogoUrl" class="form-control" /></td>
+                        <td>
+                            <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
+                            <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <td>@inst.Name</td>
+                        <td>@inst.Address</td>
+                        <td>@inst.Email</td>
+                        <td>@inst.Phone</td>
+                        @* <td>@inst.LogoUrl</td> *@
+                        <td>
+                            <button type="submit" asp-page-handler="Edit" name="id" value="@inst.Id" class="btn btn-sm btn-warning">Edit</button>
+                        </td>
+                    }
+                    </form>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

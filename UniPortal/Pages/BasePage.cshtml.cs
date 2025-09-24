@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using UniPortal.Constants;
 using UniPortal.Services.Accounts;
+using static UniPortal.Constants.AppConstant;
 
 namespace UniPortal.Pages
 {
@@ -17,16 +18,23 @@ namespace UniPortal.Pages
         [TempData]
         public string? StatusMessageType { get; set; } // "success", "warning", "danger", "info"
 
-
         public BasePageModel(AccountService accountService)
         {
             _accountService = accountService;
         }
 
-        public Data.Entities.Account CurrentAccount { get; private set; }
+        // Always initialized to prevent NullReferenceException
+        public Data.Entities.Account CurrentAccount { get; private set; } = new();
 
         public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
         {
+            if (!User.Identity.IsAuthenticated)
+            {
+                // Redirect to login page if user is not logged in
+                context.Result = RedirectToPage(AppRoutes.Login);
+                return;
+            }
+
             await LoadCurrentAccountAsync();
             await next();
         }
@@ -37,13 +45,15 @@ namespace UniPortal.Pages
 
             if (!string.IsNullOrEmpty(identityUserId))
             {
-                CurrentAccount = await _accountService.GetAccountAsync(null, identityUserId);
+                var account = await _accountService.GetAccountAsync(null, identityUserId);
+                if (account != null)
+                {
+                    CurrentAccount = account;
+                }
             }
         }
 
-        public string CurrentUserDisplayName => CurrentAccount != null
-            ? $"{CurrentAccount.FirstName} {CurrentAccount.LastName}"
-            : "Unknown";
+        public string CurrentUserDisplayName => $"{CurrentAccount.FirstName} {CurrentAccount.LastName}".Trim();
 
         public string LayoutForRole
         {
@@ -61,7 +71,7 @@ namespace UniPortal.Pages
             }
         }
 
-        // BasePageModel
+        // Helper method for running async actions with message handling
         protected Task R(Func<Task> action, string msg) => RunWithMessageAsync(action, msg);
 
         public async Task RunWithMessageAsync(Func<Task> action, string successMessage = "Action completed successfully.")

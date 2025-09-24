@@ -25,7 +25,7 @@ namespace UniPortal.Data
         public DbSet<CourseOffering> CourseOfferings { get; set; }
         public DbSet<Room> Rooms { get; set; }
 
-        // Curriculum / Requirements
+        // Curriculum / requirements
         public DbSet<CourseType> CourseTypes { get; set; }
         public DbSet<Curriculum> Curriculums { get; set; }
 
@@ -34,7 +34,8 @@ namespace UniPortal.Data
         public DbSet<Section> Sections { get; set; }
         public DbSet<Student> Students { get; set; }
 
-        // Faculties / Staff
+        // Faculties / staff
+        public DbSet<FacultyType> FacultyTypes { get; set; }   // NEW
         public DbSet<Faculty> Faculties { get; set; }
 
         // Student-related entities
@@ -44,12 +45,13 @@ namespace UniPortal.Data
         public DbSet<Grade> Grades { get; set; }
         public DbSet<GradeScale> GradeScales { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
-        public DbSet<CourseMaterial> CourseMaterials { get; set; }  // Teacher uploads
+        public DbSet<CourseMaterial> CourseMaterials { get; set; }
         public DbSet<Notice> Notices { get; set; }
         public DbSet<Recipient> Recipients { get; set; }
         public DbSet<ClassCancellation> ClassCancellations { get; set; }
 
         // System / logging
         public DbSet<Log> Logs { get; set; }
+        public DbSet<Institution> Institutions { get; set; } 
     }
 }

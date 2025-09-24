@@ -1,6 +1,6 @@
 ﻿using UniPortal.Data;
 using UniPortal.Helpers;
-using UniPortal.Services.Academics;
+using UniPortal.Reports;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
@@ -52,15 +52,16 @@ namespace UniPortal.Extensions
             services.AddScoped<RoomService>();
             services.AddScoped<CourseService>();
             services.AddScoped<CourseTypeService>();
+            services.AddScoped<FacultyTypeService>(); // ✅ Added
             services.AddScoped<NoticeService>();
             services.AddScoped<ProgramService>();
             services.AddScoped<DegreeService>();
             services.AddScoped<SectionService>();
             services.AddScoped<BatchService>();
             services.AddScoped<CurriculumService>();
-            services.AddScoped<GradeScaleService>(); 
-            services.AddScoped<RecipientService>(); 
-
+            services.AddScoped<GradeScaleService>();
+            services.AddScoped<RecipientService>();
+            services.AddScoped<InstitutionService>(); // ✅ Added
 
             // ========================
             // Academic Operations Services
@@ -81,6 +82,12 @@ namespace UniPortal.Extensions
             // ========================
             services.AddScoped<StudentIdGenerator>();
             services.AddScoped<FacultyNumberGenerator>();
+
+            // ========================
+            // Reports
+            // ========================
+            services.AddScoped<GradesReportDocument>();
+            services.AddScoped<EnrollmentReportDocument>();
 
             return services;
         }

@@ -11,16 +11,20 @@ using static UniPortal.Constants.AppConstant;
 namespace UniPortal.Pages.Users
 {
     [Authorize(Roles = Roles.Admin + "," + Roles.Root)]
-    public class FacultyModel : PageModel
+    public class FacultyModel : BasePageModel
     {
         private readonly FacultyService _facultyService;
         private readonly DepartmentService _departmentService;
+        private readonly FacultyTypeService _facultyTypeService;
 
-        public FacultyModel(FacultyService facultyService, 
-                            DepartmentService departmentService)
+        public FacultyModel(FacultyService facultyService,
+                            DepartmentService departmentService,
+                            FacultyTypeService facultyTypeService,
+                            AccountService accountService) : base(accountService)
         {
             _facultyService = facultyService;
             _departmentService = departmentService;
+            _facultyTypeService = facultyTypeService;
         }
 
         // Display table
@@ -33,6 +37,7 @@ namespace UniPortal.Pages.Users
 
         // Dropdowns
         public List<SelectOption> Departments { get; set; } = new();
+        public List<SelectOption> FacultyTypes { get; set; } = new();
 
         // Pagination & Search
         [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
@@ -42,8 +47,9 @@ namespace UniPortal.Pages.Users
 
         public async Task OnGetAsync()
         {
-            // Load department options for dropdowns
+            // Load dropdown options
             Departments = await _departmentService.GetDepartmentOptionsAsync();
+            FacultyTypes = await _facultyTypeService.GetSelectOptionsAsync();
 
             var allFaculties = await _facultyService.GetAllAsync();
 
@@ -71,13 +77,14 @@ namespace UniPortal.Pages.Users
 
             var password = Passwords.Faculty;
 
-            // DepartmentId must be set in NewFaculty
             await _facultyService.CreateAsync(
                 NewFaculty.Email,
                 password,
                 NewFaculty.FirstName,
                 NewFaculty.LastName,
-                NewFaculty.DepartmentId
+                NewFaculty.DepartmentId,
+                NewFaculty.FacultyTypeId,
+                NewFaculty.IsAdvisor
             );
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
@@ -108,16 +115,18 @@ namespace UniPortal.Pages.Users
 
             EditFaculty.AccountId = Guid.Parse(id);
 
-            // Simply delegate everything to the service
             await _facultyService.UpdateAsync(EditFaculty);
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
-
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await _facultyService.DeleteAsync(Guid.Parse(id));
+            if (Guid.TryParse(id, out var facultyId))
+            {
+                await R(() => _facultyService.DeleteAsync(facultyId), "Faculty deleted successfully.");
+            }
+
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

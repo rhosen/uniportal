@@ -175,7 +175,33 @@ CREATE TABLE dbo.Sections (
 GO
 
 -- =========================
--- 8. Faculties Table
+-- 8. FacultyTypes Table
+-- =========================
+IF OBJECT_ID('dbo.FacultyTypes', 'U') IS NOT NULL
+    DROP TABLE dbo.FacultyTypes;
+GO
+
+CREATE TABLE dbo.FacultyTypes (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    Name NVARCHAR(100) NOT NULL,   -- e.g., Lecturer, Assistant Professor, Professor
+    
+    -- Audit Columns
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UpdatedAt DATETIME2 NULL,
+    ModifiedById UNIQUEIDENTIFIER NULL,
+    IsDeleted BIT NOT NULL DEFAULT 0,
+    DeletedAt DATETIME2 NULL,
+
+    CONSTRAINT FK_FacultyTypes_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)
+);
+
+-- Unique index on Name (ignoring soft-deleted)
+CREATE UNIQUE INDEX UQ_FacultyTypes_Name ON dbo.FacultyTypes(Name) WHERE IsDeleted = 0;
+GO
+
+
+-- =========================
+-- Faculties Table 
 -- =========================
 IF OBJECT_ID('dbo.Faculties', 'U') IS NOT NULL
     DROP TABLE dbo.Faculties;
@@ -183,9 +209,13 @@ GO
 
 CREATE TABLE dbo.Faculties (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    AccountId UNIQUEIDENTIFIER NOT NULL,           
-    DepartmentId UNIQUEIDENTIFIER NOT NULL,         
-    FacultyNumber NVARCHAR(50) NOT NULL,            
+    AccountId UNIQUEIDENTIFIER NOT NULL,
+    DepartmentId UNIQUEIDENTIFIER NOT NULL,
+    FacultyTypeId UNIQUEIDENTIFIER NOT NULL,   -- FK to FacultyTypes
+    FacultyNumber NVARCHAR(50) NOT NULL,
+    IsAdvisor BIT NOT NULL DEFAULT 0,          -- Whether this faculty can advise students
+    
+    -- Audit Columns
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
     ModifiedById UNIQUEIDENTIFIER NULL,
@@ -194,6 +224,7 @@ CREATE TABLE dbo.Faculties (
 
     CONSTRAINT FK_Faculties_Accounts_AccountId FOREIGN KEY (AccountId) REFERENCES dbo.Accounts(Id),
     CONSTRAINT FK_Faculties_Departments_DepartmentId FOREIGN KEY (DepartmentId) REFERENCES dbo.Departments(Id),
+    CONSTRAINT FK_Faculties_FacultyTypes_FacultyTypeId FOREIGN KEY (FacultyTypeId) REFERENCES dbo.FacultyTypes(Id),
     CONSTRAINT FK_Faculties_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id),
     CONSTRAINT UQ_Faculties_FacultyNumber UNIQUE (FacultyNumber)
 );
@@ -639,6 +670,7 @@ CREATE TABLE dbo.Attendances (
     
     StudentId UNIQUEIDENTIFIER NOT NULL,
     CourseOfferingId UNIQUEIDENTIFIER NOT NULL,
+    AttendanceDate DATE NOT NULL,
     Status NVARCHAR(20) NOT NULL DEFAULT 'Absent',
     ModifiedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
@@ -675,3 +707,32 @@ CREATE TABLE dbo.ClassCancellations (
     CONSTRAINT FK_ClassCancellations_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)
 );
 GO
+
+-- =========================
+-- Institution Table
+-- =========================
+IF OBJECT_ID('dbo.Institutions', 'U') IS NOT NULL
+    DROP TABLE dbo.Institutions;
+GO
+
+CREATE TABLE dbo.Institutions (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    
+    Name NVARCHAR(200) NOT NULL,         -- Institution full name
+    Address NVARCHAR(500) NULL,          -- Optional
+    Email NVARCHAR(100) NULL,            -- Contact email
+    Phone NVARCHAR(50) NULL,             -- Contact phone
+    LogoUrl NVARCHAR(500) NULL,          -- Logo URL
+
+    IsDeleted BIT NOT NULL DEFAULT 0,    -- Soft delete
+    DeletedAt DATETIME2 NULL,            -- When deleted
+
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UpdatedAt DATETIME2 NULL,
+    ModifiedById UNIQUEIDENTIFIER NULL,  -- References the account who modified
+
+    CONSTRAINT FK_Institution_Accounts_ModifiedById
+        FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)
+);
+GO
+

@@ -21,13 +21,16 @@ namespace UniPortal.Services.Dashboards
         {
             var query = from f in _context.Faculties
                         join a in _context.Accounts on f.AccountId equals a.Id
+                        join ft in _context.FacultyTypes on f.FacultyTypeId equals ft.Id
                         where f.AccountId == accountId && !f.IsDeleted && !a.IsDeleted
                         select new FacultyProfileViewModel
                         {
                             Id = a.Id,
                             FullName = a.FirstName + " " + a.LastName,
                             Email = a.Email,
-                            Phone = a.Phone
+                            Phone = a.Phone,
+                            IsAdvisor = f.IsAdvisor,
+                            Title = ft.Name
                         };
 
             return await query.FirstOrDefaultAsync();

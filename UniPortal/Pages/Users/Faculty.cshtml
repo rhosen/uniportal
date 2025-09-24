@@ -27,6 +27,8 @@
                     <th>Last Name</th>
                     <th>Email</th>
                     <th>Department</th>
+                    <th>Faculty Type</th>
+                    <th>Advisor</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -47,6 +49,20 @@
                         </select>
                     </td>
                     <td>
+                        <select asp-for="NewFaculty.FacultyTypeId" class="form-control" required>
+                            <option value="">Select Faculty Type</option>
+                            @foreach (var type in Model.FacultyTypes)
+                            {
+                                <option value="@type.Id">@type.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="NewFaculty.IsAdvisor">
+                        </div>
+                    </td>
+                    <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
                 </tr>
@@ -63,6 +79,8 @@
                 <th>Last Name</th>
                 <th>Email</th>
                 <th>Department</th>
+                <th>Faculty Type</th>
+                <th>Advisor</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -76,11 +94,11 @@
                         @if (Model.EditFacultyId == faculty.AccountId.ToString())
                         {
                             <!-- Editing Row -->
-                            <td>@faculty.FacultyNumber</td>
-                            <td><input name="EditFaculty.FirstName" value="@Model.EditFaculty.FirstName" class="form-control" /></td>
-                            <td><input name="EditFaculty.LastName" value="@Model.EditFaculty.LastName" class="form-control" /></td>
-                            <td><input name="EditFaculty.Email" value="@Model.EditFaculty.Email" class="form-control" /></td>
-                            <td>
+                        <td>@faculty.FacultyNumber</td>
+                        <td><input name="EditFaculty.FirstName" value="@Model.EditFaculty.FirstName" class="form-control" /></td>
+                        <td><input name="EditFaculty.LastName" value="@Model.EditFaculty.LastName" class="form-control" /></td>
+                        <td><input name="EditFaculty.Email" value="@Model.EditFaculty.Email" class="form-control" /></td>
+                        <td>
                             <select name="EditFaculty.DepartmentId" class="form-control">
                                 @foreach (var dept in Model.Departments)
                                 {
@@ -89,27 +107,44 @@
                                     </option>
                                 }
                             </select>
-
-                            </td>
-                            <td>
-                                <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
-                                <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
-                            </td>
-                        }
-                        else
-                        {
-                            <!-- Normal Row -->
-                            <td>@faculty.FacultyNumber</td>
-                            <td>@faculty.FirstName</td>
-                            <td>@faculty.LastName</td>
-                            <td>@faculty.Email</td>
-                            <td>@faculty.DepartmentName</td>
-                            <td>
-                                <button type="submit" asp-page-handler="Edit" name="id" value="@faculty.AccountId" class="btn btn-sm btn-warning">Edit</button>
-                                <button type="submit" asp-page-handler="Delete" name="id" value="@faculty.AccountId" class="btn btn-sm btn-danger">Delete</button>
-                                <a href="/accounts/profile?id=@faculty.AccountId" class="btn btn-sm btn-info">Details</a>
-                            </td>
-                        }
+                        </td>
+                        <td>
+                            <select name="EditFaculty.FacultyTypeId" class="form-control">
+                                @foreach (var type in Model.FacultyTypes)
+                                {
+                                    <option value="@type.Id" selected="@(type.Id == Model.EditFaculty.FacultyTypeId ? "selected" : null)">
+                                        @type.Name
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="EditFaculty.IsAdvisor" value="true"
+                                       @(Model.EditFaculty.IsAdvisor ? "checked" : "")>
+                            </div>
+                        </td>
+                        <td>
+                            <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
+                            <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <!-- Normal Row -->
+                        <td>@faculty.FacultyNumber</td>
+                        <td>@faculty.FirstName</td>
+                        <td>@faculty.LastName</td>
+                        <td>@faculty.Email</td>
+                        <td>@faculty.DepartmentName</td>
+                        <td>@faculty.FacultyTypeName</td>
+                        <td>@(faculty.IsAdvisor ? "Yes" : "No")</td>
+                        <td>
+                            <button type="submit" asp-page-handler="Edit" name="id" value="@faculty.AccountId" class="btn btn-sm btn-warning">Edit</button>
+                            <button type="submit" asp-page-handler="Delete" name="id" value="@faculty.AccountId" class="btn btn-sm btn-danger">Delete</button>
+                            <a href="/accounts/profile?id=@faculty.AccountId" class="btn btn-sm btn-info">Details</a>
+                        </td>
+                    }
                     </form>
                 </tr>
             }
