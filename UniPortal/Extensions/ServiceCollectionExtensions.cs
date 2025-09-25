@@ -6,7 +6,6 @@ using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
 using UniPortal.Services.Dashboards;
 using UniPortal.Services.Infrastructures;
-using UniPortal.Services.Notices;
 
 namespace UniPortal.Extensions
 {

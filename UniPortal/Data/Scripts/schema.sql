@@ -615,11 +615,11 @@ GO
 -- =========================
 -- 22. Recipients Table
 -- =========================
-IF OBJECT_ID('dbo.Recipients', 'U') IS NOT NULL
-    DROP TABLE dbo.Recipients;
+IF OBJECT_ID('dbo.RecipientTypes', 'U') IS NOT NULL
+    DROP TABLE dbo.RecipientTypes;
 GO
 
-CREATE TABLE dbo.Recipients (
+CREATE TABLE dbo.RecipientTypes (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     Name NVARCHAR(50) NOT NULL UNIQUE,
     Description NVARCHAR(200) NULL,
@@ -629,7 +629,7 @@ CREATE TABLE dbo.Recipients (
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
 
-    CONSTRAINT FK_Recipients_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)
+    CONSTRAINT FK_RecipientTypes_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)
 );
 GO
 
@@ -646,15 +646,15 @@ CREATE TABLE dbo.Notices (
     Message NVARCHAR(MAX) NOT NULL,    -- supports formatted text
     FilePath NVARCHAR(500) NULL,       -- optional attachment
     ModifiedById UNIQUEIDENTIFIER NOT NULL,
-    RecipientId UNIQUEIDENTIFIER NOT NULL,
-    TargetId NVARCHAR(100) NULL,       -- can be StudentNumber, FacultyId, etc.
+    RecipientTypeId UNIQUEIDENTIFIER NOT NULL,
+    RecipientId NVARCHAR(100) NULL,       -- can be StudentNumber, FacultyId, etc.
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
 
     CONSTRAINT FK_Notices_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id),
-    CONSTRAINT FK_Notices_Recipients_RecipientId FOREIGN KEY (RecipientId) REFERENCES dbo.Recipients(Id)
+    CONSTRAINT FK_Notices_RecipientTypes_RecipientTypeId FOREIGN KEY (RecipientTypeId) REFERENCES dbo.RecipientTypes(Id)
 );
 GO
 

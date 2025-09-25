@@ -7,7 +7,7 @@
 
 <div class="container my-4">
 
-    <h2 class="mb-4">🏫 About</h2>
+    <h2 class="mb-4">🏫 University</h2>
 
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
@@ -21,8 +21,8 @@
                 <th>Address</th>
                 <th>Email</th>
                 <th>Phone</th>
-                @* <th>Logo URL</th> *@
                 <th>Actions</th>
+                @* <th>Logo URL</th> *@
             </tr>
         </thead>
         <tbody>
@@ -38,11 +38,11 @@
                         <td><input name="EditInstitution.Address" value="@Model.EditInstitution.Address" class="form-control" /></td>
                         <td><input name="EditInstitution.Email" type="email" value="@Model.EditInstitution.Email" class="form-control" /></td>
                         <td><input name="EditInstitution.Phone" value="@Model.EditInstitution.Phone" class="form-control" /></td>
-                        <td><input name="EditInstitution.LogoUrl" value="@Model.EditInstitution.LogoUrl" class="form-control" /></td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
                             <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
                         </td>
+                        <td><input type="hidden" name="EditInstitution.LogoUrl" value="@Model.EditInstitution.LogoUrl" class="form-control" /></td>
                     }
                     else
                     {
@@ -50,10 +50,10 @@
                         <td>@inst.Address</td>
                         <td>@inst.Email</td>
                         <td>@inst.Phone</td>
-                        @* <td>@inst.LogoUrl</td> *@
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@inst.Id" class="btn btn-sm btn-warning">Edit</button>
                         </td>
+                        @* <td>@inst.LogoUrl</td> *@
                     }
                     </form>
                 </tr>

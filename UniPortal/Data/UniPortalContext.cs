@@ -47,7 +47,7 @@ namespace UniPortal.Data
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<CourseMaterial> CourseMaterials { get; set; }
         public DbSet<Notice> Notices { get; set; }
-        public DbSet<Recipient> Recipients { get; set; }
+        public DbSet<RecipientType> RecipientTypes { get; set; }
         public DbSet<ClassCancellation> ClassCancellations { get; set; }
 
         // System / logging

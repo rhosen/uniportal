@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Recipient Management";
     Layout = "_AdminLayout";
+
+    // Toggle read-only mode here
+    var isReadOnly = true; // set to false to allow adding/editing/deleting
 }
 
 <div class="container my-4">
@@ -16,29 +19,28 @@
         </div>
     </form>
 
-    <!-- Add New Recipient -->
-    <form method="post">
-        <table class="table table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>New</td>
-                    <td><input asp-for="NewRecipient.Name" class="form-control" required /></td>
-                    <td><input asp-for="NewRecipient.Description" class="form-control" /></td>
-                    <td>
-                        <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </form>
+    @* Add New Recipient only if not read-only *@
+    @if (!isReadOnly)
+    {
+        <form method="post">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>New</td>
+                        <td><input asp-for="NewRecipient.Name" class="form-control" required /></td>
+                        <td><input asp-for="NewRecipient.Description" class="form-control" /></td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    }
 
     <!-- Existing Recipients Table -->
     <table class="table table-striped">
@@ -46,32 +48,20 @@
             <tr>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Actions</th>
+                @if (!isReadOnly)
+                {
+                    <th>Actions</th>
+                }
             </tr>
         </thead>
         <tbody>
             @foreach (var rec in Model.Recipients)
             {
                 <tr>
-                    <form method="post">
-                        <input type="hidden" name="id" value="@rec.Id" />
-                        <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
-
-                        @if (Model.EditRecipientId == rec.Id.ToString())
-                        {
-                            <!-- Editing Row -->
-                        <td><input name="EditRecipient.Name" value="@Model.EditRecipient.Name" class="form-control" /></td>
-                        <td><input name="EditRecipient.Description" value="@Model.EditRecipient.Description" class="form-control" /></td>
-                        <td>
-                            <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
-                            <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
-                        </td>
-                    }
-                    else
+                    <td>@rec.Name</td>
+                    <td>@rec.Description</td>
+                    @if (!isReadOnly)
                     {
-                        <!-- Normal Row -->
-                        <td>@rec.Name</td>
-                        <td>@rec.Description</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@rec.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (!rec.IsDeleted)
@@ -84,7 +74,6 @@
                             }
                         </td>
                     }
-                    </form>
                 </tr>
             }
         </tbody>

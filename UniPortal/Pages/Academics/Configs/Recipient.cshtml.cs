@@ -17,10 +17,10 @@ namespace UniPortal.Pages.Academics.Configs
             _recipientService = recipientService;
         }
 
-        public List<Recipient> Recipients { get; set; } = new();
+        public List<Data.Entities.RecipientType> Recipients { get; set; } = new();
 
-        [BindProperty] public Recipient NewRecipient { get; set; } = new();
-        [BindProperty] public Recipient EditRecipient { get; set; } = new();
+        [BindProperty] public Data.Entities.RecipientType NewRecipient { get; set; } = new();
+        [BindProperty] public Data.Entities.RecipientType EditRecipient { get; set; } = new();
         [BindProperty(SupportsGet = true)] public string? EditRecipientId { get; set; }
 
         [BindProperty(SupportsGet = true)] public string? SearchTerm { get; set; }
@@ -61,7 +61,7 @@ namespace UniPortal.Pages.Academics.Configs
             var rec = await _recipientService.GetByIdAsync(recId);
             if (rec != null)
             {
-                EditRecipient = new Recipient
+                EditRecipient = new Data.Entities.RecipientType
                 {
                     Id = rec.Id,
                     Name = rec.Name,

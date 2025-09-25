@@ -17,7 +17,7 @@
     </form>
 
     <!-- Add New Notice -->
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <table class="table table-striped">
             <thead class="table-dark">
                 <tr>
@@ -33,9 +33,12 @@
                 <tr>
                     <td>New</td>
                     <td><input asp-for="NewNotice.Title" class="form-control" required /></td>
-                    <td><input asp-for="NewNotice.Message" class="form-control" required /></td>
                     <td>
-                        <select asp-for="NewNotice.RecipientId" class="form-select" required>
+                        <textarea rows="1" asp-for="NewNotice.Message" class="form-control" required></textarea>
+                        <input type="file" asp-for="NewNoticeFile" class="form-control mt-1" />
+                    </td>
+                    <td>
+                        <select asp-for="NewNotice.RecipientTypeId" class="form-select" required>
                             <option value="">-- Select Type --</option>
                             @foreach (var type in Model.RecipientTypes)
                             {
@@ -43,7 +46,7 @@
                             }
                         </select>
                     </td>
-                    <td><input asp-for="NewNotice.TargetId" class="form-control" placeholder="Optional Recipient ID" /></td>
+                    <td><input asp-for="NewNotice.RecipientId" class="form-control" placeholder="Optional Student ID or Faculty Number" /></td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
@@ -60,7 +63,6 @@
                 <th>Message</th>
                 <th>Type</th>
                 <th>Target</th>
-                <th>Created By</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -68,53 +70,58 @@
             @foreach (var notice in Model.Notices)
             {
                 <tr>
-                    <form method="post">
-                        <input type="hidden" name="id" value="@notice.Id" />
-
-                        @if (Model.EditNoticeId == notice.Id.ToString())
-                        {
-                            <!-- Editing Row -->
+                    @if (Model.EditNoticeId == notice.Id.ToString())
+                    {
+                        <form method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="id" value="@notice.Id" />
                         <td><input name="EditNotice.Title" value="@Model.EditNotice.Title" class="form-control" /></td>
-                        <td><input name="EditNotice.Message" value="@Model.EditNotice.Message" class="form-control" /></td>
                         <td>
-                            <select name="EditNotice.NotificationTypeId" class="form-select">
+                            <textarea rows="1" name="EditNotice.Message" class="form-control">@Model.EditNotice.Message</textarea>
+                            <input type="file" name="EditNoticeFile" class="form-control mt-1" />
+                            @if (!string.IsNullOrEmpty(Model.EditNotice.FilePath))
+                            {
+                                <a href="@Model.EditNotice.FilePath" target="_blank">View existing file</a>
+                            }
+                        </td>
+                        <td>
+                            <select name="EditNotice.RecipientTypeId" class="form-select">
                                 <option value="">-- Select Type --</option>
                                 @foreach (var type in Model.RecipientTypes)
                                 {
-                                    <option value="@type.Id" selected="@(type.Id == Model.EditNotice.RecipientId ? "selected" : null)">
+                                    <option value="@type.Id" selected="@(type.Id == Model.EditNotice.RecipientTypeId ? "selected" : null)">
                                         @type.Name
                                     </option>
                                 }
                             </select>
                         </td>
-                        <td><input name="EditNotice.StudentId" value="@Model.EditNotice.TargetId" class="form-control" placeholder="Optional target ID" /></td>
-                        <td>@notice.Sender?.FirstName @notice.Sender?.LastName</td>
+                        <td><input name="EditNotice.RecipientId" value="@Model.EditNotice.RecipientId" class="form-control" placeholder="Optional target ID" /></td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
                             <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
                         </td>
+                        </form>
                     }
                     else
                     {
-                        <!-- Normal Row -->
+                        <form method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="id" value="@notice.Id" />
                         <td>@notice.Title</td>
                         <td>@notice.Message</td>
-                        <td>@notice.Recipient?.Name</td>
-                        <td>@notice.TargetId</td>
-                        <td>@notice.Sender?.FirstName @notice.Sender?.LastName</td>
+                        <td>@notice.RecipientType?.Name</td>
+                        <td>@notice.RecipientId</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@notice.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (!notice.IsDeleted)
                             {
-                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@notice.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')"> Delete </button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@notice.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')">Delete</button>
                             }
                             else
                             {
                                 <button type="submit" asp-page-handler="Activate" name="id" value="@notice.Id" class="btn btn-sm btn-success">Activate</button>
                             }
                         </td>
+                        </form>
                     }
-                    </form>
                 </tr>
             }
         </tbody>

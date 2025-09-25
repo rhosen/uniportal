@@ -6,13 +6,9 @@ namespace UniPortal.Data.Entities
     {
         public string Title { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
-        public Guid RecipientId { get; set; }
-        public string? TargetId { get; set; }
-        public string? FilePath { get; set; }       // optional attachment path
-
-        // Navigation properties
-        [ForeignKey(nameof(ModifiedById))]
-        public Account Sender { get; set; } = null!;
-        public Recipient Recipient { get; set; } = null!;
+        public Guid RecipientTypeId { get; set; }
+        public string RecipientId { get; set; }
+        public string? FilePath { get; set; }     
+        public RecipientType RecipientType { get; set; } = null!;
     }
 }

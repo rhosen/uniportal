@@ -15,37 +15,37 @@ namespace UniPortal.Services.Academics.Configs
         }
 
         // Get all recipients
-        public async Task<List<Recipient>> GetAllAsync()
+        public async Task<List<RecipientType>> GetAllAsync()
         {
-            return await _context.Recipients
+            return await _context.RecipientTypes
                 .Where(r => !r.IsDeleted)
                 .OrderBy(r => r.Name)
                 .ToListAsync();
         }
 
         // Get recipient by Id
-        public async Task<Recipient?> GetByIdAsync(Guid id)
+        public async Task<RecipientType?> GetByIdAsync(Guid id)
         {
-            return await _context.Recipients
+            return await _context.RecipientTypes
                 .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
         }
 
         // Create new recipient
         public async Task CreateAsync(string name, string? description = null)
         {
-            var rec = new Recipient
+            var rec = new RecipientType
             {
                 Name = name,
                 Description = description
             };
-            _context.Recipients.Add(rec);
+            _context.RecipientTypes.Add(rec);
             await _context.SaveChangesAsync();
         }
 
         // Update recipient
         public async Task UpdateAsync(Guid id, string name, string? description = null)
         {
-            var rec = await _context.Recipients.FindAsync(id);
+            var rec = await _context.RecipientTypes.FindAsync(id);
             if (rec == null) return;
 
             rec.Name = name;
@@ -58,7 +58,7 @@ namespace UniPortal.Services.Academics.Configs
         // Soft delete
         public async Task DeleteAsync(Guid id)
         {
-            var rec = await _context.Recipients
+            var rec = await _context.RecipientTypes
                 .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
             if (rec == null) return;
 
@@ -70,7 +70,7 @@ namespace UniPortal.Services.Academics.Configs
         // Reactivate
         public async Task ActivateAsync(Guid id)
         {
-            var rec = await _context.Recipients.FindAsync(id);
+            var rec = await _context.RecipientTypes.FindAsync(id);
             if (rec == null) return;
 
             rec.IsDeleted = false;
@@ -81,7 +81,7 @@ namespace UniPortal.Services.Academics.Configs
         // For dropdowns/selects
         public async Task<List<SelectOption>> GetOptionsAsync()
         {
-            return await _context.Recipients
+            return await _context.RecipientTypes
                 .Where(r => !r.IsDeleted)
                 .OrderBy(r => r.Name)
                 .Select(r => new SelectOption

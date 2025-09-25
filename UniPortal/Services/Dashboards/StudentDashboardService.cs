@@ -118,7 +118,7 @@ namespace UniPortal.Services.Dashboards
 
             // 6️⃣ Unread notifications
             var unreadNotifications = await _context.Notices
-                .Where(n => !n.IsDeleted && n.TargetId == studentId.ToString())
+                .Where(n => !n.IsDeleted && n.RecipientId == studentId.ToString())
                 .CountAsync();
 
             // 7️⃣ Notes count

@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UniPortal.Constants;
 using UniPortal.Data.Entities;
+using UniPortal.Helpers;
 using UniPortal.Services.Accounts;
-using UniPortal.Services.Notices;
 
 namespace UniPortal.Pages.Academics.Operations
 {
@@ -18,11 +18,14 @@ namespace UniPortal.Pages.Academics.Operations
         }
 
         public List<Notice> Notices { get; set; } = new();
-        public List<Recipient> RecipientTypes { get; set; } = new();
+        public List<RecipientType> RecipientTypes { get; set; } = new();
 
         [BindProperty] public Notice NewNotice { get; set; } = new();
         [BindProperty] public Notice EditNotice { get; set; } = new();
         [BindProperty(SupportsGet = true)] public string EditNoticeId { get; set; }
+
+        [BindProperty] public IFormFile? NewNoticeFile { get; set; }
+        [BindProperty] public IFormFile? EditNoticeFile { get; set; }
 
         // Search & Pagination
         [BindProperty(SupportsGet = true)] public string SearchTerm { get; set; }
@@ -51,13 +54,49 @@ namespace UniPortal.Pages.Academics.Operations
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            await _noticeService.CreateAsync(
-                NewNotice.Title,
-                NewNotice.Message,
-                CurrentAccount.Id,
-                NewNotice.RecipientId,
-                NewNotice.TargetId
+            string? filePath = null;
+
+            if (NewNoticeFile != null)
+            {
+                filePath = await FileHelper.SaveFileAsync(NewNoticeFile, UploadType.Notice);
+            }
+
+            await R(
+                async () => await _noticeService.CreateAsync(
+                    NewNotice.Title,
+                    NewNotice.Message,
+                    CurrentAccount.Id,
+                    NewNotice.RecipientTypeId,
+                    NewNotice.RecipientId,
+                    filePath
+                ),
+                "Notice created successfully."
             );
+
+            return RedirectToPage(new { CurrentPage, SearchTerm });
+        }
+
+        public async Task<IActionResult> OnPostSaveEditAsync(string id)
+        {
+            string? filePath = EditNotice.FilePath;
+
+            if (EditNoticeFile != null)
+            {
+                filePath = await FileHelper.SaveFileAsync(EditNoticeFile, UploadType.Notice);
+            }
+
+            await R(
+                async () => await _noticeService.UpdateAsync(
+                    Guid.Parse(id),
+                    EditNotice.Title,
+                    EditNotice.Message,
+                    EditNotice.RecipientTypeId,
+                    EditNotice.RecipientId,
+                    filePath
+                ),
+                "Notice updated successfully."
+            );
+
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
@@ -72,8 +111,9 @@ namespace UniPortal.Pages.Academics.Operations
                     Id = notif.Id,
                     Title = notif.Title,
                     Message = notif.Message,
+                    RecipientTypeId = notif.RecipientTypeId,
                     RecipientId = notif.RecipientId,
-                    TargetId = notif.TargetId,
+                    FilePath = notif.FilePath,
                     UpdatedAt = DateTime.Now,
                 };
             }
@@ -84,18 +124,6 @@ namespace UniPortal.Pages.Academics.Operations
         public IActionResult OnPostCancelEdit()
         {
             EditNoticeId = null;
-            return RedirectToPage(new { CurrentPage, SearchTerm });
-        }
-
-        public async Task<IActionResult> OnPostSaveEditAsync(string id)
-        {
-            await _noticeService.UpdateAsync(
-                Guid.Parse(id),
-                EditNotice.Title,
-                EditNotice.Message,
-                EditNotice.RecipientId,
-                EditNotice.TargetId
-            );
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
