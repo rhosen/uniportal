@@ -629,34 +629,60 @@ CREATE TABLE dbo.RecipientTypes (
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
 
-    CONSTRAINT FK_RecipientTypes_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)
+    CONSTRAINT FK_RecipientTypes_Accounts_ModifiedById 
+        FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)
 );
 GO
 
 -- =========================
--- 23. Notices Table
+-- 23. Notifications Table
 -- =========================
-IF OBJECT_ID('dbo.Notices', 'U') IS NOT NULL
-    DROP TABLE dbo.Notices;
+IF OBJECT_ID('dbo.Notifications', 'U') IS NOT NULL
+    DROP TABLE dbo.Notifications;
 GO
 
-CREATE TABLE dbo.Notices (
+CREATE TABLE dbo.Notifications (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     Title NVARCHAR(200) NOT NULL,
-    Message NVARCHAR(MAX) NOT NULL,    -- supports formatted text
-    FilePath NVARCHAR(500) NULL,       -- optional attachment
+    Message NVARCHAR(MAX) NOT NULL,
+    FilePath NVARCHAR(500) NULL,       
     ModifiedById UNIQUEIDENTIFIER NOT NULL,
-    RecipientTypeId UNIQUEIDENTIFIER NOT NULL,
-    RecipientId NVARCHAR(100) NULL,       -- can be StudentNumber, FacultyId, etc.
+    RecipientTypeId UNIQUEIDENTIFIER NULL, -- NULL = not group-targeted
+    AccountId UNIQUEIDENTIFIER NULL,       -- NULL = not individual-targeted
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
 
-    CONSTRAINT FK_Notices_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id),
-    CONSTRAINT FK_Notices_RecipientTypes_RecipientTypeId FOREIGN KEY (RecipientTypeId) REFERENCES dbo.RecipientTypes(Id)
+    CONSTRAINT FK_Notifications_Accounts_ModifiedById 
+        FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id),
+    CONSTRAINT FK_Notifications_RecipientTypes_RecipientTypeId 
+        FOREIGN KEY (RecipientTypeId) REFERENCES dbo.RecipientTypes(Id),
+    CONSTRAINT FK_Notifications_Accounts_AccountId
+        FOREIGN KEY (AccountId) REFERENCES dbo.Accounts(Id)
 );
 GO
+
+-- =========================
+-- 23. NotificationReads Table
+-- =========================
+
+CREATE TABLE dbo.NotificationReads (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    NotificationId UNIQUEIDENTIFIER NOT NULL,
+    AccountId UNIQUEIDENTIFIER NOT NULL,         -- user who read
+    IsRead BIT NOT NULL DEFAULT 1,               -- true if read
+    ReadAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+
+    CONSTRAINT FK_NotificationReads_Notifications_NotificationId 
+        FOREIGN KEY (NotificationId) REFERENCES dbo.Notifications(Id),
+    CONSTRAINT FK_NotificationReads_Accounts_AccountId 
+        FOREIGN KEY (AccountId) REFERENCES dbo.Accounts(Id),
+
+    CONSTRAINT UQ_NotificationReads UNIQUE (NotificationId, AccountId)
+);
+
+
 
 -- =========================
 -- 24. Attendances Table (Updated)

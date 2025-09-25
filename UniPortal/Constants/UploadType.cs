@@ -2,7 +2,7 @@
 {
     public enum UploadType
     {
-        Notice,
+        Notification,
         ClassMaterial,
         Assignment,
         Submission

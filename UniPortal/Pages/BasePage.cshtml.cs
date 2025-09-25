@@ -26,6 +26,11 @@ namespace UniPortal.Pages
         // Always initialized to prevent NullReferenceException
         public Data.Entities.Account CurrentAccount { get; private set; } = new();
 
+        /// <summary>
+        /// Current user role (e.g., Admin, Student, Faculty)
+        /// </summary>
+        public string CurrentRole { get; private set; } = string.Empty;
+
         public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
         {
             if (!User.Identity.IsAuthenticated)
@@ -51,25 +56,21 @@ namespace UniPortal.Pages
                     CurrentAccount = account;
                 }
             }
+
+            // Initialize role from claims or fallback
+            CurrentRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? string.Empty;
         }
 
         public string CurrentUserDisplayName => $"{CurrentAccount.FirstName} {CurrentAccount.LastName}".Trim();
 
-        public string LayoutForRole
+        public string LayoutForRole => CurrentRole switch
         {
-            get
-            {
-                var role = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-                return role switch
-                {
-                    Roles.Root => "_AdminLayout",
-                    Roles.Admin => "_AdminLayout",
-                    Roles.Faculty => "_FacultyLayout",
-                    Roles.Student => "_StudentLayout",
-                    _ => "_Layout"
-                };
-            }
-        }
+            Roles.Root => "_AdminLayout",
+            Roles.Admin => "_AdminLayout",
+            Roles.Faculty => "_FacultyLayout",
+            Roles.Student => "_StudentLayout",
+            _ => "_Layout"
+        };
 
         // Helper method for running async actions with message handling
         protected Task R(Func<Task> action, string msg) => RunWithMessageAsync(action, msg);

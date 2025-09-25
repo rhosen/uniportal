@@ -32,7 +32,7 @@ namespace UniPortal.Data.Seeders
             // Seed rooms (classrooms, labs, special rooms)
             await RoomSeeder.SeedAsync(dbContext);
 
-            // Seed recipients (for notices)
+            // Seed recipients (for notifications)
             await RecipientTypeSeeder.SeedAsync(dbContext);
         }
     }

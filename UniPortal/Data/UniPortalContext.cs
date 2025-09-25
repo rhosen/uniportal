@@ -46,7 +46,8 @@ namespace UniPortal.Data
         public DbSet<GradeScale> GradeScales { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<CourseMaterial> CourseMaterials { get; set; }
-        public DbSet<Notice> Notices { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationRead> NotificationReads { get; set; }
         public DbSet<RecipientType> RecipientTypes { get; set; }
         public DbSet<ClassCancellation> ClassCancellations { get; set; }
 

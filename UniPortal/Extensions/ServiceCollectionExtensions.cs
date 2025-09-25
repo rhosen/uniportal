@@ -6,6 +6,7 @@ using UniPortal.Services.Academics.Operations;
 using UniPortal.Services.Accounts;
 using UniPortal.Services.Dashboards;
 using UniPortal.Services.Infrastructures;
+using UniPortal.Services.Portals;
 
 namespace UniPortal.Extensions
 {
@@ -52,7 +53,7 @@ namespace UniPortal.Extensions
             services.AddScoped<CourseService>();
             services.AddScoped<CourseTypeService>();
             services.AddScoped<FacultyTypeService>(); // ✅ Added
-            services.AddScoped<NoticeService>();
+            services.AddScoped<NotificationService>();
             services.AddScoped<ProgramService>();
             services.AddScoped<DegreeService>();
             services.AddScoped<SectionService>();
@@ -69,6 +70,7 @@ namespace UniPortal.Extensions
             services.AddScoped<AssignmentService>();
             services.AddScoped<GradeService>();
             services.AddScoped<EnrollmentService>();
+            services.AddScoped<InboxService>();
 
             // ========================
             // Infrastructure & Logging

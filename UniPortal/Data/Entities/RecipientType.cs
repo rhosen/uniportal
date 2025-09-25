@@ -6,6 +6,6 @@
         public string? Description { get; set; }               // nullable
 
         // Navigation
-        public ICollection<Notice> Notices { get; set; } = new List<Notice>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }

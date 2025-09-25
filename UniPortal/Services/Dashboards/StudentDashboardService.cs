@@ -116,9 +116,11 @@ namespace UniPortal.Services.Dashboards
                 ? (grades.Average() / 25).ToString("0.00") // example conversion
                 : "N/A";
 
+            var student = _context.Students.FirstOrDefault(x => x.Id == studentId);
+
             // 6️⃣ Unread notifications
-            var unreadNotifications = await _context.Notices
-                .Where(n => !n.IsDeleted && n.RecipientId == studentId.ToString())
+            var unreadNotifications = await _context.Notifications
+                .Where(n => !n.IsDeleted && n.AccountId == student.AccountId)
                 .CountAsync();
 
             // 7️⃣ Notes count

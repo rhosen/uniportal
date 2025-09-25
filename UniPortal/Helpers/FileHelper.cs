@@ -14,7 +14,7 @@ namespace UniPortal.Helpers
             // Base folder
             string baseFolder = type switch
             {
-                UploadType.Notice => "uploads/notices",
+                UploadType.Notification => "uploads/notifications",
                 UploadType.ClassMaterial => "uploads/classmaterials",
                 UploadType.Assignment => "uploads/assignments",
                 UploadType.Submission => "uploads/submissions",
