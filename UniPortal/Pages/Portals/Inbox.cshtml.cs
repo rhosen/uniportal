@@ -35,6 +35,7 @@ namespace UniPortal.Pages.Portals
 
         public int PageSize { get; set; } = 10;
         public int TotalPages { get; set; }
+        public int TotalNotifications { get; set; }
 
         public async Task OnGetAsync()
         {
@@ -55,10 +56,10 @@ namespace UniPortal.Pages.Portals
         {
             var role = CurrentRole;
 
-            var allNotifications = await _inboxService.GetUserNotificationsAsync(
-                 CurrentAccount.Id, role, CurrentPage, PageSize);
+            // 1. Get all notifications for the user (no paging yet)
+            var allNotifications = await _inboxService.GetUserNotificationsAsync(CurrentAccount.Id, role);
 
-            // Apply filters
+            // 2. Apply filters
             var today = DateTime.Today;
             var filtered = allNotifications.AsQueryable();
 
@@ -80,12 +81,15 @@ namespace UniPortal.Pages.Portals
                 filtered = filtered.Where(n => n.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
             }
 
-            var filteredList = filtered.ToList();
-            var totalCount = filteredList.Count;
+            // 3. Sort newest first
+            filtered = filtered.OrderByDescending(n => n.CreatedAt);
 
-            TotalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
-            Notifications = filteredList
-                .OrderByDescending(n => n.CreatedAt)
+            // 4. Calculate total notifications and pages
+            TotalNotifications = filtered.Count();
+            TotalPages = (int)Math.Ceiling(TotalNotifications / (double)PageSize);
+
+            // 5. Apply pagination
+            Notifications = filtered
                 .Skip((CurrentPage - 1) * PageSize)
                 .Take(PageSize)
                 .ToList();

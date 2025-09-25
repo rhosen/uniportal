@@ -75,15 +75,33 @@
                 }
             </div>
 
-            <!-- Load More -->
-            @if (Model.CurrentPage < Model.TotalPages)
+            <!-- Gmail-style Pagination -->
+            @if (Model.TotalPages > 1)
             {
-                <div class="p-3 text-center border-top">
-                    <a class="btn btn-outline-primary" asp-page="./Inbox"
+                <div class="d-flex justify-content-between align-items-center p-2 border-top">
+                    <!-- Previous -->
+                    <a class="btn btn-outline-secondary btn-sm @(Model.CurrentPage == 1 ? "disabled" : "")"
+                       asp-page="./Inbox"
+                       asp-route-CurrentPage="@(Model.CurrentPage - 1)"
+                       asp-route-Filter="@Model.Filter"
+                       asp-route-SearchTerm="@Model.SearchTerm">
+                        ← Previous
+                    </a>
+
+                    <!-- Current Range Info -->
+                    <small class="text-muted">
+                        @(((Model.CurrentPage - 1) * Model.PageSize) + 1) -
+                        @(Math.Min(Model.CurrentPage * Model.PageSize, Model.Notifications.Count + ((Model.CurrentPage - 1) * Model.PageSize)))
+                        of @((Model.TotalPages * Model.PageSize > Model.Notifications.Count ? Model.Notifications.Count : Model.TotalPages * Model.PageSize))
+                    </small>
+
+                    <!-- Next -->
+                    <a class="btn btn-outline-secondary btn-sm @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")"
+                       asp-page="./Inbox"
                        asp-route-CurrentPage="@(Model.CurrentPage + 1)"
                        asp-route-Filter="@Model.Filter"
                        asp-route-SearchTerm="@Model.SearchTerm">
-                        Load More…
+                        Next →
                     </a>
                 </div>
             }
@@ -98,12 +116,9 @@
                     <p>@Model.SelectedNotification.Message</p>
                     @if (!string.IsNullOrEmpty(Model.SelectedNotification.FilePath))
                     {
-                        @if (!string.IsNullOrEmpty(Model.SelectedNotification.FilePath))
-                        {
-                            <div class="mt-2">
-                                <a href="@Model.SelectedNotification.FilePath" target="_blank" class="text-decoration-none">📎 Attachment</a>
-                            </div>
-                        }
+                        <div class="mt-2">
+                            <a href="@Model.SelectedNotification.FilePath" target="_blank" class="text-decoration-none">📎 Attachment</a>
+                        </div>
                     }
                 }
                 else
