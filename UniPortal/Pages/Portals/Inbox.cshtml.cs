@@ -28,25 +28,27 @@ namespace UniPortal.Pages.Portals
         [BindProperty(SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
 
+        [BindProperty(SupportsGet = true)]
+        public Guid? SelectedNotificationId { get; set; }
+
+        public NotificationDto SelectedNotification { get; set; }
+
         public int PageSize { get; set; } = 10;
         public int TotalPages { get; set; }
 
         public async Task OnGetAsync()
         {
             await LoadNotificationsAsync();
-        }
 
-        /// <summary>
-        /// Handler for marking a notification as read
-        /// </summary>
-        public async Task<IActionResult> OnGetReadAsync(Guid id)
-        {
-            // Mark the notification as read
-            await _inboxService.MarkAsReadAsync(id, CurrentAccount.Id);
+            if (SelectedNotificationId.HasValue)
+            {
+                SelectedNotification = await _inboxService.GetNotificationByIdAsync(SelectedNotificationId.Value, CurrentAccount.Id);
 
-            // Get the notification to redirect to its file/path
-            var notif = await _inboxService.GetNotificationByIdAsync(id, CurrentAccount.Id);
-            return Redirect(notif?.FilePath ?? Url.Page("./Inbox"));
+                if (SelectedNotification != null && !SelectedNotification.IsRead)
+                {
+                    await _inboxService.MarkAsReadAsync(SelectedNotificationId.Value, CurrentAccount.Id);
+                }
+            }
         }
 
         private async Task LoadNotificationsAsync()

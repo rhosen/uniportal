@@ -71,64 +71,66 @@
         <tbody>
             @foreach (var notification in Model.Notifications)
             {
-                <tr>
-                    @if (Model.EditNotificationId == notification.Id.ToString())
-                    {
+                @if (Model.EditNotificationId == notification.Id.ToString())
+                {
+                    <tr>
                         <form method="post" enctype="multipart/form-data">
-                            <input type="hidden" name="id" value="@notification.Id" />
-                        <td>
-                            <input name="EditNotification.Title" value="@Model.EditNotification.Title" class="form-control" />
-                        </td>
-                        <td>
-                            <textarea rows="1" name="EditNotification.Message" class="form-control">@Model.EditNotification.Message</textarea>
-                            <input type="file" name="EditNotificationFile" class="form-control mt-1" />
-                            @if (!string.IsNullOrEmpty(Model.EditNotification.FilePath))
-                            {
-                                <a href="@Model.EditNotification.FilePath" target="_blank">📎 Existing file</a>
-                            }
-                        </td>
-                        <td>
-                            <select name="EditNotification.RecipientTypeId" class="form-select">
-                                <option value="">-- Select Type --</option>
-                                @foreach (var type in Model.RecipientTypes)
+                            <input type="hidden" asp-for="EditNotification.Id" />
+                            <td>
+                                <input asp-for="EditNotification.Title" class="form-control" />
+                            </td>
+                            <td>
+                                <textarea asp-for="EditNotification.Message" rows="1" class="form-control"></textarea>
+                                <input type="file" asp-for="EditNotificationFile" class="form-control mt-1" />
+                                @if (!string.IsNullOrEmpty(Model.EditNotification.FilePath))
                                 {
-                                    <option value="@type.Id" selected="@(type.Id == Model.EditNotification.RecipientTypeId ? "selected" : null)">
-                                        @type.Name
-                                    </option>
+                                    <a href="@Model.EditNotification.FilePath" target="_blank">📎 Existing file</a>
                                 }
-                            </select>
-                        </td>
-                        <td>
-                            <input name="EditNotification.RecipientNumber" value="@Model.EditNotification.RecipientNumber" class="form-control" />
-                        </td>
-                        <td>
-                            <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
-                            <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
-                        </td>
+                            </td>
+                            <td>
+                                <select asp-for="EditNotification.RecipientTypeId" class="form-select">
+                                    <option value="">-- Select Type --</option>
+                                    @foreach (var type in Model.RecipientTypes)
+                                    {
+                                        <option value="@type.Id" selected="@(type.Id == Model.EditNotification.RecipientTypeId ? "selected" : null)">
+                                            @type.Name
+                                        </option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <input asp-for="EditNotification.RecipientNumber" class="form-control" />
+                            </td>
+                            <td>
+                                <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
+                                <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
+                            </td>
                         </form>
-                    }
-                    else
-                    {
+                    </tr>
+                }
+                else
+                {
+                    <tr>
                         <form method="post">
                             <input type="hidden" name="id" value="@notification.Id" />
-                        <td>@notification.Title</td>
-                        <td>@notification.Message</td>
-                        <td>@notification.RecipientTypeName</td>
-                        <td>@notification.RecipientNumber</td>
-                        <td>
-                            <button type="submit" asp-page-handler="Edit" name="id" value="@notification.Id" class="btn btn-sm btn-warning">✏️ Edit</button>
-                            @if (!notification.IsDeleted)
-                            {
-                                <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@notification.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')">🗑️ Delete</button>
-                            }
-                            else
-                            {
-                                <button type="submit" asp-page-handler="Activate" name="id" value="@notification.Id" class="btn btn-sm btn-success">♻️ Activate</button>
-                            }
-                        </td>
+                            <td>@notification.Title</td>
+                            <td>@notification.Message</td>
+                            <td>@notification.RecipientTypeName</td>
+                            <td>@notification.RecipientNumber</td>
+                            <td>
+                                <button type="submit" asp-page-handler="Edit" name="id" value="@notification.Id" class="btn btn-sm btn-warning">✏️ Edit</button>
+                                @if (!notification.IsDeleted)
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('@notification.Id', '@Url.Page("", "", new { handler = "Delete" }, null)')">🗑️ Delete</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" asp-page-handler="Activate" name="id" value="@notification.Id" class="btn btn-sm btn-success">♻️ Activate</button>
+                                }
+                            </td>
                         </form>
-                    }
-                </tr>
+                    </tr>
+                }
             }
         </tbody>
     </table>

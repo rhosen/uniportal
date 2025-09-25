@@ -36,4 +36,6 @@ msbuild.wrn
 .env
 Logs/
 
+!wwwroot/upload/.gitkeep
+
 UniPortal/Properties/PublishProfiles/

@@ -134,7 +134,7 @@ public class NotificationService
             RecipientTypeId = dto.RecipientTypeId,
             AccountId = accountId,
             FilePath = dto.FilePath,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.Now
         };
 
         _context.Notifications.Add(notification);
@@ -150,6 +150,11 @@ public class NotificationService
         if (notification == null)
             throw new InvalidOperationException("Notification not found.");
 
+        // Check if read
+        if (await IsNotificationReadAsync(notification.Id))
+            throw new InvalidOperationException("Cannot update notification: it has already been read.");
+
+
         var recipientEnum = await GetRecipientEnumAsync(dto.RecipientTypeId);
         Guid? accountId = null;
 
@@ -163,7 +168,7 @@ public class NotificationService
         notification.RecipientTypeId = dto.RecipientTypeId;
         notification.AccountId = accountId;
         notification.FilePath = dto.FilePath;
-        notification.UpdatedAt = DateTime.UtcNow;
+        notification.UpdatedAt = DateTime.Now;
 
         await _context.SaveChangesAsync();
     }
@@ -176,10 +181,15 @@ public class NotificationService
         if (!Guid.TryParse(id, out var guid)) return;
 
         var notification = await _context.Notifications.FindAsync(guid);
+
+        // Check if read
+        if (await IsNotificationReadAsync(guid))
+            throw new InvalidOperationException("Cannot delete notification: it has already been read.");
+
         if (notification != null)
         {
             notification.IsDeleted = true;
-            notification.DeletedAt = DateTime.UtcNow;
+            notification.DeletedAt = DateTime.Now;
             await _context.SaveChangesAsync();
         }
     }
@@ -296,4 +306,14 @@ public class NotificationService
             _ => null
         };
     }
+
+    /// <summary>
+    /// Check if a notification has been read by anyone.
+    /// </summary>
+    public async Task<bool> IsNotificationReadAsync(Guid notificationId)
+    {
+        return await _context.NotificationReads
+            .AnyAsync(nr => nr.NotificationId == notificationId);
+    }
+
 }

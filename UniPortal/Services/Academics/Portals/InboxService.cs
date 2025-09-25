@@ -84,7 +84,7 @@ namespace UniPortal.Services.Portals
                 if (!readEntry.IsRead)
                 {
                     readEntry.IsRead = true;
-                    readEntry.ReadAt = DateTime.UtcNow;
+                    readEntry.ReadAt = DateTime.Now;
                     await _context.SaveChangesAsync();
                 }
             }
@@ -96,7 +96,7 @@ namespace UniPortal.Services.Portals
                     NotificationId = notificationId,
                     AccountId = accountId,
                     IsRead = true,
-                    ReadAt = DateTime.UtcNow
+                    ReadAt = DateTime.Now
                 });
                 await _context.SaveChangesAsync();
             }

@@ -105,18 +105,12 @@ namespace UniPortal.Pages.Academics.Operations
                 EditNotification.FilePath = await FileHelper.SaveFileAsync(EditNotificationFile, UploadType.Notification);
             }
 
-            await R(
-                async () => await _notification_service_update_safe(),
+            await R(() =>
+                _notificationService.UpdateAsync(EditNotification),
                 "Notification updated successfully."
             );
 
             return RedirectToPage(new { CurrentPage, SearchTerm });
-
-            async Task _notification_service_update_safe()
-            {
-                // ensure EditNotification.Id is populated (form provides hidden id)
-                await _notificationService.UpdateAsync(EditNotification);
-            }
         }
 
         public async Task<IActionResult> OnPostEditAsync(string id)
@@ -151,19 +145,15 @@ namespace UniPortal.Pages.Academics.Operations
 
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            await _notificationService.DeleteAsync(id);
+            await R(() => _notificationService.DeleteAsync(id), "Notification deleted successfully.");
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 
         public async Task<IActionResult> OnPostActivateAsync(string id)
         {
-            await _notification_service_activate_safe();
+            await _notificationService.ActivateAsync(id);
             return RedirectToPage(new { CurrentPage, SearchTerm });
 
-            async Task _notification_service_activate_safe()
-            {
-                await _notificationService.ActivateAsync(id);
-            }
         }
     }
 }
