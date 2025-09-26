@@ -15,7 +15,7 @@ namespace UniPortal.Helpers
             string baseFolder = type switch
             {
                 UploadType.Notification => "uploads/notifications",
-                UploadType.Classwork => "uploads/classwork",
+                UploadType.Classwork => "uploads/classworks",
                 UploadType.Submission => "uploads/submissions",
                 _ => "uploads/others"
             };
@@ -27,13 +27,8 @@ namespace UniPortal.Helpers
                 baseFolder = Path.Combine(baseFolder, path);
             }
 
-            // Add date-based folders
-            var dateFolder = Path.Combine(
-                DateTime.Now.Year.ToString(),
-                DateTime.Now.Month.ToString("D2"),
-                DateTime.Now.Day.ToString("D2")
-            );
-
+            // Add single date folder (yyyy-MM-dd)
+            var dateFolder = DateTime.Now.ToString("yyyy-MM-dd");
             baseFolder = Path.Combine(baseFolder, dateFolder);
 
             // Ensure folder exists
@@ -50,5 +45,4 @@ namespace UniPortal.Helpers
             return $"/{baseFolder.Replace("\\", "/")}/{fileName}";
         }
     }
-
 }

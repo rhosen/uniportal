@@ -36,6 +36,11 @@ msbuild.wrn
 .env
 Logs/
 
-!wwwroot/upload/.gitkeep
+# Ignore all uploaded files
+wwwroot/uploads/
+
+# Keep empty folders with a placeholder
+!wwwroot/uploads/**/.gitkeep
+
 
 UniPortal/Properties/PublishProfiles/
