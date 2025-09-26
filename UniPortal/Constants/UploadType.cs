@@ -3,7 +3,7 @@
     public enum UploadType
     {
         Notification,
-        ClassMaterial,
+        Classwork,
         Assignment,
         Submission
     }

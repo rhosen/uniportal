@@ -67,6 +67,7 @@ namespace UniPortal.Extensions
             // Academic Operations Services
             // ========================
             services.AddScoped<CourseOfferingService>();
+            services.AddScoped<ClassworkService>();
             services.AddScoped<AssignmentService>();
             services.AddScoped<GradeService>();
             services.AddScoped<EnrollmentService>();

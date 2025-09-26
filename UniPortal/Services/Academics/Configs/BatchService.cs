@@ -19,7 +19,7 @@ namespace UniPortal.Services.Academics.Configs
         {
             return await _context.Batches
                 .Where(b => !b.IsDeleted)
-                .OrderBy(b => b.Number)
+                .OrderBy(b => b.Name)
                 .ToListAsync();
         }
 
@@ -35,7 +35,7 @@ namespace UniPortal.Services.Academics.Configs
         {
             var batch = new Batch
             {
-                Number = number
+                Name = number
             };
             _context.Batches.Add(batch);
             await _context.SaveChangesAsync();
@@ -47,7 +47,7 @@ namespace UniPortal.Services.Academics.Configs
             var batch = await _context.Batches.FindAsync(id);
             if (batch == null) return;
 
-            batch.Number = number;
+            batch.Name = number;
             batch.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -91,11 +91,11 @@ namespace UniPortal.Services.Academics.Configs
         {
             return await _context.Batches
                 .Where(b => !b.IsDeleted)
-                .OrderBy(b => b.Number)
+                .OrderBy(b => b.Name)
                 .Select(b => new SelectOption
                 {
                     Id = b.Id,
-                    Name = b.Number
+                    Name = b.Name
                 })
                 .ToListAsync();
         }

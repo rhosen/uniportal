@@ -35,24 +35,29 @@ namespace UniPortal.Data
         public DbSet<Student> Students { get; set; }
 
         // Faculties / staff
-        public DbSet<FacultyType> FacultyTypes { get; set; }   // NEW
+        public DbSet<FacultyType> FacultyTypes { get; set; }
         public DbSet<Faculty> Faculties { get; set; }
+
+        // Classwork & submissions
+        public DbSet<Classwork> Classworks { get; set; }
+        public DbSet<ClassworkSubmission> ClassworkSubmissions { get; set; }
 
         // Student-related entities
         public DbSet<Enrollment> Enrollments { get; set; }
-        public DbSet<Assignment> Assignments { get; set; }
-        public DbSet<AssignmentSubmission> AssignmentSubmissions { get; set; }
         public DbSet<Grade> Grades { get; set; }
         public DbSet<GradeScale> GradeScales { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
-        public DbSet<CourseMaterial> CourseMaterials { get; set; }
+
+        // Notifications
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationRead> NotificationReads { get; set; }
         public DbSet<RecipientType> RecipientTypes { get; set; }
+
+        // Class cancellations
         public DbSet<ClassCancellation> ClassCancellations { get; set; }
 
         // System / logging
         public DbSet<Log> Logs { get; set; }
-        public DbSet<Institution> Institutions { get; set; } 
+        public DbSet<Institution> Institutions { get; set; }
     }
 }

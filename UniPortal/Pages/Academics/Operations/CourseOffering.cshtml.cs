@@ -72,7 +72,7 @@ namespace UniPortal.Pages.Academics.Operations
             Programs = await _programService.GetProgramOptionsAsync();
             Batches = await _batchService.GetBatchOptionsAsync();
             Sections = await _sectionService.GetSectionOptionsAsync();
-            Faculties = await _facultyService.GetFacultiesAsync(ProgramId);
+            Faculties = await _facultyService.GetFacultiesByProgramIdAsync(ProgramId);
             Rooms = await _roomService.GetOptionsAsync();
 
             if (ProgramId != Guid.Empty && SemesterNumber != 0)

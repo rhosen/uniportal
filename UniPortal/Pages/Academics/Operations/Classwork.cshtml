@@ -1,0 +1,281 @@
+﻿@page
+@model UniPortal.Pages.Academics.Operations.ClassworkModel
+@{
+    ViewData["Title"] = "Classwork";
+    Layout = Model.LayoutForRole;
+}
+
+@functions {
+    // Relative time helper
+    public string GetRelativeTime(DateTime dateTime)
+    {
+        var ts = DateTime.Now - dateTime; // local time
+        if (ts.TotalSeconds < 60)
+            return $"{ts.Seconds} seconds ago";
+        if (ts.TotalMinutes < 60)
+            return $"{ts.Minutes} minutes ago";
+        if (ts.TotalHours < 24)
+            return $"{ts.Hours} hours ago";
+        if (ts.TotalDays < 7)
+            return $"{ts.Days} days ago";
+        if (ts.TotalDays < 30)
+            return $"{Math.Floor(ts.TotalDays / 7)} weeks ago";
+        if (ts.TotalDays < 365)
+            return $"{Math.Floor(ts.TotalDays / 30)} months ago";
+        return $"{Math.Floor(ts.TotalDays / 365)} years ago";
+    }
+}
+
+<!-- HEADER: Semester & Course Dropdown -->
+<div class="container-fluid mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <select class="form-select form-select-sm" asp-for="SelectedSemesterId" asp-items="@(new SelectList(Model.SemesterOptions, "Id", "Name"))" onchange="this.form.submit()">
+                    <option value="">Select Semester</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select form-select-sm" asp-for="SelectedBatchId" asp-items="@(new SelectList(Model.BatchOptions, "Id", "Name"))" onchange="this.form.submit()">
+                    <option value="">Select Batch</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select form-select-sm" asp-for="SelectedSectionId" asp-items="@(new SelectList(Model.SectionOptions, "Id", "Name"))" onchange="this.form.submit()">
+                    <option value="">Select Section</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select form-select-sm" asp-for="SelectedCourseId" onchange="this.form.submit()">
+                    <option value="">Select Course</option>
+                    @foreach (var course in Model.Courses)
+                    {
+                        <option value="@course.CourseOfferingId" selected="@(Model.SelectedCourseId == course.CourseOfferingId ? "selected" : null)">
+                            @course.CourseTitle
+                        </option>
+                    }
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div class="container-fluid" style="height: calc(100vh - 150px);">
+    <div class="row g-0 h-100">
+
+        <!-- LEFT PANEL: Classwork Form -->
+        <div class="col-md-4 d-flex flex-column bg-white p-3 border-end h-100">
+            <h5 class="fw-bold mb-3">
+                @if (Model.SelectedClasswork != null)
+                {
+                    <span>📄 @Model.SelectedClasswork.Title</span>
+                }
+                else
+                {
+                    <span>➕ Create Classwork</span>
+                }
+            </h5>
+
+            <div class="overflow-auto flex-grow-1">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    <input type="hidden" asp-for="SelectedCourseId" />
+                    <input type="hidden" asp-for="SelectedClassworkId" />
+                    <input type="hidden" asp-for="ClassworkDto.FilePath" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input class="form-control" asp-for="ClassworkDto.Title" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" asp-for="ClassworkDto.Description"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">File</label>
+                        <input type="file" class="form-control" asp-for="ClassworkDto.File" />
+                        @if (!string.IsNullOrEmpty(Model.ClassworkDto.FilePath))
+                        {
+                            <small>Current file: <a href="@Model.ClassworkDto.FilePath" target="_blank">📎 View</a></small>
+                        }
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="ClassworkDto.RequiresSubmission" />
+                        <label class="form-check-label">Requires Submission</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-control" asp-for="ClassworkDto.DueDate" />
+                    </div>
+
+                    @if (Model.SelectedClasswork != null)
+                    {
+                        <button type="submit" asp-page-handler="Update" class="btn btn-primary me-2">Update</button>
+                        <button type="submit" asp-page-handler="Delete" class="btn btn-danger">Delete</button>
+                    }
+                    else
+                    {
+                        <button type="submit" asp-page-handler="Create" class="btn btn-success">Create</button>
+                    }
+                </form>
+            </div>
+        </div>
+
+        <!-- MIDDLE PANEL: Classworks List -->
+        <div class="col-md-4 d-flex flex-column bg-white p-3 border-end h-100">
+            <div class="mb-3">
+                <form method="get" class="d-flex gap-2">
+                    <input type="hidden" asp-for="SelectedCourseId" />
+                    <input type="text" class="form-control" placeholder="Search classwork..." asp-for="SearchTerm" />
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </div>
+
+            <div class="list-group mb-2 overflow-auto flex-grow-1">
+                @foreach (var cw in Model.Classworks)
+                {
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(Model.SelectedClassworkId == cw.Id ? "active" : "")">
+                        <a class="flex-grow-1 text-decoration-none text-dark"
+                           asp-page="./Classwork"
+                           asp-route-SelectedClassworkId="@cw.Id"
+                           asp-route-SelectedCourseId="@Model.SelectedCourseId"
+                           asp-route-SelectedSemesterId="@Model.SelectedSemesterId"
+                           asp-route-SearchTerm="@Model.SearchTerm">
+                            <div>@cw.Title</div>
+                            <small class="text-muted">@GetRelativeTime(cw.CreatedAt)</small>
+                        </a>
+
+                        <div class="ms-2 d-flex gap-1">
+                            <a class="btn btn-sm btn-outline-primary"
+                               asp-page="./Classwork"
+                               asp-route-SelectedClassworkId="@cw.Id"
+                               asp-route-SelectedCourseId="@Model.SelectedCourseId"
+                               asp-route-SelectedSemesterId="@Model.SelectedSemesterId"
+                               asp-route-SearchTerm="@Model.SearchTerm">
+                                ✏️
+                            </a>
+                            <form method="post" asp-page-handler="Delete" asp-route-SelectedClassworkId="@cw.Id">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">🗑️</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <a class="btn btn-outline-secondary btn-sm @(Model.CurrentPage == 1 ? "disabled" : "")"
+                       asp-page="./Classwork"
+                       asp-route-SelectedSemesterId="@Model.SelectedSemesterId"
+                       asp-route-SelectedBatchId="@Model.SelectedBatchId"
+                       asp-route-SelectedSectionId="@Model.SelectedSectionId"
+                       asp-route-SelectedCourseId="@Model.SelectedCourseId"
+                       asp-route-SearchTerm="@Model.SearchTerm"
+                       asp-route-CurrentPage="@(Model.CurrentPage - 1)">
+                        ← Previous
+                    </a>
+
+                    <small class="text-muted">
+                        @(((Model.CurrentPage - 1) * Model.PageSize) + 1) -
+                        @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalClassworks))
+                        of @Model.TotalClassworks
+                    </small>
+
+                    <a class="btn btn-outline-secondary btn-sm @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")"
+                       asp-page="./Classwork"
+                       asp-route-SelectedSemesterId="@Model.SelectedSemesterId"
+                       asp-route-SelectedBatchId="@Model.SelectedBatchId"
+                       asp-route-SelectedSectionId="@Model.SelectedSectionId"
+                       asp-route-SelectedCourseId="@Model.SelectedCourseId"
+                       asp-route-SearchTerm="@Model.SearchTerm"
+                       asp-route-CurrentPage="@(Model.CurrentPage + 1)">
+                        Next →
+                    </a>
+                </div>
+            }
+        </div>
+
+        <!-- RIGHT PANEL: Submissions -->
+        <!-- RIGHT PANEL: Submissions -->
+        <div class="col-md-4 d-flex flex-column bg-white p-3 h-100">
+            <h5 class="fw-bold mb-3">Submissions</h5>
+
+            <div class="overflow-auto flex-grow-1">
+
+                @* Case 1: No classwork selected *@
+                @if (Model.SelectedClasswork == null)
+                {
+                    <p class="text-muted">📌 Select a classwork to view submissions.</p>
+                }
+                else if (!Model.SelectedClasswork.RequiresSubmission)
+                {
+                    @* Case 2: Resource-only classwork *@
+                    <p class="text-muted">📄 This classwork is just a resource; no submissions required.</p>
+                }
+                else
+                {
+                    @* Case 3: Submission-required classwork *@
+                    <h6>✅ Submitted</h6>
+                    @if (Model.Submitted != null && Model.Submitted.Any())
+                    {
+                        <ul class="list-group mb-3">
+                            @foreach (var sub in Model.Submitted.Take(10))
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>@sub.StudentName</span>
+                                    @if (!string.IsNullOrEmpty(sub.FilePath))
+                                    {
+                                        <a href="@sub.FilePath" target="_blank">📎</a>
+                                    }
+                                    <small class="text-muted ms-2">@GetRelativeTime(sub.CreatedAt)</small>
+                                </li>
+                            }
+                            @if (Model.Submitted.Count > 10)
+                            {
+                                <li class="list-group-item text-center text-muted">
+                                    and @((Model.Submitted.Count) - 10) more...
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No submissions yet. Students haven’t uploaded their work.</p>
+                    }
+
+                    <h6>⏳ Pending</h6>
+                    @if (Model.NotSubmitted != null && Model.NotSubmitted.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var sub in Model.NotSubmitted.Take(10))
+                            {
+                                <li class="list-group-item">@sub.StudentName</li>
+                            }
+                            @if (Model.NotSubmitted.Count > 10)
+                            {
+                                <li class="list-group-item text-center text-muted">
+                                    and @((Model.NotSubmitted.Count) - 10) more...
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">All students have submitted.</p>
+                    }
+                }
+
+            </div>
+        </div>
+
+
+    </div>
+</div>

@@ -37,7 +37,7 @@ namespace UniPortal.Pages.Academics.Configs
             if (!string.IsNullOrEmpty(SearchTerm))
             {
                 allBatches = allBatches
-                    .Where(b => b.Number.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                    .Where(b => b.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
@@ -50,9 +50,9 @@ namespace UniPortal.Pages.Academics.Configs
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            if (!string.IsNullOrWhiteSpace(NewBatch.Number))
+            if (!string.IsNullOrWhiteSpace(NewBatch.Name))
             {
-                await _batchService.CreateAsync(NewBatch.Number);
+                await _batchService.CreateAsync(NewBatch.Name);
             }
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
@@ -68,7 +68,7 @@ namespace UniPortal.Pages.Academics.Configs
                 EditBatch = new Batch
                 {
                     Id = batch.Id,
-                    Number = batch.Number
+                    Name = batch.Name
                 };
             }
 
@@ -87,7 +87,7 @@ namespace UniPortal.Pages.Academics.Configs
             if (!Guid.TryParse(id, out var batchId))
                 return RedirectToPage(new { CurrentPage, SearchTerm });
 
-            await _batchService.UpdateAsync(batchId, EditBatch.Number);
+            await _batchService.UpdateAsync(batchId, EditBatch.Name);
             return RedirectToPage(new { CurrentPage, SearchTerm });
         }
 

@@ -15,15 +15,14 @@ namespace UniPortal.Helpers
             string baseFolder = type switch
             {
                 UploadType.Notification => "uploads/notifications",
-                UploadType.ClassMaterial => "uploads/classmaterials",
-                UploadType.Assignment => "uploads/assignments",
+                UploadType.Classwork => "uploads/classwork",
                 UploadType.Submission => "uploads/submissions",
                 _ => "uploads/others"
             };
 
             // Add courseOfferingId for course-specific files
             if (!string.IsNullOrEmpty(path) &&
-                (type == UploadType.ClassMaterial || type == UploadType.Assignment || type == UploadType.Submission))
+                (type == UploadType.Classwork || type == UploadType.Assignment || type == UploadType.Submission))
             {
                 baseFolder = Path.Combine(baseFolder, path);
             }

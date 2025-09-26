@@ -26,6 +26,13 @@ namespace UniPortal.Services.Accounts
             _unitOfWork = unitOfWork;
         }
 
+        public async Task<Faculty?> GetFacultyByAccountIdAsync(Guid accountId)
+        {
+            return await _context.Faculties
+                .AsNoTracking()
+                .FirstOrDefaultAsync(f => f.AccountId == accountId);
+        }
+
         public async Task<List<SelectOption>> GetSelectOptionsAsync()
         {
             return await (
@@ -42,7 +49,7 @@ namespace UniPortal.Services.Accounts
             ).ToListAsync();
         }
 
-        public async Task<List<SelectOption>> GetFacultiesAsync(Guid programId)
+        public async Task<List<SelectOption>> GetFacultiesByProgramIdAsync(Guid programId)
         {
             var query =
                 from f in _context.Faculties

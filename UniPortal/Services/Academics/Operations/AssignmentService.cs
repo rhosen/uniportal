@@ -29,29 +29,29 @@ namespace UniPortal.Services.Academics.Operations
         {
             var today = DateTime.Today;
 
-            var query = from a in _context.Assignments
+            var query = from a in _context.Classworks
                         join co in _context.CourseOfferings on a.CourseOfferingId equals co.Id
                         join crs in _context.Courses on co.CourseId equals crs.Id
                         join e in _context.Enrollments on co.Id equals e.CourseOfferingId
                         where !a.IsDeleted && !co.IsDeleted && !e.IsDeleted
                               && e.StudentId == studentId
+                              && a.RequiresSubmission
                               && a.DueDate >= today
                         orderby a.DueDate
                         select new AssignmentViewModel
                         {
                             Id = a.Id,
                             Title = a.Title,
-                            CourseName = crs.Title, // join used here
+                            CourseName = crs.Title,
                             DueDate = a.DueDate,
-                            Status = _context.AssignmentSubmissions
-                                .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId && !s.IsDeleted)
+                            Status = _context.ClassworkSubmissions
+                                .Any(s => s.ClassworkId == a.Id && s.StudentId == studentId && !s.IsDeleted)
                                 ? "Submitted"
                                 : a.DueDate < DateTime.Now ? "Overdue" : "Pending"
                         };
 
             return await query.Take(limit).ToListAsync();
         }
-
 
         // -----------------------------
         // Create a new assignment (optional file)
@@ -71,16 +71,18 @@ namespace UniPortal.Services.Academics.Operations
                 await file.CopyToAsync(stream);
             }
 
-            var assignment = new Assignment
+            var assignment = new Classwork
             {
                 CourseOfferingId = courseOfferingId,
                 Title = title,
                 Description = description,
                 FilePath = filePath,
+                RequiresSubmission = true, // or pass as parameter if optional
+                DueDate = DateTime.Today.AddDays(7), // example default, can pass parameter
                 ModifiedById = accountId
             };
 
-            _context.Assignments.Add(assignment);
+            _context.Classworks.Add(assignment);
             await _context.SaveChangesAsync();
         }
 
@@ -96,7 +98,6 @@ namespace UniPortal.Services.Academics.Operations
             if (student == null)
                 throw new Exception("Student not found.");
 
-            // Build folder path: /wwwroot/uploads/assignments/{assignmentId}/{studentNumber}/
             var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "assignments", assignmentId.ToString(), student.StudentNumber);
             if (!Directory.Exists(uploadFolder))
                 Directory.CreateDirectory(uploadFolder);
@@ -107,31 +108,26 @@ namespace UniPortal.Services.Academics.Operations
                 await file.CopyToAsync(stream);
             }
 
-            // Check if submission already exists
-            var existingSubmission = await _context.AssignmentSubmissions
-                .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == student.Id && !s.IsDeleted);
+            var existingSubmission = await _context.ClassworkSubmissions
+                .FirstOrDefaultAsync(s => s.ClassworkId == assignmentId && s.StudentId == student.Id && !s.IsDeleted);
 
             if (existingSubmission != null)
             {
-                // Update existing submission
                 existingSubmission.FilePath = filePath;
-                existingSubmission.SubmittedDate = DateTime.Now;
-                existingSubmission.Status = "Submitted";
+                existingSubmission.UpdatedAt = DateTime.Now;
                 existingSubmission.ModifiedById = accountId;
             }
             else
             {
-                // New submission
-                var submission = new AssignmentSubmission
+                var submission = new ClassworkSubmission
                 {
-                    AssignmentId = assignmentId,
+                    ClassworkId = assignmentId,
                     StudentId = student.Id,
                     FilePath = filePath,
-                    SubmittedDate = DateTime.Now,
-                    Status = "Submitted",
+                    CreatedAt = DateTime.Now,
                     ModifiedById = accountId
                 };
-                _context.AssignmentSubmissions.Add(submission);
+                _context.ClassworkSubmissions.Add(submission);
             }
 
             await _context.SaveChangesAsync();
@@ -142,21 +138,21 @@ namespace UniPortal.Services.Academics.Operations
         // -----------------------------
         public async Task<AssignmentViewModel?> GetAssignmentDetailsAsync(Guid assignmentId, Guid studentId)
         {
-            var assignment = await (from a in _context.Assignments
+            var assignment = await (from a in _context.Classworks
                                     join co in _context.CourseOfferings on a.CourseOfferingId equals co.Id
-                                    join crs in _context.Courses on co.CourseId equals crs.Id   // fetch the actual course title
+                                    join crs in _context.Courses on co.CourseId equals crs.Id
                                     where a.Id == assignmentId && !a.IsDeleted && !co.IsDeleted
                                     select new AssignmentViewModel
                                     {
                                         Id = a.Id,
                                         Title = a.Title,
                                         Description = a.Description,
-                                        CourseName = crs.Title, // <- correctly get course title
+                                        CourseName = crs.Title,
                                         DueDate = a.DueDate,
-                                        Status = _context.AssignmentSubmissions
-                                            .Any(s => s.AssignmentId == a.Id && s.StudentId == studentId && !s.IsDeleted)
+                                        Status = _context.ClassworkSubmissions
+                                            .Any(s => s.ClassworkId == a.Id && s.StudentId == studentId && !s.IsDeleted)
                                             ? "Submitted"
-                                            : "Pending"
+                                            : a.RequiresSubmission ? "Pending" : "N/A"
                                     }).FirstOrDefaultAsync();
 
             return assignment;

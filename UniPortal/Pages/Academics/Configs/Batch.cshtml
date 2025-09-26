@@ -22,14 +22,14 @@
             <thead class="table-dark">
                 <tr>
                     <th>#</th>
-                    <th>Batch Number</th>
+                    <th>Batch</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>New</td>
-                    <td><input asp-for="NewBatch.Number" class="form-control" required /></td>
+                    <td><input asp-for="NewBatch.Name" class="form-control" required /></td>
                     <td>
                         <button type="submit" asp-page-handler="Create" class="btn btn-success btn-sm">Add</button>
                     </td>
@@ -42,7 +42,7 @@
     <table class="table table-striped">
         <thead class="table-dark">
             <tr>
-                <th>Batch Number</th>
+                <th>Batch</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -57,7 +57,7 @@
                         @if (Model.EditBatchId == batch.Id.ToString())
                         {
                             <!-- Editing Row -->
-                        <td><input name="EditBatch.Number" value="@Model.EditBatch.Number" class="form-control" /></td>
+                        <td><input name="EditBatch.Number" value="@Model.EditBatch.Name" class="form-control" /></td>
                         <td>
                             <button type="submit" asp-page-handler="SaveEdit" class="btn btn-sm btn-primary">💾 Save</button>
                             <button type="submit" asp-page-handler="CancelEdit" class="btn btn-sm btn-secondary">❌ Cancel</button>
@@ -66,7 +66,7 @@
                     else
                     {
                         <!-- Normal Row -->
-                        <td>@batch.Number</td>
+                        <td>@batch.Name</td>
                         <td>
                             <button type="submit" asp-page-handler="Edit" name="id" value="@batch.Id" class="btn btn-sm btn-warning">Edit</button>
                             @if (!batch.IsDeleted)

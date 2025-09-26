@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniPortal.Data;
 using UniPortal.Dtos;
-using UniPortal.Services.Accounts;
 using UniPortal.ViewModels.Users;
 
 namespace UniPortal.Services.Dashboards
@@ -9,14 +8,10 @@ namespace UniPortal.Services.Dashboards
     public class StudentDashboardService
     {
         private readonly UniPortalContext _context;
-        private readonly StudentService _studentService;
 
-        public StudentDashboardService(
-            UniPortalContext context,
-            StudentService studentService)
+        public StudentDashboardService(UniPortalContext context)
         {
             _context = context;
-            _studentService = studentService;
         }
 
         // -----------------------------
@@ -40,7 +35,7 @@ namespace UniPortal.Services.Dashboards
                             StudentId = s.StudentNumber,
                             Program = p.Name,
                             Department = d.Name,
-                            Batch = b.Number,
+                            Batch = b.Name,
                             Section = sec.Name,
                             Email = a.Email,
                             Phone = a.Phone
@@ -62,25 +57,40 @@ namespace UniPortal.Services.Dashboards
             var today = DateTime.Today;
             var currentDayOfWeek = today.DayOfWeek;
 
-            // 1️⃣ Total courses
+            var student = await _context.Students
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == studentId);
+
+            if (student == null)
+                throw new KeyNotFoundException("Student not found.");
+
+            // -----------------------------
+            // Total courses
+            // -----------------------------
             var courseCount = await _context.Enrollments
                 .Where(e => e.StudentId == studentId && !e.IsDeleted)
                 .CountAsync();
 
-            // 2️⃣ Pending assignments
-            var pendingAssignments = await (from a in _context.Assignments
-                                            join co in _context.CourseOfferings on a.CourseOfferingId equals co.Id
-                                            join e in _context.Enrollments on co.Id equals e.CourseOfferingId
-                                            where e.StudentId == studentId
-                                                  && !a.IsDeleted && !co.IsDeleted && !e.IsDeleted
-                                                  && a.DueDate >= today
-                                            join s in _context.AssignmentSubmissions
-                                                on new { a.Id, StudentId = studentId } equals new { Id = s.AssignmentId, StudentId = s.StudentId } into sub
-                                            from submission in sub.DefaultIfEmpty()
-                                            where submission == null
-                                            select a.Id).CountAsync();
+            // -----------------------------
+            // Pending classwork (requires submission & not submitted)
+            // -----------------------------
+            var pendingClasswork = await (from cw in _context.Classworks
+                                          join co in _context.CourseOfferings on cw.CourseOfferingId equals co.Id
+                                          join e in _context.Enrollments on co.Id equals e.CourseOfferingId
+                                          where e.StudentId == studentId
+                                                && !cw.IsDeleted && !co.IsDeleted && !e.IsDeleted
+                                                && cw.RequiresSubmission
+                                                && cw.DueDate >= today
+                                          join sub in _context.ClassworkSubmissions
+                                              on new { ClassworkId = cw.Id, StudentId = studentId }
+                                              equals new { sub.ClassworkId, sub.StudentId } into subGroup
+                                          from submission in subGroup.DefaultIfEmpty()
+                                          where submission == null
+                                          select cw.Id).CountAsync();
 
-            // 3️⃣ Today's classes (check weekday flags)
+            // -----------------------------
+            // Today's classes
+            // -----------------------------
             var todayClasses = await (from e in _context.Enrollments
                                       join co in _context.CourseOfferings on e.CourseOfferingId equals co.Id
                                       where e.StudentId == studentId && !e.IsDeleted && !co.IsDeleted
@@ -93,7 +103,9 @@ namespace UniPortal.Services.Dashboards
                                           (currentDayOfWeek == DayOfWeek.Sunday && co.Sun))
                                       select co.Id).CountAsync();
 
-            // 4️⃣ Attendance %
+            // -----------------------------
+            // Attendance %
+            // -----------------------------
             var totalClasses = await _context.Attendances
                 .Where(a => a.StudentId == studentId && !a.IsDeleted)
                 .CountAsync();
@@ -106,31 +118,39 @@ namespace UniPortal.Services.Dashboards
                 ? (int)Math.Round((double)presentCount / totalClasses * 100)
                 : 0;
 
-            // 5️⃣ Overall GPA
-            var grades = await _context.Grades
+            // -----------------------------
+            // Overall GPA
+            // -----------------------------
+            var gpaList = await _context.Grades
                 .Where(g => g.StudentId == studentId && !g.IsDeleted)
-                .Select(g => g.Marks)
+                .Select(g => g.GPA)
                 .ToListAsync();
 
-            string overallGPA = grades.Any()
-                ? (grades.Average() / 25).ToString("0.00") // example conversion
+            string overallGPA = gpaList.Any()
+                ? gpaList.Average().ToString("0.00")
                 : "N/A";
 
-            var student = _context.Students.FirstOrDefault(x => x.Id == studentId);
-
-            // 6️⃣ Unread notifications
+            // -----------------------------
+            // Unread notifications
+            // -----------------------------
             var unreadNotifications = await _context.Notifications
                 .Where(n => !n.IsDeleted && n.AccountId == student.AccountId)
+                .Where(n => !_context.NotificationReads
+                              .Any(nr => nr.NotificationId == n.Id && nr.AccountId == student.AccountId && nr.IsRead))
                 .CountAsync();
 
-            // 7️⃣ Notes count
-            var notesCount = await (from cm in _context.CourseMaterials
-                                    join co in _context.CourseOfferings on cm.CourseOfferingId equals co.Id
-                                    join e in _context.Enrollments on co.Id equals e.CourseOfferingId
-                                    where e.StudentId == studentId && !cm.IsDeleted && !co.IsDeleted && !e.IsDeleted
-                                    select cm.Id).CountAsync();
+            // -----------------------------
+            // Classwork count (notes)
+            // -----------------------------
+            var classworkCount = await (from cw in _context.Classworks
+                                        join co in _context.CourseOfferings on cw.CourseOfferingId equals co.Id
+                                        join e in _context.Enrollments on co.Id equals e.CourseOfferingId
+                                        where e.StudentId == studentId && !cw.IsDeleted && !co.IsDeleted && !e.IsDeleted
+                                        select cw.Id).CountAsync();
 
-            // 8️⃣ Distinct classrooms
+            // -----------------------------
+            // Distinct classrooms
+            // -----------------------------
             var classroomsCount = await (from co in _context.CourseOfferings
                                          join e in _context.Enrollments on co.Id equals e.CourseOfferingId
                                          where e.StudentId == studentId && !co.IsDeleted && !e.IsDeleted
@@ -139,15 +159,14 @@ namespace UniPortal.Services.Dashboards
             return new StudentMetricDto
             {
                 Courses = courseCount,
-                PendingAssignments = pendingAssignments,
+                PendingAssignments = pendingClasswork,
                 TodayClasses = todayClasses,
                 AttendancePercent = attendancePercent,
                 OverallGPA = overallGPA,
                 UnreadNotifications = unreadNotifications,
-                NotesCount = notesCount,
+                NotesCount = classworkCount,
                 Classrooms = classroomsCount
             };
         }
-
     }
 }

@@ -121,7 +121,7 @@ namespace UniPortal.Services.Accounts
                             AccountId = s.AccountId,
                             StudentId = s.StudentNumber,
                             BatchId = b.Id,
-                            BatchNumber = b.Number,
+                            BatchNumber = b.Name,
                             SectionId = sec.Id,
                             Section = sec.Name,
                             ProgramId = s.ProgramId,
@@ -180,7 +180,7 @@ namespace UniPortal.Services.Accounts
                             DepartmentName = d.Code,
                             ProgramName = p.Name,
                             CurrentSemester = s.CurrentSemester,
-                            Batch = b.Number,
+                            Batch = b.Name,
                             Section = sec.Name
                         };
 
@@ -238,7 +238,7 @@ namespace UniPortal.Services.Accounts
                             FullName = a.FirstName + " " + a.LastName,
                             ProgramName = p.Name,
                             DepartmentName = d.Code,
-                            Batch = b.Number,
+                            Batch = b.Name,
                             Section = sec.Name,
                             CurrentSemester = s.CurrentSemester,
                             CurrentSemesterName = $"Semester {s.CurrentSemester}"

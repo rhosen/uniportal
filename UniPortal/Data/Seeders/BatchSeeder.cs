@@ -10,13 +10,13 @@ namespace UniPortal.Data.Seeders
             var now = DateTime.Now;
             var batches = new List<Batch>
             {
-                new Batch { Id = Guid.NewGuid(), Number = "1", CreatedAt = now },
-                new Batch { Id = Guid.NewGuid(), Number = "2", CreatedAt = now }
+                new Batch { Id = Guid.NewGuid(), Name = "1", CreatedAt = now },
+                new Batch { Id = Guid.NewGuid(), Name = "2", CreatedAt = now }
             };
 
             foreach (var batch in batches)
             {
-                if (!await dbContext.Batches.AnyAsync(b => b.Number == batch.Number && !b.IsDeleted))
+                if (!await dbContext.Batches.AnyAsync(b => b.Name == batch.Name && !b.IsDeleted))
                     dbContext.Batches.Add(batch);
             }
 

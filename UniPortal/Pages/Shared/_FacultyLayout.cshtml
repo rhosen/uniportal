@@ -84,7 +84,7 @@
     </script>
 
     <!-- Main Content -->
-    <div class="container px-4 pb-5">
+    <div class="container">
         @if (!string.IsNullOrEmpty(message))
         {
             <div class="alert alert-@type alert-dismissible fade show" role="alert">
@@ -92,17 +92,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
-        <main role="main" class="pb-5">
+        <main role="main">
             @RenderBody()
         </main>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer mt-auto py-3 bg-light fixed-bottom border-top">
-        <div class="container text-center text-muted">
-            &copy; 2025 UniPortal
-        </div>
-    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
