@@ -43,16 +43,8 @@ namespace UniPortal.Pages.Portals
             var currentSemester = await _semesterService.GetCurrentSemesterAsync();
             SelectedSemesterId = SelectedSemesterId == Guid.Empty ? currentSemester.Id : SelectedSemesterId;
 
-            // Load current student
-            var student = await _studentService.GetStudentAsync(accountId: CurrentAccount.Id);
-
-            // Load courses
-            Courses = _scheduleService.GetStudentCourses(student.Id, SelectedSemesterId);
-
-            // Generate hourly slots
-            TimeSlots = Enumerable.Range(8, 11)
-                .Select(h => new StudentScheduleTimeSlotDto { Hour = h })
-                .ToList();
+            // Load semester info
+            var semester = await _semesterService.GetByIdAsync(SelectedSemesterId.ToString());
 
             // Compute week dates (Mon-Sun)
             DateTime monday;
@@ -70,6 +62,25 @@ namespace UniPortal.Pages.Portals
 
             WeekDates = Enumerable.Range(0, 7)
                 .Select(i => monday.AddDays(i))
+                .ToList();
+
+            // Only load courses if the week is inside the semester
+            if (WeekDates.First() >= semester.StartDate && WeekDates.Last() <= semester.EndDate)
+            {
+                // Load current student
+                var student = await _studentService.GetStudentAsync(accountId: CurrentAccount.Id);
+
+                // Load courses
+                Courses = _scheduleService.GetStudentCourses(student.Id, SelectedSemesterId);
+            }
+            else
+            {
+                Courses = new List<StudentScheduleCourseDto>(); // show nothing
+            }
+
+            // Generate hourly slots
+            TimeSlots = Enumerable.Range(8, 11)
+                .Select(h => new StudentScheduleTimeSlotDto { Hour = h })
                 .ToList();
         }
 
