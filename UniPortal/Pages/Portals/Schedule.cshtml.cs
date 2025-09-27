@@ -79,11 +79,14 @@ namespace UniPortal.Pages.Portals
 
         public StudentScheduleCourseDto? GetCourseAt(string day, TimeSpan slotStart)
         {
+            var slotEnd = slotStart + TimeSpan.FromHours(1);
+
             return Courses.FirstOrDefault(c =>
                 c.Day == day &&
-                slotStart < c.EndTime &&
-                slotStart + TimeSpan.FromHours(1) > c.StartTime
+                c.StartTime >= slotStart &&
+                c.StartTime < slotEnd
             );
         }
+
     }
 }

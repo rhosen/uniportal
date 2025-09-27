@@ -75,13 +75,16 @@ namespace UniPortal.Pages.Portals
         // Calendar helper: get courses for a specific date and time slot
         public List<FacultyScheduleCourseDto> GetCoursesAt(DateTime date, TimeSpan slotStart)
         {
+            var slotEnd = slotStart + TimeSpan.FromHours(1);
+
             return Courses
                 .Where(c =>
                     c.Date.Date == date.Date &&
-                    c.StartTime < slotStart + TimeSpan.FromHours(1) && // overlap with the slot
-                    c.EndTime > slotStart
+                    c.StartTime >= slotStart &&
+                    c.StartTime < slotEnd
                 )
                 .ToList();
         }
+
     }
 }
