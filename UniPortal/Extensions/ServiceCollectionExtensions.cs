@@ -76,6 +76,7 @@ namespace UniPortal.Extensions
             services.AddScoped<StudentScheduleService>();
             services.AddScoped<FacultyScheduleService>();
             services.AddScoped<AttendanceService>();
+            services.AddScoped<AttendanceReportService>();
 
             // ========================
             // Infrastructure & Logging
