@@ -1,0 +1,136 @@
+﻿@page
+@model UniPortal.Pages.Portals.ScheduleModel
+@{
+    ViewData["Title"] = "My Courses & Schedule";
+}
+
+<div class="container mt-4">
+
+    <h2 class="mb-2">📚 My Courses & Schedule</h2>
+
+    <!-- Semester Filter -->
+    <form method="get" class="mb-3 d-flex align-items-center gap-2">
+        <label for="semester" class="fw-bold">Semester:</label>
+        <select id="semester" name="SelectedSemesterId" class="form-select w-auto">
+            @foreach (var s in Model.SemesterOptions)
+            {
+                <option value="@s.Id" selected="@(s.Id == Model.SelectedSemesterId ? "" : null)">
+                    @s.Name
+                </option>
+            }
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Load</button>
+    </form>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#calendarView">Calendar</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#listView">List</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Calendar -->
+        <div class="tab-pane fade show active" id="calendarView">
+            <table class="table table-bordered text-center align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 10%">Time</th>
+                        @for (int i = 0; i < Model.DaysOfWeek.Length; i++)
+                        {
+                            var day = Model.DaysOfWeek[i];
+                            var date = Model.WeekDates[i];
+                            var isToday = date.Date == DateTime.Today;
+                            <th>
+                                @day <br />
+                                <small>@date.ToString("dd MMM")</small>
+                                @if (isToday)
+                                {
+                                    <span class="badge bg-info text-dark ms-1">Today</span>
+                                }
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slot in Model.TimeSlots)
+                    {
+                        <tr>
+                            <td>@slot.Label</td>
+                            @for (int i = 0; i < Model.DaysOfWeek.Length; i++)
+                            {
+                                var day = Model.DaysOfWeek[i];
+                                var date = Model.WeekDates[i];
+                                var isToday = date.Date == DateTime.Today;
+                                var course = Model.GetCourseAt(day, slot.Start);
+
+                                <td class="@(isToday ? "table-info" : "")">
+                                    @if (course != null)
+                                    {
+                                        <div class="fw-bold">@course.Code</div>
+                                        <div>@course.Title</div>
+                                        <div><small>@course.Room</small></div>
+                                        @* Canceled badge with tooltip *@
+                                        @if (course.IsCancelled)
+                                        {
+                                            <span class="badge bg-danger" data-bs-toggle="tooltip" title="@course.CancellationReason">Canceled</span>
+                                        }
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- List -->
+        <div class="tab-pane fade" id="listView">
+            <table class="table table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>Course Code</th>
+                        <th>Course Title</th>
+                        <th>Faculty</th>
+                        <th>Days</th>
+                        <th>Time</th>
+                        <th>Room</th>
+                        <th>Credits</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Courses)
+                    {
+                        <tr class="@(c.IsCancelled ? "table-danger" : "")">
+                            <td>@c.Code</td>
+                            <td>
+                                @c.Title
+                                @if (c.IsCancelled)
+                                {
+                                    <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" title="@c.CancellationReason">Canceled</span>
+                                }
+                            </td>
+                            <td>@c.Faculty</td>
+                            <td>@c.Days</td>
+                            <td>@c.Time</td>
+                            <td>@c.Room</td>
+                            <td>@c.Credits</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+}

@@ -674,12 +674,13 @@ GO
 CREATE TABLE dbo.ClassCancellations (
     Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
     CourseOfferingId UNIQUEIDENTIFIER NOT NULL,
-    CancellationDate DATE NOT NULL,
+    CancellationDate DATETIME2 NOT NULL,       -- keep DATE
     Reason NVARCHAR(500) NULL,
     ModifiedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UpdatedAt DATETIME2 NULL,
 
     CONSTRAINT FK_ClassCancellations_CourseOfferings FOREIGN KEY (CourseOfferingId) REFERENCES dbo.CourseOfferings(Id),
     CONSTRAINT FK_ClassCancellations_Accounts_ModifiedById FOREIGN KEY (ModifiedById) REFERENCES dbo.Accounts(Id)

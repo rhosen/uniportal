@@ -5,7 +5,7 @@ using UniPortal.Data.Entities;
 using UniPortal.Dtos;
 using UniPortal.Services.Infrastructures;
 
-namespace UniPortal.Services.Accounts
+namespace UniPortal.Services.Academics.Configs
 {
     public class FacultyTypeService : BaseService<FacultyType>
     {
@@ -57,7 +57,7 @@ namespace UniPortal.Services.Accounts
             return entity;
         }
 
-        public async Task<FacultyType?> GetAsync(Guid id)
+        public async Task<FacultyType> GetAsync(Guid id)
         {
             return await _unitOfWork.Context.FacultyTypes
                 .FirstOrDefaultAsync(ft => ft.Id == id && !ft.IsDeleted);

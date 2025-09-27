@@ -89,18 +89,6 @@
         <!-- Right Column: Metric Cards -->
         <div class="col-lg-9">
             <div class="row g-3">
-                <!-- Courses -->
-                <div class="col-md-3 col-sm-6">
-                    <div class="metric-card" onclick="location.href='@Url.Page("/portals/courses")'">
-                        <div class="metric-content">
-                            <svg class="metric-icon" viewBox="0 0 64 48">
-                                <path d="M10 40V10l22 10 22-10v30L32 32 10 40z" fill="#6f42c1" />
-                            </svg>
-                            <div class="card-title">Courses</div>
-                            <div class="card-value">@Model.Metrics.Courses</div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Assignments -->
                 <div class="col-md-3 col-sm-6">
@@ -122,12 +110,16 @@
                         <div class="metric-content">
                             <svg class="metric-icon" viewBox="0 0 64 48">
                                 <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="#fd7e14" />
+                                <circle cx="32" cy="27" r="8" fill="#fff" />
+                                <rect x="31.5" y="24" width="1" height="5" fill="#fd7e14" />
+                                <rect x="32" y="27" width="5" height="1" fill="#fd7e14" />
                             </svg>
                             <div class="card-title">Schedule</div>
                             <div class="card-value">@Model.Metrics.TodayClasses</div>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Attendance -->
                 <div class="col-md-3 col-sm-6">

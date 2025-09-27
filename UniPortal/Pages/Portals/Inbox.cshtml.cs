@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Dtos;
+using UniPortal.Services.Academics.Portals;
 using UniPortal.Services.Accounts;
-using UniPortal.Services.Portals;
 
 namespace UniPortal.Pages.Portals
 {

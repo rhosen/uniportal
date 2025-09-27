@@ -3,7 +3,7 @@ using UniPortal.Data;
 using UniPortal.Dtos;
 using UniPortal.Data.Entities;
 
-namespace UniPortal.Services.Portals
+namespace UniPortal.Services.Academics.Portals
 {
     public class InboxService
     {
@@ -51,7 +51,7 @@ namespace UniPortal.Services.Portals
         /// <summary>
         /// Get a single notification by Id for display or redirect.
         /// </summary>
-        public async Task<NotificationDto?> GetNotificationByIdAsync(Guid notificationId, Guid accountId)
+        public async Task<NotificationDto> GetNotificationByIdAsync(Guid notificationId, Guid accountId)
         {
             return await _context.Notifications
                 .AsNoTracking()

@@ -3,10 +3,10 @@ using UniPortal.Helpers;
 using UniPortal.Reports;
 using UniPortal.Services.Academics.Configs;
 using UniPortal.Services.Academics.Operations;
+using UniPortal.Services.Academics.Portals;
 using UniPortal.Services.Accounts;
 using UniPortal.Services.Dashboards;
 using UniPortal.Services.Infrastructures;
-using UniPortal.Services.Portals;
 
 namespace UniPortal.Extensions
 {
@@ -72,6 +72,7 @@ namespace UniPortal.Extensions
             services.AddScoped<GradeService>();
             services.AddScoped<EnrollmentService>();
             services.AddScoped<InboxService>();
+            services.AddScoped<StudentScheduleService>();
 
             // ========================
             // Infrastructure & Logging
