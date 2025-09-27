@@ -9,6 +9,7 @@
         public string FilePath { get; set; }
         public bool RequiresSubmission { get; set; }
         public DateTime? DueDate { get; set; }
+        public DateTime? UploadedAt { get; set; }
 
     }
 }

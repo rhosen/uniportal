@@ -6,13 +6,14 @@
 }
 
 <div class="container-fluid my-4">
-    <!-- HEADER: Week + Semester -->
-    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white border rounded">
+
+    <!-- HEADER: Week + Semester + Navigation -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 p-3 bg-white border rounded gap-3">
         <div class="fw-bold">
             📅 Week: @Model.WeekDates.First().ToString("dd MMM") – @Model.WeekDates.Last().ToString("dd MMM")
         </div>
 
-        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+        <form method="get" class="d-flex align-items-center gap-2 mb-0 flex-wrap">
             <label for="semester" class="fw-bold mb-0">Semester:</label>
             <select id="semester" name="SelectedSemesterId" class="form-select w-auto">
                 @foreach (var s in Model.SemesterOptions)
@@ -24,33 +25,25 @@
             </select>
             <button type="submit" class="btn btn-primary btn-sm">Load</button>
         </form>
-    </div>
 
-    <div class="row g-0" style="min-height: 80vh;">
-
-        <!-- Left Panel: Week Navigation -->
-        <div class="col-md-3 border-end bg-light d-flex flex-column">
-            <h5 class="p-3 mb-2 border-bottom fw-bold">🧭 Week Navigation</h5>
-
-            <div class="d-flex justify-content-between p-3">
-                <a class="btn btn-outline-primary btn-sm"
-                   href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(-7).ToString("yyyy-MM-dd")">← Prev</a>
-                <a class="btn btn-outline-primary btn-sm"
-                   href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(7).ToString("yyyy-MM-dd")">Next →</a>
-            </div>
-
-            <div class="p-3">
-                <label for="weekPicker" class="fw-bold">Go to week:</label>
-                <input type="date" id="weekPicker" class="form-control mt-1"
-                       value="@Model.WeekDates.First().ToString("yyyy-MM-dd")"
-                       onchange="location.href='?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=' + this.value">
-            </div>
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-outline-primary btn-sm"
+               href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(-7).ToString("yyyy-MM-dd")">← Prev</a>
+            <a class="btn btn-outline-primary btn-sm"
+               href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(7).ToString("yyyy-MM-dd")">Next →</a>
         </div>
 
-        <!-- Middle Panel: Main Schedule -->
-        <div class="col-md-9 d-flex flex-column">
+        <div>
+            <label for="weekPicker" class="fw-bold mb-1 d-block">Go to week:</label>
+            <input type="date" id="weekPicker" class="form-control"
+                   value="@Model.WeekDates.First().ToString("yyyy-MM-dd")"
+                   onchange="location.href='?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=' + this.value">
+        </div>
+    </div>
 
-            <!-- Tabs -->
+    <!-- Tabs -->
+    <div class="row g-0">
+        <div class="col-12 d-flex flex-column">
             <ul class="nav nav-tabs bg-white px-3 mt-2">
                 <li class="nav-item">
                     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#calendarView">Calendar</button>
@@ -126,29 +119,49 @@
                                     <th>Course Code</th>
                                     <th>Course Title</th>
                                     <th>Faculty</th>
-                                    <th>Days</th>
+                                    <th>Day</th>
+                                    <th>Date</th>
                                     <th>Time</th>
                                     <th>Room</th>
                                     <th>Credits</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var c in Model.Courses)
+                                @foreach (var courseGroup in Model.Courses.GroupBy(c => new { c.Code, c.Faculty }))
                                 {
-                                    <tr class="@(c.IsCancelled ? "table-danger" : "")">
-                                        <td>@c.Code</td>
+                                    var course = courseGroup.First();
+                                    <tr>
+                                        <td>@course.Code</td>
+                                        <td>@course.Title</td>
+                                        <td>@course.Faculty</td>
                                         <td>
-                                            @c.Title
-                                            @if (c.IsCancelled)
+                                            @foreach (var c in courseGroup)
                                             {
-                                                <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" title="@c.CancellationReason">Canceled</span>
+                                                <span>@c.Day</span>
+                                                @if (c.IsCancelled)
+                                                {
+                                                    <span class="badge bg-danger ms-1" title="@c.CancellationReason">Canceled</span>
+                                                }
+                                                <br />
                                             }
                                         </td>
-                                        <td>@c.Faculty</td>
-                                        <td>@c.Days</td>
-                                        <td>@c.Time</td>
-                                        <td>@c.Room</td>
-                                        <td>@c.Credits</td>
+                                        <td>
+                                            @foreach (var c in courseGroup)
+                                            {
+                                                <span>@c.Date.ToShortDateString()</span>
+                                                <br />
+                                            }
+                                        </td>
+                                        <td>
+                                            @foreach (var c in courseGroup)
+                                            {
+                                                <span>@(DateTime.Today.Add(c.StartTime).ToString("hh:mm tt")) – @(DateTime.Today.Add(c.EndTime).ToString("hh:mm tt"))</span>
+                                        
+                                                <br />
+                                            }
+                                        </td>
+                                        <td>@course.Room</td>
+                                        <td>@course.Credits</td>
                                     </tr>
                                 }
                             </tbody>
@@ -158,7 +171,6 @@
 
             </div>
         </div>
-
     </div>
 </div>
 

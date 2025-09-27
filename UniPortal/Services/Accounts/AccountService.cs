@@ -36,6 +36,7 @@ namespace UniPortal.Services.Accounts
                     FirstName = firstName ?? "",
                     LastName = lastName ?? "",
                     Gender = Gender.Other.ToString(),
+                    RegisteredAt = DateTime.Now,
                     IsActive = !string.Equals(role, Roles.Student, StringComparison.OrdinalIgnoreCase), // activate if not Student
                     IsDeleted = false
                 };
@@ -201,6 +202,25 @@ namespace UniPortal.Services.Accounts
                 .AsNoTracking()
                 .Where(a => studentIds.Contains(a.IdentityId) && !a.IsActive && !a.IsDeleted)
                 .ToListAsync();
+        }
+
+        public async Task UpdateLastLoginAsync(Guid accountId, DateTime lastLoginAt)
+        {
+            var account = await _unitOfWork.Context.Accounts
+                .FirstOrDefaultAsync(a => a.Id == accountId);
+
+            if (account == null)
+                throw new InvalidOperationException("Account not found.");
+
+            account.LastLoginAt = lastLoginAt;
+            account.UpdatedAt = DateTime.Now;
+
+            // Only update these two columns to avoid touching other fields
+            _unitOfWork.Context.Accounts.Attach(account);
+            _unitOfWork.Context.Entry(account).Property(a => a.LastLoginAt).IsModified = true;
+            _unitOfWork.Context.Entry(account).Property(a => a.UpdatedAt).IsModified = true;
+
+            await _unitOfWork.Context.SaveChangesAsync();
         }
     }
 }

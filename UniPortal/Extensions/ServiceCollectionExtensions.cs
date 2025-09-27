@@ -73,6 +73,7 @@ namespace UniPortal.Extensions
             services.AddScoped<EnrollmentService>();
             services.AddScoped<InboxService>();
             services.AddScoped<StudentScheduleService>();
+            services.AddScoped<FacultyScheduleService>();
 
             // ========================
             // Infrastructure & Logging

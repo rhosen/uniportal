@@ -24,6 +24,11 @@ CREATE TABLE dbo.Accounts
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    
+    -- New columns
+    RegisteredAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    LastLoginAt DATETIME2 NULL,
+    
     UpdatedAt DATETIME2 NULL,
 
     CONSTRAINT FK_Accounts_AspNetUsers_IdentityId FOREIGN KEY (IdentityId)
@@ -34,6 +39,7 @@ CREATE TABLE dbo.Accounts
     CONSTRAINT CHK_Accounts_Gender CHECK (Gender IN ('Male','Female','Other'))
 );
 GO
+
 
 -- =========================
 -- 2. Departments Table
@@ -436,6 +442,7 @@ CREATE TABLE dbo.Classworks (
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UploadedAt DATETIME2 NULL,
 
     CONSTRAINT FK_Classworks_CourseOffering FOREIGN KEY (CourseOfferingId) REFERENCES dbo.CourseOfferings(Id),
     CONSTRAINT FK_Classworks_Faculties FOREIGN KEY (FacultyId) REFERENCES dbo.Faculties(Id),
@@ -461,6 +468,7 @@ CREATE TABLE dbo.ClassworkSubmissions (
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UploadedAt DATETIME2 NULL,
 
     CONSTRAINT FK_ClassworkSubmissions_Classworks FOREIGN KEY (ClassworkId) REFERENCES dbo.Classworks(Id),
     CONSTRAINT FK_ClassworkSubmissions_Student FOREIGN KEY (StudentId) REFERENCES dbo.Students(Id),
@@ -484,6 +492,7 @@ CREATE TABLE dbo.Enrollments (
     DeletedAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UpdatedAt DATETIME2 NULL,
+    EnrollmentDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
 
     CONSTRAINT FK_Enrollments_Students FOREIGN KEY (StudentId) REFERENCES dbo.Students(Id),
     CONSTRAINT FK_Enrollments_CourseOfferings FOREIGN KEY (CourseOfferingId) REFERENCES dbo.CourseOfferings(Id),

@@ -212,6 +212,7 @@ public class EnrollmentService
                 Id = Guid.NewGuid(),
                 StudentId = studentId,
                 CourseOfferingId = coId,
+                EnrollmentDate = DateTime.Now,
                 ModifiedById = modifiedBy,
                 CreatedAt = DateTime.Now,
                 IsDeleted = false

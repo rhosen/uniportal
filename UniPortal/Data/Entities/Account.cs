@@ -11,5 +11,7 @@
         public string IdentityId { get; set; } = string.Empty; // Link to AspNetUsers
         public bool IsActive { get; set; } = true;
         public string Gender { get; set; } = string.Empty; // New field
+        public DateTime RegisteredAt { get; set; } = DateTime.Now;
+        public DateTime? LastLoginAt { get; set; }
     }
 }

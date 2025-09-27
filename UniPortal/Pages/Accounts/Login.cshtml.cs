@@ -100,22 +100,21 @@ namespace UniPortal.Pages.Accounts
             if (!ModelState.IsValid)
                 return Page();
 
-            // 1️⃣ Use the ValidateUserAsync method
+            // 1️⃣ Validate user
             var (isValid, errorMessage, displayName, role, identityId) = await ValidateUserAsync(Input.Email, Input.Password);
-
             if (!isValid)
                 return InvalidLogin(errorMessage);
 
-            // 2️⃣ Create claims with dynamic role
+            // 2️⃣ Create claims
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, displayName),
-                new Claim(ClaimTypes.Email, Input.Email),
-                new Claim(ClaimTypes.NameIdentifier, identityId),
-                new Claim(ClaimTypes.Role, role),
-            };
+    {
+        new Claim(ClaimTypes.Name, displayName),
+        new Claim(ClaimTypes.Email, Input.Email),
+        new Claim(ClaimTypes.NameIdentifier, identityId),
+        new Claim(ClaimTypes.Role, role),
+    };
 
-            // 3️⃣ Sign in with cookie
+            // 3️⃣ Sign in
             var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
             await HttpContext.SignInAsync(
                 IdentityConstants.ApplicationScheme,
@@ -126,9 +125,18 @@ namespace UniPortal.Pages.Accounts
                     ExpiresUtc = DateTimeOffset.Now.AddHours(8)
                 });
 
-            // 4️⃣ Redirect based on the role using the helper method
+            // 4️⃣ Update LastLoginAt
+            var account = await _accountService.GetAccountAsync(null, identityId);
+            if (account != null)
+            {
+                account.LastLoginAt = DateTime.Now;
+                await _accountService.UpdateLastLoginAsync(account.Id, DateTime.Now);
+            }
+
+            // 5️⃣ Redirect based on role
             return RedirectToRoleBasedPage(role);
         }
+
 
         // ---------------- Helper ----------------
         private IActionResult InvalidLogin(string message)

@@ -178,6 +178,7 @@ namespace UniPortal.Services.Academics.Operations
                 Title = dto.Title,
                 Description = dto.Description,
                 FilePath = dto.FilePath,
+                UploadedAt = dto.FilePath == null ? null : DateTime.Now,
                 RequiresSubmission = dto.RequiresSubmission,
                 DueDate = dto.DueDate,
                 CreatedAt = DateTime.Now
@@ -205,6 +206,7 @@ namespace UniPortal.Services.Academics.Operations
             cw.Title = dto.Title;
             cw.Description = dto.Description;
             cw.FilePath = dto.FilePath;
+            cw.UploadedAt = dto.FilePath == null ? null : DateTime.Now;
             cw.RequiresSubmission = dto.RequiresSubmission;
             cw.DueDate = dto.DueDate;
             cw.UpdatedAt = DateTime.Now;

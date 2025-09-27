@@ -59,6 +59,7 @@ namespace UniPortal.Data.Seeders
                         DepartmentId = dept.Id,
                         FacultyTypeId = facultyType.Id,
                         FacultyNumber = facultyNumber,
+                        IsAdvisor = facultyNumber == "CSEFAC004",
                         CreatedAt = now
                     };
                     dbContext.Faculties.Add(faculty);

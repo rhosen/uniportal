@@ -6,5 +6,6 @@
         public Guid StudentId { get; set; }
         public string FilePath { get; set; }
         public string Remarks { get; set; }
+        public DateTime? UploadedAt { get; set; }
     }
 }

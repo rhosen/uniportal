@@ -33,11 +33,8 @@ namespace UniPortal.Pages.Portals
         public List<SelectOption> SemesterOptions { get; set; } = new();
         public List<StudentScheduleCourseDto> Courses { get; set; } = new();
         public List<StudentScheduleTimeSlotDto> TimeSlots { get; set; } = new();
-
-        // Remove fixed DaysOfWeek
-        public string[] DaysOfWeek { get; set; } = Array.Empty<string>();
-
         public List<DateTime> WeekDates { get; set; } = new();
+        public string[] DaysOfWeek { get; set; } = Array.Empty<string>();
 
         public async Task OnGet()
         {
@@ -46,15 +43,12 @@ namespace UniPortal.Pages.Portals
             var currentSemester = await _semesterService.GetCurrentSemesterAsync();
             SelectedSemesterId = SelectedSemesterId == Guid.Empty ? currentSemester.Id : SelectedSemesterId;
 
-            // Load semester info
             var semester = await _semesterService.GetByIdAsync(SelectedSemesterId.ToString());
 
             // Compute week dates dynamically (Mon-Sun)
             DateTime monday;
             if (WeekStart.HasValue)
-            {
                 monday = WeekStart.Value;
-            }
             else
             {
                 var today = DateTime.Today;
@@ -63,18 +57,14 @@ namespace UniPortal.Pages.Portals
                 monday = today.AddDays(-diff);
             }
 
-            WeekDates = Enumerable.Range(0, 7)
-                .Select(i => monday.AddDays(i))
-                .ToList();
-
-            // Dynamic day names for headers
+            WeekDates = Enumerable.Range(0, 7).Select(i => monday.AddDays(i)).ToList();
             DaysOfWeek = WeekDates.Select(d => d.ToString("ddd")).ToArray();
 
-            // Only load courses if the week is inside the semester
+            // Load student courses only if week is inside semester
             if (WeekDates.First() >= semester.StartDate && WeekDates.Last() <= semester.EndDate)
             {
-                var student = await _studentService.GetStudentAsync(accountId: CurrentAccount.Id);
-                Courses = _scheduleService.GetStudentCourses(student.Id, SelectedSemesterId);
+                var student = await _studentService.GetStudentAsync(CurrentAccount.Id);
+                Courses = _scheduleService.GetStudentCourses(student.Id, SelectedSemesterId, WeekDates);
             }
             else
             {
@@ -87,9 +77,13 @@ namespace UniPortal.Pages.Portals
                 .ToList();
         }
 
-        public StudentScheduleCourseDto? GetCourseAt(string day, TimeSpan startTime) =>
-            Courses.FirstOrDefault(c =>
-                c.Days.Contains(day) &&
-                c.StartTime == startTime);
+        public StudentScheduleCourseDto? GetCourseAt(string day, TimeSpan slotStart)
+        {
+            return Courses.FirstOrDefault(c =>
+                c.Day == day &&
+                slotStart < c.EndTime &&
+                slotStart + TimeSpan.FromHours(1) > c.StartTime
+            );
+        }
     }
 }
