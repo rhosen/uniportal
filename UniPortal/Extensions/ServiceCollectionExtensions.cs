@@ -7,6 +7,7 @@ using UniPortal.Services.Academics.Portals;
 using UniPortal.Services.Accounts;
 using UniPortal.Services.Dashboards;
 using UniPortal.Services.Infrastructures;
+using UniPortal.Services.Portals;
 
 namespace UniPortal.Extensions
 {
@@ -74,6 +75,7 @@ namespace UniPortal.Extensions
             services.AddScoped<InboxService>();
             services.AddScoped<StudentScheduleService>();
             services.AddScoped<FacultyScheduleService>();
+            services.AddScoped<AttendanceService>();
 
             // ========================
             // Infrastructure & Logging

@@ -658,6 +658,7 @@ CREATE TABLE dbo.Attendances (
     CourseOfferingId UNIQUEIDENTIFIER NOT NULL,
     AttendanceDate DATE NOT NULL,
     Status NVARCHAR(20) NOT NULL DEFAULT 'Absent',
+    Remarks NVARCHAR(250) NULL,
     ModifiedById UNIQUEIDENTIFIER NULL,
     IsDeleted BIT NOT NULL DEFAULT 0,
     DeletedAt DATETIME2 NULL,

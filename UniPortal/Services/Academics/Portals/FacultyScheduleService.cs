@@ -80,21 +80,25 @@ public class FacultyScheduleService
 
     public async Task CancelClassAsync(Guid facultyId, Guid courseOfferingId, DateTime cancellationDate, string? reason)
     {
+        // Check if course exists and belongs to this faculty
         var course = await _dbContext.CourseOfferings
             .FirstOrDefaultAsync(c => c.Id == courseOfferingId && c.FacultyId == facultyId);
 
         if (course == null)
             throw new InvalidOperationException("Course not found or does not belong to this faculty.");
 
+        // Prevent cancellation of past classes
         if (cancellationDate.Date < DateTime.Today)
-            throw new InvalidOperationException("Cannot cancel a class in the past.");
+            throw new InvalidOperationException("Cannot cancel a class that has already been conducted.");
 
+        // Prevent duplicate cancellation
         var existing = await _dbContext.ClassCancellations
             .FirstOrDefaultAsync(c => c.CourseOfferingId == courseOfferingId && c.CancellationDate.Date == cancellationDate.Date);
 
         if (existing != null)
             throw new InvalidOperationException("This class session has already been cancelled.");
 
+        // Add cancellation record
         _dbContext.ClassCancellations.Add(new ClassCancellation
         {
             CourseOfferingId = courseOfferingId,
@@ -104,4 +108,5 @@ public class FacultyScheduleService
 
         await _dbContext.SaveChangesAsync();
     }
+
 }
