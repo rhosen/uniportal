@@ -27,12 +27,13 @@ namespace UniPortal.Pages.Portals
         [BindProperty(SupportsGet = true)]
         public Guid SelectedSemesterId { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public DateTime? WeekStart { get; set; }
+
         public List<SelectOption> SemesterOptions { get; set; } = new();
         public List<StudentScheduleCourseDto> Courses { get; set; } = new();
         public List<StudentScheduleTimeSlotDto> TimeSlots { get; set; } = new();
         public string[] DaysOfWeek { get; } = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-
-        // <-- New: dates for the current week
         public List<DateTime> WeekDates { get; set; } = new();
 
         public async Task OnGet()
@@ -40,7 +41,7 @@ namespace UniPortal.Pages.Portals
             // Load semester dropdown
             SemesterOptions = await _semesterService.GetSelectOptionsAsync();
             var currentSemester = await _semesterService.GetCurrentSemesterAsync();
-            SelectedSemesterId = currentSemester.Id;
+            SelectedSemesterId = SelectedSemesterId == Guid.Empty ? currentSemester.Id : SelectedSemesterId;
 
             // Load current student
             var student = await _studentService.GetStudentAsync(accountId: CurrentAccount.Id);
@@ -53,11 +54,19 @@ namespace UniPortal.Pages.Portals
                 .Select(h => new StudentScheduleTimeSlotDto { Hour = h })
                 .ToList();
 
-            // Compute dates for the week (Mon-Sun)
-            var today = DateTime.Today;
-            var diff = today.DayOfWeek - DayOfWeek.Monday;
-            if (diff < 0) diff += 7;
-            var monday = today.AddDays(-diff);
+            // Compute week dates (Mon-Sun)
+            DateTime monday;
+            if (WeekStart.HasValue)
+            {
+                monday = WeekStart.Value;
+            }
+            else
+            {
+                var today = DateTime.Today;
+                var diff = today.DayOfWeek - DayOfWeek.Monday;
+                if (diff < 0) diff += 7;
+                monday = today.AddDays(-diff);
+            }
 
             WeekDates = Enumerable.Range(0, 7)
                 .Select(i => monday.AddDays(i))
