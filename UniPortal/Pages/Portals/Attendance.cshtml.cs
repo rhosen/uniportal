@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using UniPortal.Dtos;
 using UniPortal.Dtos.Attendance;
 using UniPortal.Services.Academics.Configs;
+using UniPortal.Services.Academics.Portals;
 using UniPortal.Services.Accounts;
-using UniPortal.Services.Portals;
 
 namespace UniPortal.Pages.Portals
 {

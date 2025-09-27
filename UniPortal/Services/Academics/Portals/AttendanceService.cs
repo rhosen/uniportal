@@ -4,7 +4,7 @@ using UniPortal.Data.Entities;
 using UniPortal.Dtos;
 using UniPortal.Dtos.Attendance;
 
-namespace UniPortal.Services.Portals
+namespace UniPortal.Services.Academics.Portals
 {
     public class AttendanceService
     {

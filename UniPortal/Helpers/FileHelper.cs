@@ -22,7 +22,7 @@ namespace UniPortal.Helpers
 
             // Add courseOfferingId for course-specific files
             if (!string.IsNullOrEmpty(path) &&
-                (type == UploadType.Classwork || type == UploadType.Assignment || type == UploadType.Submission))
+                (type == UploadType.Classwork || type == UploadType.Submission))
             {
                 baseFolder = Path.Combine(baseFolder, path);
             }
@@ -34,15 +34,19 @@ namespace UniPortal.Helpers
             // Ensure folder exists
             Directory.CreateDirectory(Path.Combine("wwwroot", baseFolder));
 
-            // Save file
+            // Save file with original name on disk
             var fileName = $"{Guid.NewGuid()}_{file.FileName}";
             var fileFullPath = Path.Combine("wwwroot", baseFolder, fileName);
 
             using var stream = new FileStream(fileFullPath, FileMode.Create);
             await file.CopyToAsync(stream);
 
-            // Return relative path for db
-            return $"/{baseFolder.Replace("\\", "/")}/{fileName}";
+            // URL-encode ONLY the filename for browser safety
+            var safeFileName = Uri.EscapeDataString(fileName);
+
+            // Return relative path for DB/browser
+            var relativePath = $"/{baseFolder.Replace("\\", "/")}/{safeFileName}";
+            return relativePath;
         }
     }
 }
