@@ -33,7 +33,10 @@ namespace UniPortal.Pages.Portals
         public List<SelectOption> SemesterOptions { get; set; } = new();
         public List<StudentScheduleCourseDto> Courses { get; set; } = new();
         public List<StudentScheduleTimeSlotDto> TimeSlots { get; set; } = new();
-        public string[] DaysOfWeek { get; } = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+
+        // Remove fixed DaysOfWeek
+        public string[] DaysOfWeek { get; set; } = Array.Empty<string>();
+
         public List<DateTime> WeekDates { get; set; } = new();
 
         public async Task OnGet()
@@ -46,7 +49,7 @@ namespace UniPortal.Pages.Portals
             // Load semester info
             var semester = await _semesterService.GetByIdAsync(SelectedSemesterId.ToString());
 
-            // Compute week dates (Mon-Sun)
+            // Compute week dates dynamically (Mon-Sun)
             DateTime monday;
             if (WeekStart.HasValue)
             {
@@ -64,21 +67,21 @@ namespace UniPortal.Pages.Portals
                 .Select(i => monday.AddDays(i))
                 .ToList();
 
+            // Dynamic day names for headers
+            DaysOfWeek = WeekDates.Select(d => d.ToString("ddd")).ToArray();
+
             // Only load courses if the week is inside the semester
             if (WeekDates.First() >= semester.StartDate && WeekDates.Last() <= semester.EndDate)
             {
-                // Load current student
                 var student = await _studentService.GetStudentAsync(accountId: CurrentAccount.Id);
-
-                // Load courses
                 Courses = _scheduleService.GetStudentCourses(student.Id, SelectedSemesterId);
             }
             else
             {
-                Courses = new List<StudentScheduleCourseDto>(); // show nothing
+                Courses = new List<StudentScheduleCourseDto>();
             }
 
-            // Generate hourly slots
+            // Generate hourly slots (8AM to 18PM)
             TimeSlots = Enumerable.Range(8, 11)
                 .Select(h => new StudentScheduleTimeSlotDto { Hour = h })
                 .ToList();

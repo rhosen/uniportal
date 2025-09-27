@@ -5,49 +5,53 @@
     Layout = Model.LayoutForRole;
 }
 
-<div class="container-fluid mt-4">
-    <div class="row">
-        <!-- Sidebar: Left Column -->
-        <div class="col-md-3 border-end">
-            <h5 class="mb-3">Week Navigation</h5>
-
-            <!-- Previous / Next week inline -->
-            <div class="d-flex justify-content-between mb-3">
-                <a class="btn btn-outline-primary btn-sm"
-                   href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(-7).ToString("yyyy-MM-dd")">← Previous Week</a>
-                <a class="btn btn-outline-primary btn-sm"
-                   href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(7).ToString("yyyy-MM-dd")">Next Week→</a>
-            </div>
-
-            <!-- Date Picker -->
-            <label for="weekPicker" class="fw-bold">Go to week:</label>
-            <input type="date" id="weekPicker" class="form-control mb-3"
-                   value="@Model.WeekDates.First().ToString("yyyy-MM-dd")"
-                   onchange="location.href='?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=' + this.value">
+<div class="container-fluid my-4">
+    <!-- HEADER: Week + Semester -->
+    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white border rounded">
+        <div class="fw-bold">
+            📅 Week: @Model.WeekDates.First().ToString("dd MMM") – @Model.WeekDates.Last().ToString("dd MMM")
         </div>
 
-        <!-- Main Content: Right Column -->
-        <div class="col-md-9">
-            <!-- Semester Filter -->
-            <form method="get" class="mb-3 d-flex align-items-center gap-2">
-                <label for="semester" class="fw-bold">Semester:</label>
-                <select id="semester" name="SelectedSemesterId" class="form-select w-auto">
-                    @foreach (var s in Model.SemesterOptions)
-                    {
-                        <option value="@s.Id" selected="@(s.Id == Model.SelectedSemesterId ? "" : null)">
-                            @s.Name
-                        </option>
-                    }
-                </select>
-                <button type="submit" class="btn btn-primary btn-sm">Load</button>
-            </form>
+        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+            <label for="semester" class="fw-bold mb-0">Semester:</label>
+            <select id="semester" name="SelectedSemesterId" class="form-select w-auto">
+                @foreach (var s in Model.SemesterOptions)
+                {
+                    <option value="@s.Id" selected="@(s.Id == Model.SelectedSemesterId ? "" : null)">
+                        @s.Name
+                    </option>
+                }
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Load</button>
+        </form>
+    </div>
 
-            <h5 class="mb-3">
-                Week: @Model.WeekDates.First().ToString("dd MMM") – @Model.WeekDates.Last().ToString("dd MMM")
-            </h5>
+    <div class="row g-0" style="min-height: 80vh;">
+
+        <!-- Left Panel: Week Navigation -->
+        <div class="col-md-3 border-end bg-light d-flex flex-column">
+            <h5 class="p-3 mb-2 border-bottom fw-bold">🧭 Week Navigation</h5>
+
+            <div class="d-flex justify-content-between p-3">
+                <a class="btn btn-outline-primary btn-sm"
+                   href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(-7).ToString("yyyy-MM-dd")">← Prev</a>
+                <a class="btn btn-outline-primary btn-sm"
+                   href="?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=@Model.WeekDates.First().AddDays(7).ToString("yyyy-MM-dd")">Next →</a>
+            </div>
+
+            <div class="p-3">
+                <label for="weekPicker" class="fw-bold">Go to week:</label>
+                <input type="date" id="weekPicker" class="form-control mt-1"
+                       value="@Model.WeekDates.First().ToString("yyyy-MM-dd")"
+                       onchange="location.href='?SelectedSemesterId=@Model.SelectedSemesterId&WeekStart=' + this.value">
+            </div>
+        </div>
+
+        <!-- Middle Panel: Main Schedule -->
+        <div class="col-md-9 d-flex flex-column">
 
             <!-- Tabs -->
-            <ul class="nav nav-tabs mb-3">
+            <ul class="nav nav-tabs bg-white px-3 mt-2">
                 <li class="nav-item">
                     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#calendarView">Calendar</button>
                 </li>
@@ -56,100 +60,106 @@
                 </li>
             </ul>
 
-            <div class="tab-content">
-                <!-- Calendar View -->
-                <div class="tab-pane fade show active" id="calendarView">
-                    <table class="table table-bordered text-center align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 10%">Time</th>
-                                @for (int i = 0; i < Model.DaysOfWeek.Length; i++)
-                                {
-                                    var day = Model.DaysOfWeek[i];
-                                    var date = Model.WeekDates[i];
-                                    var isToday = date.Date == DateTime.Today;
-                                    <th>
-                                        @day <br />
-                                        <small>@date.ToString("dd MMM")</small>
-                                        @if (isToday)
-                                        {
-                                            <span class="badge bg-info text-dark ms-1">Today</span>
-                                        }
-                                    </th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var slot in Model.TimeSlots)
-                            {
-                                <tr>
-                                    <td>@slot.Label</td>
-                                    @for (int i = 0; i < Model.DaysOfWeek.Length; i++)
-                                    {
-                                        var day = Model.DaysOfWeek[i];
-                                        var date = Model.WeekDates[i];
-                                        var isToday = date.Date == DateTime.Today;
-                                        var course = Model.GetCourseAt(day, slot.Start);
+            <div class="tab-content flex-grow-1 overflow-auto" style="scroll-behavior: smooth;">
 
-                                        <td class="@(isToday ? "table-info" : "")">
-                                            @if (course != null)
+                <!-- Calendar View -->
+                <div class="tab-pane fade show active p-3" id="calendarView">
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 10%">Time</th>
+                                    @for (int i = 0; i < Model.WeekDates.Count; i++)
+                                    {
+                                        var date = Model.WeekDates[i];
+                                        var day = Model.DaysOfWeek[i];
+                                        var isToday = date.Date == DateTime.Today;
+                                        <th>
+                                            @day <br />
+                                            <small>@date.ToString("dd MMM")</small>
+                                            @if (isToday)
                                             {
-                                                <div class="fw-bold">@course.Code</div>
-                                                <div>@course.Title</div>
-                                                <div><small>@course.Room</small></div>
-                                                @if (course.IsCancelled)
-                                                {
-                                                    <span class="badge bg-danger" data-bs-toggle="tooltip" title="@course.CancellationReason">Canceled</span>
-                                                }
+                                                <span class="badge bg-info text-dark ms-1">Today</span>
                                             }
-                                        </td>
+                                        </th>
                                     }
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var slot in Model.TimeSlots)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@slot.Label</td>
+                                        @for (int i = 0; i < Model.WeekDates.Count; i++)
+                                        {
+                                            var date = Model.WeekDates[i];
+                                            var day = Model.DaysOfWeek[i];
+                                            var isToday = date.Date == DateTime.Today;
+                                            var course = Model.GetCourseAt(day, slot.Start);
+
+                                            <td class="@(isToday ? "table-info" : "")">
+                                                @if (course != null)
+                                                {
+                                                    <div class="fw-bold text-truncate">@course.Code</div>
+                                                    <div class="text-truncate">@course.Title</div>
+                                                    <div><small>@course.Room</small></div>
+                                                    @if (course.IsCancelled)
+                                                    {
+                                                        <span class="badge bg-danger mt-1" data-bs-toggle="tooltip" title="@course.CancellationReason">Canceled</span>
+                                                    }
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- List View -->
-                <div class="tab-pane fade" id="listView">
-                    <table class="table table-striped">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Course Code</th>
-                                <th>Course Title</th>
-                                <th>Faculty</th>
-                                <th>Days</th>
-                                <th>Time</th>
-                                <th>Room</th>
-                                <th>Credits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var c in Model.Courses)
-                            {
-                                <tr class="@(c.IsCancelled ? "table-danger" : "")">
-                                    <td>@c.Code</td>
-                                    <td>
-                                        @c.Title
-                                        @if (c.IsCancelled)
-                                        {
-                                            <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" title="@c.CancellationReason">Canceled</span>
-                                        }
-                                    </td>
-                                    <td>@c.Faculty</td>
-                                    <td>@c.Days</td>
-                                    <td>@c.Time</td>
-                                    <td>@c.Room</td>
-                                    <td>@c.Credits</td>
+                <div class="tab-pane fade p-3" id="listView">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Title</th>
+                                    <th>Faculty</th>
+                                    <th>Days</th>
+                                    <th>Time</th>
+                                    <th>Room</th>
+                                    <th>Credits</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.Courses)
+                                {
+                                    <tr class="@(c.IsCancelled ? "table-danger" : "")">
+                                        <td>@c.Code</td>
+                                        <td>
+                                            @c.Title
+                                            @if (c.IsCancelled)
+                                            {
+                                                <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" title="@c.CancellationReason">Canceled</span>
+                                            }
+                                        </td>
+                                        <td>@c.Faculty</td>
+                                        <td>@c.Days</td>
+                                        <td>@c.Time</td>
+                                        <td>@c.Room</td>
+                                        <td>@c.Credits</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-        </div> <!-- End Right Column -->
-    </div> <!-- End Row -->
+            </div>
+        </div>
+
+    </div>
 </div>
 
 @section Scripts {
