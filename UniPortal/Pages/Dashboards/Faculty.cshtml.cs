@@ -47,7 +47,7 @@ namespace UniPortal.Pages.Dashboards
             // Ensure metrics are populated
             Metrics ??= new FacultyMetricDto
             {
-                TotalCourses = 0,
+                UnreadNotifications = 0,
                 UpcomingClass = "N/A"
             };
 

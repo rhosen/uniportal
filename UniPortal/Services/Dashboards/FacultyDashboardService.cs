@@ -41,69 +41,125 @@ namespace UniPortal.Services.Dashboards
         // -----------------------------
         public async Task<FacultyMetricDto> GetDashboardMetricsAsync(Guid accountId)
         {
+            // -----------------------------
             // Get faculty ID
+            // -----------------------------
             var facultyId = await _context.Faculties
                 .Where(f => f.AccountId == accountId && !f.IsDeleted)
                 .Select(f => f.Id)
                 .FirstOrDefaultAsync();
 
             if (facultyId == Guid.Empty)
-                return new FacultyMetricDto { TotalCourses = 0, UpcomingClass = "N/A" };
+                return new FacultyMetricDto { UnreadNotifications = 0, UpcomingClass = "N/A" };
 
-            // Total courses taught
-            int totalCourses = await _context.CourseOfferings
-                .Where(co => co.FacultyId == facultyId && !co.IsDeleted)
+            // -----------------------------
+            // Unread notifications
+            // -----------------------------
+            var unreadNotifications = await _context.Notifications
+                .Where(n => !n.IsDeleted && n.AccountId == accountId)
+                .Where(n => !_context.NotificationReads
+                    .Any(nr => nr.NotificationId == n.Id &&
+                               nr.AccountId == accountId &&
+                               nr.IsRead))
                 .CountAsync();
 
-            // Current day and time
+            // -----------------------------
+            // Current time
+            // -----------------------------
             var now = DateTime.Now;
-            var currentDayOfWeek = now.DayOfWeek;
             var currentTime = TimeOnly.FromDateTime(now);
+            var todayIndex = (int)now.DayOfWeek; // 0 = Sunday
 
-            // Next class calculation using CourseOfferings + explicit join to Courses
-            var offeringsQuery = from co in _context.CourseOfferings
-                                 join c in _context.Courses on co.CourseId equals c.Id
-                                 where co.FacultyId == facultyId && !co.IsDeleted
-                                 select new
-                                 {
-                                     c.Title,
-                                     co.StartTime,
-                                     co.EndTime,
-                                     co.Mon,
-                                     co.Tue,
-                                     co.Wed,
-                                     co.Thu,
-                                     co.Fri,
-                                     co.Sat,
-                                     co.Sun
-                                 };
+            // -----------------------------
+            // Faculty offerings with course code
+            // -----------------------------
+            var offerings = await (
+                from co in _context.CourseOfferings
+                join c in _context.Courses on co.CourseId equals c.Id
+                where co.FacultyId == facultyId && !co.IsDeleted
+                select new
+                {
+                    c.Code,
+                    co.StartTime,
+                    co.EndTime,
+                    co.Mon,
+                    co.Tue,
+                    co.Wed,
+                    co.Thu,
+                    co.Fri,
+                    co.Sat,
+                    co.Sun
+                }).ToListAsync();
 
-            var offerings = await offeringsQuery.ToListAsync();
-
-            var weekdayFlagMap = new Dictionary<DayOfWeek, Func<dynamic, bool>>
+            // -----------------------------
+            // Helper: check if offering occurs on a DayOfWeek
+            // -----------------------------
+            bool IsOnDay(dynamic co, DayOfWeek day) => day switch
             {
-                { DayOfWeek.Monday, x => x.Mon },
-                { DayOfWeek.Tuesday, x => x.Tue },
-                { DayOfWeek.Wednesday, x => x.Wed },
-                { DayOfWeek.Thursday, x => x.Thu },
-                { DayOfWeek.Friday, x => x.Fri },
-                { DayOfWeek.Saturday, x => x.Sat },
-                { DayOfWeek.Sunday, x => x.Sun }
+                DayOfWeek.Monday => co.Mon,
+                DayOfWeek.Tuesday => co.Tue,
+                DayOfWeek.Wednesday => co.Wed,
+                DayOfWeek.Thursday => co.Thu,
+                DayOfWeek.Friday => co.Fri,
+                DayOfWeek.Saturday => co.Sat,
+                DayOfWeek.Sunday => co.Sun,
+                _ => false
             };
 
-            var nextClassEntry = offerings
-                .Where(co => weekdayFlagMap[currentDayOfWeek](co) && co.StartTime >= currentTime)
-                .OrderBy(co => co.StartTime)
-                .FirstOrDefault();
+            // -----------------------------
+            // Find next upcoming class in the week
+            // -----------------------------
+            dynamic? nextClass = null;
+            DayOfWeek? nextClassDay = null;
+            int daysChecked = 0;
 
-            string nextClass = nextClassEntry != null
-                ? $"{nextClassEntry.StartTime:hh\\:mm} - {nextClassEntry.Title}"
+            while (daysChecked < 7 && nextClass == null)
+            {
+                var day = (DayOfWeek)((todayIndex + daysChecked) % 7);
+
+                var classesOnDay = offerings
+                    .Where(co => IsOnDay(co, day))
+                    .OrderBy(co => co.StartTime)
+                    .ToList();
+
+                if (classesOnDay.Any())
+                {
+                    if (daysChecked == 0)
+                    {
+                        // Today: pick class that hasn't started yet
+                        nextClass = classesOnDay.FirstOrDefault(co => co.StartTime >= currentTime);
+                    }
+
+                    // If no class left today or checking future day, pick first class
+                    if (nextClass == null && daysChecked > 0)
+                    {
+                        nextClass = classesOnDay.First();
+                    }
+
+                    if (nextClass != null)
+                    {
+                        nextClassDay = day; // store the day of next class
+                        break;
+                    }
+                }
+
+                daysChecked++;
+            }
+
+            // -----------------------------
+            // Format next class string
+            // -----------------------------
+            string upcomingClassStr = (nextClass != null && nextClassDay.HasValue)
+                ? $"{nextClassDay.Value.ToString().Substring(0, 3)} {nextClass.StartTime:hh\\:mm tt} - {nextClass.Code}"
                 : "N/A";
 
+            // -----------------------------
+            // Return dashboard DTO
+            // -----------------------------
             return new FacultyMetricDto
             {
-                TotalCourses = totalCourses,
-                UpcomingClass = nextClass
+                UnreadNotifications = unreadNotifications,
+                UpcomingClass = upcomingClassStr
             };
         }
 

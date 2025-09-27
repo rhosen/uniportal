@@ -51,22 +51,10 @@
         <!-- Right Column: Metric Cards -->
         <div class="col-lg-9">
             <div class="row g-3">
-                <!-- Stats Row -->
-                <div class="col-md-3 col-sm-6">
-                    <div class="metric-card">
-                        <div class="metric-content">
-                            <svg class="metric-icon" viewBox="0 0 64 48">
-                                <path d="M10 40V10l22 10 22-10v30L32 32 10 40z" fill="#6f42c1" />
-                            </svg>
-                            <div class="card-title">Total Courses</div>
-                            <div class="card-title fw-bold text-black">@Model.Metrics.TotalCourses</div>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="col-md-3 col-sm-6">
                     <div class="metric-card">
-                        <div class="metric-content" onclick="location.href='@Url.Page("/academics/operations/classcancellation")'">
+                        <div class="metric-content" onclick="location.href='@Url.Page("/portals/facultyschedule")'">
                             <svg class="metric-icon" viewBox="0 0 64 48">
                                 <rect x="12" y="12" width="40" height="30" rx="4" ry="4" fill="#fd7e14" />
                             </svg>
@@ -138,8 +126,8 @@
                             <svg class="metric-icon" viewBox="0 0 64 48">
                                 <path d="M32 4c-8 0-14 6-14 14v8l-6 6v2h40v-2l-6-6v-8c0-8-6-14-14-14z" fill="#dc3545" />
                             </svg>
-                            <div class="card-title">Check</div>
                             <div class="card-title">Notifications</div>
+                            <div class="card-title fw-bold text-black">@Model.Metrics.UnreadNotifications</div>
                         </div>
                     </div>
                 </div>
@@ -155,20 +143,6 @@
                         </div>
                     </div>
                 </div> *@
-
-                <!-- Quick Access to Full Page -->
-                <div class="col-md-4 col-sm-6">
-                    <div class="metric-card" onclick="location.href='@Url.Page("/academics/operations/classcancellation")'">
-                        <div class="metric-content">
-                            <svg class="metric-icon" viewBox="0 0 64 48">
-                                <path d="M10 40V10l22 10 22-10v30L32 32 10 40z" fill="#6f42c1" />
-                            </svg>
-                            <div class="card-title">Manage</div>
-                            <div class="card-title">Cancellations</div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>

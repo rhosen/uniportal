@@ -2,7 +2,7 @@
 {
     public class FacultyMetricDto
     {
-        public int TotalCourses { get; set; }      
-        public string UpcomingClass { get; set; }  
+        public string UpcomingClass { get; set; }
+        public int UnreadNotifications { get; set; }
     }
 }
