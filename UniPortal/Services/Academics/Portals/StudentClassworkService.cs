@@ -91,7 +91,9 @@ namespace UniPortal.Services.Academics.Portals
                     Description = x.cw.Description,
                     RequiresSubmission = x.cw.RequiresSubmission,
                     DueDate = x.cw.DueDate,
-                    UploadedAt = x.cw.UploadedAt,
+                    UploadedAt = !string.IsNullOrEmpty(x.cw.FilePath)
+                                ? x.cw.UploadedAt
+                                : x.cw.CreatedAt, // fallback
                     FilePath = x.cw.FilePath,
                     HasSubmitted = _context.ClassworkSubmissions
                         .Any(sub => sub.ClassworkId == x.cw.Id && sub.StudentId == studentId)
