@@ -125,20 +125,31 @@
 
 @section Scripts {
     <script>
-        document.querySelectorAll('input.use-system-radio').forEach(radio => {
-            radio.addEventListener('change', () => {
-                const form = radio.closest('form');
-                if (!form) return;
-                const studentIdInput = form.querySelector('.student-id-input');
-                if (!studentIdInput) return;
-                if (radio.value === 'true') {
-                    studentIdInput.readOnly = true;
-                    studentIdInput.value = '';
-                } else {
-                    studentIdInput.readOnly = false;
-                    studentIdInput.focus();
-                }
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input.use-system-radio').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    // Get the row that this radio belongs to
+                    const row = this.closest('tr');
+                    if (!row) return;
+
+                    const studentIdInput = row.querySelector('.student-id-input');
+                    if (!studentIdInput) return;
+
+                    // Find the checked radio in this row only
+                    const checked = row.querySelector('input.use-system-radio:checked');
+                    if (!checked) return;
+
+                    // Toggle readonly based on the checked value
+                    if (checked.value === 'true') {
+                        studentIdInput.readOnly = true;
+                        studentIdInput.value = '';
+                    } else {
+                        studentIdInput.readOnly = false;
+                        studentIdInput.focus();
+                    }
+                });
             });
         });
     </script>
 }
+
