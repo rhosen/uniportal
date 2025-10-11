@@ -1,21 +1,28 @@
-# From .NET Core 3.0 you can use the command: `dotnet new gitignore` to generate a customizable .gitignore file
-
+# ------------------------
+# Temporary & swap files
+# ------------------------
 *.swp
 *.*~
 project.lock.json
 .DS_Store
 *.pyc
 
+# ------------------------
 # Visual Studio Code
+# ------------------------
 .vscode
 
+# ------------------------
 # User-specific files
+# ------------------------
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
 
+# ------------------------
 # Build results
+# ------------------------
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -28,19 +35,23 @@ bld/
 [Oo]bj/
 msbuild.log
 msbuild.err
-msbuild.wrn
 
 # Visual Studio 2015
 .vs/
 
+# Environment & logs
 .env
 Logs/
 
-# Ignore all uploaded files
+# ------------------------
+# Ignore uploads folder completely
+# ------------------------
 wwwroot/uploads/
 
-# Keep empty folders with a placeholder
+# Optional: keep empty folders
 !wwwroot/uploads/**/.gitkeep
 
-
+# ------------------------
+# Publish Profiles
+# ------------------------
 UniPortal/Properties/PublishProfiles/

@@ -20,6 +20,7 @@
   <ItemGroup>
     <Folder Include="Docs\" />
     <Folder Include="Dtos\Coursework\" />
+    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
 </Project>
