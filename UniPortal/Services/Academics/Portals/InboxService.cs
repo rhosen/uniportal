@@ -21,13 +21,19 @@ namespace UniPortal.Services.Academics.Portals
         public async Task<List<NotificationDto>> GetUserNotificationsAsync(Guid accountId, string role, int page = 1, int pageSize = 20)
         {
             var skip = (page - 1) * pageSize;
-            var roleId = GetRecipientTypeId(role);
+            var recipientTypeId = GetRecipientTypeId(role);
             var allId = GetRecipientTypeId("All");
 
             var query = _context.Notifications
                 .AsNoTracking()
-                .Where(n => !n.IsDeleted &&
-                            (n.RecipientTypeId == roleId || n.RecipientTypeId == allId || n.AccountId == accountId))
+                .Where(n =>
+                    !n.IsDeleted &&
+                    (
+                        n.RecipientTypeId == allId ||   // for everyone
+                        (n.RecipientTypeId == recipientTypeId && n.AccountId == null) || // for all students or all faculty
+                        (n.RecipientTypeId == recipientTypeId && n.AccountId == accountId) // specific student or faculty
+                    )
+                )
                 .OrderByDescending(n => n.CreatedAt)
                 .Skip(skip)
                 .Take(pageSize)

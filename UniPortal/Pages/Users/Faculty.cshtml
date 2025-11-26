@@ -90,6 +90,8 @@
                 <tr>
                     <form method="post">
                         <input type="hidden" name="id" value="@faculty.AccountId" />
+                        <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
+
 
                         @if (Model.EditFacultyId == faculty.AccountId.ToString())
                         {
