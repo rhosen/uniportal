@@ -82,7 +82,7 @@ namespace UniPortal.Pages.Academics.Configs
         {
             await R(() => _curriculumService.CreateAsync(
                 NewCurriculum.ProgramId,
-                EditCurriculum.SemesterNumber,
+                EditCurriculum.SemesterNumber+1,
                 NewCurriculum.CourseId,
                 NewCurriculum.Sequence,
                 CurrentAccount.Id
